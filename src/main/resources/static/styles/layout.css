@@ -1,0 +1,266 @@
+/* =========================================
+   LAYOUT GERAL (Sidebar, Header, Estrutura)
+   ========================================= */
+
+/* --- Container Principal --- */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    /* Fundo sutil com gradiente radial para dar profundidade */
+    background: radial-gradient(circle at top left, #1a2e20, var(--bg-primary));
+}
+
+.main-content {
+    flex: 1;
+    /* Espaço para o menu lateral flutuante */
+    margin-left: 320px;
+    padding: 2rem 3rem;
+    min-height: 100vh;
+    max-width: 1600px;
+}
+
+/* --- Sidebar (Menu Lateral) --- */
+.sidebar {
+    width: 290px;
+    height: calc(100vh - 40px); /* Margem superior e inferior */
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+
+    /* Estilo Vidro (Glassmorphism) */
+    background: rgba(21, 25, 21, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    /* Bordas e Sombras */
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+    /* Layout Interno */
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 0 0 2rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.logo-compact {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-compact img {
+    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.3));
+    transition: transform 0.3s ease;
+}
+
+.logo-compact:hover img {
+    transform: scale(1.05) rotate(-2deg);
+}
+
+.logo-compact span {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+}
+
+/* Itens de Navegação */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
+    font-size: 0.9375rem;
+}
+
+.nav-item svg {
+    transition: transform 0.3s ease;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-item:hover svg {
+    transform: scale(1.3);
+    color: var(--accent-green);
+}
+
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(57, 255, 20, 0.15), transparent);
+    color: var(--accent-green);
+    font-weight: 600;
+    border: 1px solid rgba(57, 255, 20, 0.2);
+    box-shadow: 0 4px 15px rgba(57, 255, 20, 0.1);
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 40%;
+    background: var(--accent-green);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px var(--accent-green);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.btn-logout:hover {
+    background: rgba(255, 68, 68, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+/* --- Cabeçalho da Página (Page Header) --- */
+.page {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.user-badge {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: var(--accent-green);
+}
+
+/* --- Badges Globais (Usado em várias páginas) --- */
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge.success {
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+}
+
+.badge.danger {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+}
+
+/* --- Responsividade do Layout --- */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 90px;
+        padding: 1.5rem 1rem;
+    }
+    .logo-compact span, .nav-item span, .btn-logout span { display: none; }
+    .nav-item { justify-content: center; padding: 1rem; }
+    .nav-item:hover { transform: none; }
+    .main-content { margin-left: 110px; padding: 2rem 1.5rem; }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: calc(100% - 40px);
+        height: auto;
+        bottom: 20px;
+        top: auto;
+        left: 20px;
+        right: 20px;
+        flex-direction: row;
+        padding: 1rem;
+        overflow-x: auto;
+        border-radius: 20px;
+    }
+    .sidebar-header, .sidebar-footer, .logo-compact { display: none; }
+    .sidebar-nav { flex-direction: row; justify-content: space-around; padding: 0; }
+    .nav-item.active::before { width: 40%; height: 4px; bottom: 0; top: auto; left: 50%; transform: translateX(-50%); border-radius: 4px 4px 0 0; }
+    .main-content { margin-left: 0; margin-bottom: 100px; padding: 1.5rem; }
+    .page-header { flex-direction: column; align-items: flex-start; }
+}

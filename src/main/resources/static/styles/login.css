@@ -1,0 +1,25 @@
+/* =========================================
+   LOGIN PAGE SPECIFIC STYLES
+   ========================================= */
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.forgot-password {
+    color: var(--accent-green);
+    text-decoration: none;
+    font-size: 0.875rem;
+    text-align: right;
+    transition: opacity 0.3s ease;
+}
+
+.forgot-password:hover {
+    opacity: 0.8;
+}
+
+.login-pattern {
+    display: none;
+}
