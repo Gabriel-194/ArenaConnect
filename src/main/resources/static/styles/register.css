@@ -1,0 +1,195 @@
+/* =========================================
+   REGISTER PAGE SPECIFIC STYLES
+   ========================================= */
+
+/* --- Selection Buttons (Client vs Admin) --- */
+.register-type-container {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.register-type-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    min-height: 160px;
+}
+
+.register-type-btn:hover {
+    border-color: var(--accent-green);
+    background: rgba(57, 255, 20, 0.05);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.register-type-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.register-type-btn:hover .register-type-icon {
+    transform: scale(1.1);
+}
+
+.register-type-btn h3 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.register-type-btn p {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* --- Modals --- */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal.active,
+.modal[style*="display: flex"] { /* Fallback for inline styles */
+    display: flex !important;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-green) var(--bg-card);
+}
+
+/* Wide Modal for Registration Forms */
+.modal-content.modal-wide {
+    max-width: 800px;
+    width: 90%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+/* --- Form Layouts inside Modal --- */
+.form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.col-span-2 {
+    grid-column: span 2;
+}
+
+.section-title {
+    color: var(--accent-green);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.separator {
+    border: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    margin: 0.5rem 0;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.modal-actions button {
+    flex: 1;
+}
+
+/* Loading status for CEP */
+#cep-status {
+    font-size: 0.8rem;
+    color: var(--accent-green) !important;
+    margin-left: 0.5rem;
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .col-span-2 {
+        grid-column: span 1;
+    }
+
+    .modal-content.modal-wide {
+        max-width: 95%;
+        margin: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .register-type-container {
+        flex-direction: column;
+    }
+}

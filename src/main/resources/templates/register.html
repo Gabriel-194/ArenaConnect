@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArenaConnect - Cadastro</title>
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/register.css">
+    <link rel="stylesheet" href="styles/layout.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Racing+Sans+One&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="logo">
+                <img th:src="@{/assets/3-removebg-preview.png}" alt="logo" style="width: 80px">
+                <h1 style="font-family: 'Racing Sans One', cursive;">Arena Connect</h1>
+            </div>
+            <p class="subtitle">Escolha o tipo de cadastro</p>
+        </div>
+
+        <div class="register-type-container">
+            <button type="button" class="register-type-btn" id="btn-register-cliente">
+                <div class="register-type-icon">
+                    <img th:src="@{/assets/user-svgrepo-com.svg}" alt="client logo" style="width: 50px;">
+                </div>
+                <h3>Sou Cliente</h3>
+                <p>Quero reservar quadras para jogar</p>
+            </button>
+
+            <button type="button" class="register-type-btn" id="btn-register-admin">
+                <div class="register-type-icon">
+                    <img th:src="@{/assets/stadium-svgrepo-com.svg}" alt="arena logo" style="width: 50px;">
+                </div>
+                <h3>Sou Dono de Arena</h3>
+                <p>Quero gerenciar meu complexo</p>
+            </button>
+        </div>
+
+        <div class="form-footer">
+            <span class="footer-text">Já tem uma conta?</span>
+            <a th:href="@{/login}" class="link-accent">Fazer login</a>
+        </div>
+    </div>
+</div>
+
+<div id="modal-cliente" class="modal">
+    <div class="modal-content modal-wide">
+        <div class="modal-header">
+            <h2>Cadastro de Cliente</h2>
+            <button class="modal-close" type="button" id="close-cliente">&times;</button>
+        </div>
+
+        <form id="form-cliente" class="form form-grid">
+            <div class="form-group col-span-2">
+                <label for="cliente-name">Nome Completo *</label>
+                <input type="text" id="cliente-name" placeholder="Seu nome completo" required>
+            </div>
+
+            <div class="form-group">
+                <label for="cliente-cpf">CPF *</label>
+                <input type="text" id="cliente-cpf" placeholder="000.000.000-00" required maxlength="14">
+            </div>
+
+            <div class="form-group">
+                <label for="cliente-telefone">Telefone</label>
+                <input type="tel" id="cliente-telefone" placeholder="(00) 00000-0000" maxlength="15">
+            </div>
+
+            <div class="form-group col-span-2">
+                <label for="cliente-email">E-mail *</label>
+                <input type="email" id="cliente-email" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="cliente-password">Senha *</label>
+                <input type="password" id="cliente-password" placeholder="••••••••" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="cliente-confirm-password">Confirmar Senha *</label>
+                <input type="password" id="cliente-confirm-password" placeholder="••••••••" required minlength="6">
+            </div>
+
+            <div class="modal-actions col-span-2">
+                <button type="button" class="btn-secondary" id="cancel-cliente">Cancelar</button>
+                <button type="submit" class="btn-primary">Criar Conta</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="modal-admin" class="modal">
+    <div class="modal-content modal-wide">
+        <div class="modal-header">
+            <h2>Cadastro de Parceiro</h2>
+            <button class="modal-close" type="button" id="close-admin">&times;</button>
+        </div>
+
+        <form id="form-admin" class="form form-grid">
+
+            <h3 class="col-span-2 section-title">Seus Dados Pessoais</h3>
+
+            <div class="form-group col-span-2">
+                <label for="admin-name">Nome Completo *</label>
+                <input type="text" id="admin-name" placeholder="Nome do proprietário" required>
+            </div>
+
+            <div class="form-group">
+                <label for="admin-cpf">CPF *</label>
+                <input type="text" id="admin-cpf" placeholder="000.000.000-00" required maxlength="14">
+            </div>
+
+            <div class="form-group">
+                <label for="admin-telefone">Celular / WhatsApp</label>
+                <input type="tel" id="admin-telefone" placeholder="(00) 00000-0000" maxlength="15">
+            </div>
+
+            <div class="form-group col-span-2">
+                <label for="admin-email">E-mail de Login *</label>
+                <input type="email" id="admin-email" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="admin-password">Senha *</label>
+                <input type="password" id="admin-password" placeholder="••••••••" required minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="admin-confirm-password">Confirmar Senha *</label>
+                <input type="password" id="admin-confirm-password" placeholder="••••••••" required minlength="6">
+            </div>
+
+            <hr class="col-span-2 separator">
+
+            <h3 class="col-span-2 section-title"> Dados do seu Complexo Esportivo</h3>
+
+            <div class="form-group col-span-2">
+                <label for="partner-arena-name">Nome da Arena *</label>
+                <input type="text" id="partner-arena-name" placeholder="Ex: Arena Gol de Placa" required>
+            </div>
+
+            <div class="form-group">
+                <label for="partner-arena-cnpj">CNPJ da Empresa *</label>
+                <input type="text" id="partner-arena-cnpj" placeholder="00.000.000/0000-00" required maxlength="18">
+            </div>
+
+            <div class="form-group">
+                <label for="partner-arena-cep">CEP *</label>
+                <input type="text" id="partner-arena-cep" placeholder="00000-000" required maxlength="9">
+                <small id="cep-status" style="color: var(--text-muted); display: none;">Buscando...</small>
+            </div>
+
+            <div class="form-group col-span-2">
+                <label for="partner-arena-endereco">Endereço</label>
+                <input type="text" id="partner-arena-endereco" placeholder="Rua, Número, Bairro" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+                <label for="partner-arena-cidade">Cidade</label>
+                <input type="text" id="partner-arena-cidade" placeholder="Cidade" readonly class="input-readonly">
+            </div>
+
+            <div class="form-group">
+                <label for="partner-arena-estado">Estado</label>
+                <input type="text" id="partner-arena-estado" placeholder="UF" readonly class="input-readonly" maxlength="2">
+            </div>
+
+            <div class="modal-actions col-span-2" style="margin-top: 1rem;">
+                <button type="button" class="btn-secondary" id="cancel-admin">Cancelar</button>
+                <button type="submit" class="btn-primary" id="btn-submit-partner">Finalizar Cadastro</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
