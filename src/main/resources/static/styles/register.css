@@ -1,8 +1,4 @@
-/* =========================================
-   REGISTER PAGE SPECIFIC STYLES
-   ========================================= */
 
-/* --- Selection Buttons (Client vs Admin) --- */
 .register-type-container {
     display: flex;
     gap: 1rem;
@@ -58,7 +54,7 @@
     line-height: 1.4;
 }
 
-/* --- Modals --- */
+
 .modal {
     display: none;
     position: fixed;
@@ -71,7 +67,7 @@
 }
 
 .modal.active,
-.modal[style*="display: flex"] { /* Fallback for inline styles */
+.modal[style*="display: flex"] {
     display: flex !important;
 }
 
@@ -87,7 +83,7 @@
     scrollbar-color: var(--accent-green) var(--bg-card);
 }
 
-/* Wide Modal for Registration Forms */
+
 .modal-content.modal-wide {
     max-width: 800px;
     width: 90%;
@@ -120,7 +116,6 @@
     color: var(--text-primary);
 }
 
-/* --- Form Layouts inside Modal --- */
 .form {
     padding: 1.5rem;
     display: flex;
@@ -164,14 +159,21 @@
     flex: 1;
 }
 
-/* Loading status for CEP */
+
 #cep-status {
     font-size: 0.8rem;
     color: var(--accent-green) !important;
     margin-left: 0.5rem;
 }
 
-/* --- Responsiveness --- */
+.text-danger {
+    color: #ff4d4f;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    display: block;
+}
+
+
 @media (max-width: 768px) {
     .form-grid {
         grid-template-columns: 1fr;

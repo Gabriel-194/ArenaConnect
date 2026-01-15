@@ -31,6 +31,10 @@ public class TenantFilter implements Filter {
             return true;
         }
 
+        if (uri.startsWith("/api/users/register")) {
+            return true;
+        }
+
         return uri.startsWith("/api/auth/") ||
                 uri.startsWith("/api/users/register") ||
                 uri.startsWith("/styles/") ||

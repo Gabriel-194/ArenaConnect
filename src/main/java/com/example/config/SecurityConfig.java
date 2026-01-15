@@ -27,22 +27,33 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                .sessionManagement(sessions -> sessions
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/styles/**", "/scripts/**", "/assets/**", "/images/**").permitAll()
-
-                        .requestMatchers("/", "/login", "/register", "/favicon.ico", "/error", "/webjars/**").permitAll()
-
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/register", "/api/users/register-partner").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/login",
+                                "/register",
+                                "/register-partner",
+                                "/styles/**",
+                                "/scripts/**",
+                                "/assets/**",
+                                "/images/**",
+                                "/favicon.ico",
+                                "/error"
+                        ).permitAll()
 
                         .anyRequest().authenticated()
                 )
 
-                .logout(logout -> logout.disable());
+                .logout(logout -> logout
+                .logoutUrl("/logout")
+                .deleteCookies("JWT")
+                .invalidateHttpSession(true)
+                .permitAll()
+        );
 
         return http.build();
     }
