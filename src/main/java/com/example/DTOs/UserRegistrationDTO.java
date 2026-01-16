@@ -32,7 +32,7 @@ public class UserRegistrationDTO {
     @NotBlank(message = "CPF é obrigatório")
     @CPF(message = "CPF inválido")
     private String cpf;
-    
+
     private String telefone;
     private Integer idArena;
 
