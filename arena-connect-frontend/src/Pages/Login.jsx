@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import axios from "axios";
 
 import '../styles/login.css';
-import '../styles/layout.css';
+
 
 export default function Login(){
     const [email,setEmail] = useState('');
@@ -78,7 +78,7 @@ export default function Login(){
 
                     <div className="form-footer">
                         <span className="footer-text">Não tem uma conta?</span>
-                        <Link to="/register" className="link-accent">Criar conta</Link>
+                        <Link to="/Register" className="link-accent">Criar conta</Link>
                     </div>
                 </form>
             </div>

@@ -14,7 +14,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-@Controller
+@RestController
+@RequestMapping("/api/users")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -27,7 +28,7 @@ public class UserController {
 
 
     @PostMapping("/register")
-    public String registerCliente(
+    public String registerUser(
             @Valid @ModelAttribute("userDTO") UserRegistrationDTO dto,
             BindingResult bindingResult,
             Model model,
