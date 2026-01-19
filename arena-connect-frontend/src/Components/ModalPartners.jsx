@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom';
 
 export default function ModalPartners({onClose}) {
     const navigate = useNavigate();
-    const [nome, setNome] = useState('');
-    const [email,setEmail] = useState('');
-    const [cpf,setCpf] = useState('');
-    const [telefone,setTelefone] = useState('');
-    const [senha, setSenha] = useState('');
-    const [erro, setErro] = useState('');
+    const [nomeUser, setNomeUser] = useState('');
+    const [emailAdmin,setEmailAdmin] = useState('');
+    const [cpfUser,setCpf] = useState('');
+    const [telefoneUser,setTelefone] = useState('');
+    const [senhaAdmin, setSenha] = useState('');
+    const [confirmarSenha, setConfirmarSenha] = useState('');
+    const [error, setErro] = useState('');
     //arena
     const [nameArena, setNameArena] = useState('');
     const [cnpjArena, setCnpjArena] = useState('');
@@ -23,12 +24,13 @@ export default function ModalPartners({onClose}) {
         setErro('');
 
         try{
-            const response = await axios.post("http://localhost/api/users/register-partner",{
-                nome: nome,
-                email: email,
-                cpf: cpf,
-                telefone: telefone,
-                senha: senha,
+            const response = await axios.post("http://localhost:8080/api/users/register-partner",{
+                nomeUser: nomeUser,
+                emailAdmin: emailAdmin,
+                cpfUser: cpfUser,
+                telefoneUser:  telefoneUser,
+                senhaAdmin:  senhaAdmin,
+                confirmarSenha: confirmarSenha,
                 //arenaDatas
                 nomeArena: nameArena,
                 cnpjArena: cnpjArena,
@@ -38,13 +40,18 @@ export default function ModalPartners({onClose}) {
                 estadoArena:estadoArena
             });
 
-            if(response.ok){
-                <Link to="/login"></Link>
-            } else{
+            if (response.data.success) {
+                alert(response.data.message);
+                navigate("/login");
+            } else {
                 setErro("dados invalidos");
             }
-        } catch (error) {
-            setErro("Falha ao registrar. Verifique se o Java está rodando e o CORS configurado.");
+        } catch (err) {
+            if (err.response && err.response.data?.message) {
+                setErro(err.response.data.message);
+            } else {
+                setErro("Erro inesperado ao registrar usuário");
+            }
         }
     }
 
@@ -63,32 +70,34 @@ export default function ModalPartners({onClose}) {
 
                     <div className="form-group col-span-2">
                         <label>Nome Completo *</label>
-                        <input type="text" placeholder="Nome do proprietário" required value={nome} onChange={(e) => setNome(e.target.value)}/>
+                        <input type="text" placeholder="Nome do proprietário" required value={nomeUser} onChange={(e) => setNomeUser(e.target.value)}/>
                     </div>
 
                     <div className="form-group">
                         <label>CPF *</label>
-                        <input type="text" placeholder="000.000.000-00" required maxLength="14" value={cpf} onChange={(e)=> setCpf(e.target.value)}/>
+                        <input type="text" placeholder="000.000.000-00" required maxLength="14" value={cpfUser} onChange={(e)=> setCpf(e.target.value)}/>
                     </div>
 
                     <div className="form-group">
                         <label>Celular / WhatsApp</label>
-                        <input type="tel" placeholder="(00) 00000-0000" maxLength="15" value={telefone} onChange={(e)=> setTelefone(e.target.value)}/>
+                        <input type="tel" placeholder="(00) 00000-0000" maxLength="15" value={telefoneUser} onChange={(e)=> setTelefone(e.target.value)}/>
                     </div>
 
                     <div className="form-group col-span-2">
                         <label>E-mail de Login *</label>
-                        <input type="email" placeholder="seu@email.com" required value={email} onChange={(e) => setEmail(e.target.value)}/>
+                        <input type="email" placeholder="seu@email.com" required value={emailAdmin} onChange={(e) => setEmailAdmin(e.target.value)}/>
                     </div>
 
                     <div className="form-group">
                         <label>Senha *</label>
-                        <input type="password" placeholder="••••••••" required minLength="6" value={senha} onChange={(e) => setSenha(e.target.value)}/>
+                        <input type="password" placeholder="••••••••" required minLength="6" value={senhaAdmin} onChange={(e) => setSenha(e.target.value)}/>
                     </div>
 
                     <div className="form-group">
                         <label>Confirmar Senha *</label>
-                        <input type="password" placeholder="••••••••" required minLength="6"/>
+                        <input type="password" placeholder="••••••••" required minLength="6"
+                               value={confirmarSenha}
+                               onChange={(e) => setConfirmarSenha(e.target.value)}/>
                     </div>
 
                     <hr className="col-span-2 separator"/>
@@ -127,6 +136,11 @@ export default function ModalPartners({onClose}) {
                     </div>
 
                     <div className="modal-actions col-span-2" style={{marginTop: "1rem"}}>
+                        {error && (
+                            <p className="error-text" style={{ color: "red" }}>
+                                {error}
+                            </p>
+                        )}
                         <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
                         <button type="submit" className="btn-primary">Finalizar cadastro</button>
                     </div>

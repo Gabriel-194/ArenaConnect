@@ -28,6 +28,8 @@ public class PartnerRegistrationDTO {
     @NotBlank(message = "Senha é obrigatória")
     private String senhaAdmin;
 
+    private String confirmarSenha;
+
     @NotBlank(message = "Nome da arena é obrigatório")
     private String nomeArena;
 
@@ -41,4 +43,9 @@ public class PartnerRegistrationDTO {
     private String enderecoArena;
     private String cidadeArena;
     private String estadoArena;
+
+    public String getCpfLimpo() {
+        return cpfUser != null ? cpfUser.replaceAll("\\D", "") : null;
+
+    }
 }

@@ -33,6 +33,8 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    @Autowired
+    private ArenaService arenaService;
 
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email);
@@ -44,9 +46,7 @@ public class UserService {
 
     @Transactional
     public Users registrarCliente(UserRegistrationDTO dto){
-        validarDadosBasicos(dto);
-            validarEmail(dto.getEmail());
-            validarCpf(dto);
+            validarDados(dto);
 
             String senhaHash = passwordEncoder.encode(dto.getSenha());
 
@@ -71,7 +71,11 @@ public class UserService {
 
 
     @Transactional
-    public Users registerParceiro(PartnerRegistrationDTO dto) {
+    public Users registerPartner(PartnerRegistrationDTO dto) {
+        validarAdmin(dto);
+        arenaService.validarArena(dto);
+
+        //Arena create
         Arena arena = new Arena();
         arena.setName(dto.getNomeArena());
         arena.setCnpj(dto.getCnpjArena().replaceAll("\\D", ""));
@@ -80,13 +84,12 @@ public class UserService {
         arena.setCidade(dto.getCidadeArena());
         arena.setEstado(dto.getEstadoArena());
         arena.setAtivo(true);
-        String schemaName = dto.getNomeArena()
-                .trim()
-                .toLowerCase()
-                .replaceAll("\\s+", "_");
+        String schemaName = (dto.getNomeArena());
         arena.setSchemaName(schemaName);
-        Arena arenaSalva = arenaRepository.save(arena);
 
+        arenaService.cadastrarArena(arena);
+
+        //admin create
         Users admin = new Users();
         admin.setNome(dto.getNomeUser());
         admin.setEmail(dto.getEmailAdmin());
@@ -96,15 +99,14 @@ public class UserService {
 
         admin.setSenhaHash(passwordEncoder.encode(dto.getSenhaAdmin()));
         admin.setRole(RoleEnum.ADMIN);
-        admin.setIdArena(arenaSalva.getId());
+        admin.setIdArena(arena.getId());
         admin.setAtivo(true);
 
         return userRepository.save(admin);
     }
 
     //validations
-
-    private void validarDadosBasicos(UserRegistrationDTO dto) {
+    private void validarDados(UserRegistrationDTO dto) {
 
         if (dto == null) {
             throw new IllegalArgumentException("Dados não informados");
@@ -122,29 +124,22 @@ public class UserService {
             throw new IllegalArgumentException("Senhas não conferem");
         }
 
+        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email é obrigatório");
+        }
+
+        if (!UserRegistrationDTO.isEmailValid(dto.getEmail())) {
+            throw new IllegalArgumentException("Email inválido");
+        }
+
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new IllegalArgumentException("Email já cadastrado");
+        }
+
         String cpfLimpo = dto.getCpfLimpo();
         if (cpfLimpo == null || cpfLimpo.length() != 11) {
             throw new IllegalArgumentException("CPF inválido");
         }
-    }
-
-
-    private void validarEmail(String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email é obrigatório");
-        }
-
-        if (!UserRegistrationDTO.isEmailValid(email)) {
-            throw new IllegalArgumentException("Email inválido");
-        }
-
-        if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email já cadastrado");
-        }
-    }
-
-    private void validarCpf(UserRegistrationDTO dto) {
-        String cpfLimpo = dto.getCpfLimpo();
 
         if (cpfLimpo == null || cpfLimpo.isBlank()) {
             throw new IllegalArgumentException("CPF é obrigatório");
@@ -155,5 +150,43 @@ public class UserService {
         }
     }
 
+    public void validarAdmin(PartnerRegistrationDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Dados não informados");
+        }
+
+        if (dto.getNomeUser() == null || dto.getNomeUser().isBlank()) {
+            throw new IllegalArgumentException("Nome é obrigatório");
+        }
+
+        if (dto.getEmailAdmin() == null || dto.getEmailAdmin().isBlank()) {
+            throw new IllegalArgumentException("Email é obrigatório");
+        }
+
+        if (!UserRegistrationDTO.isEmailValid(dto.getEmailAdmin())) {
+            throw new IllegalArgumentException("Email inválido");
+        }
+
+        if (userRepository.existsByEmail(dto.getEmailAdmin())) {
+            throw new IllegalArgumentException("Email já cadastrado");
+        }
+
+        if (!dto.getSenhaAdmin().equals(dto.getConfirmarSenha())) {
+            throw new IllegalArgumentException("Senhas não conferem");
+        }
+
+        String cpfLimpo = dto.getCpfLimpo();
+        if (cpfLimpo == null || cpfLimpo.length() != 11) {
+            throw new IllegalArgumentException("CPF inválido");
+        }
+
+        if (cpfLimpo == null || cpfLimpo.isBlank()) {
+            throw new IllegalArgumentException("CPF é obrigatório");
+        }
+
+        if (userRepository.existsByCpf(cpfLimpo)) {
+            throw new IllegalArgumentException("CPF já cadastrado");
+        }
+    }
 
 }
