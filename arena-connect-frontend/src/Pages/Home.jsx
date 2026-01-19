@@ -1,15 +1,38 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/home.css';
+import axios from "axios";
 
 export default function Home(){
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const handleLogout = async (e) => {
+        e.preventDefault();
 
-        navigate('/login');
+        const token = sessionStorage.getItem('token')
+
+        if(!token) {
+            navigate('/login');
+            return;
+        }
+
+        try {
+            await axios.post(
+                'http://localhost:8080/api/auth/logout', {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
+            navigate('/login');
+        }
     }
 
     return (

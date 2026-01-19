@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom'
+import {Link, useNavigate} from 'react-router-dom'
 import axios from "axios";
 
 import '../styles/login.css';
@@ -9,6 +9,7 @@ export default function Login(){
     const [email,setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [erro, setErro] = useState('');
+    const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -16,13 +17,14 @@ export default function Login(){
 
         try{
             const response = await axios.post('http://localhost:8080/api/auth/login', {
-                login: email,
-                senha: senha
+                email: email,
+                senha: senha,
+                headers: { "Content-Type": "application/json" }
             });
 
             const token = response.data.token;
-            localStorage.setItem('token', token);
-            alert("Login realizado com sucesso! (Token salvo)");
+            sessionStorage.setItem('token', token);
+            navigate('/home');
         } catch (error) {
             console.error(error);
             setErro("Falha no login. Verifique se o Java está rodando e o CORS configurado.");
