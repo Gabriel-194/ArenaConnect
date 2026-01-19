@@ -1,0 +1,145 @@
+.home-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #1a2e20, var(--bg-primary));
+    padding: 2rem;
+    width: 100%;
+}
+
+.home-container {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3rem;
+}
+
+.home-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-large {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.logo-large img {
+    width: 120px;
+    height: auto;
+    filter: drop-shadow(0 0 15px rgba(57, 255, 20, 0.4));
+    margin-bottom: 1rem;
+    animation: floatLogo 3s ease-in-out infinite;
+}
+
+.logo-large h1 {
+    font-size: 3rem;
+    margin: 0;
+    background: linear-gradient(to right, #ffffff, var(--accent-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.home-subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+}
+
+.home-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.nav-card {
+    background: rgba(21, 25, 21, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.nav-card-icon {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.nav-card h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-family: 'Racing Sans One', cursive;
+}
+
+.nav-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.nav-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--accent-green);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(57, 255, 20, 0.2);
+}
+
+.nav-card:hover .nav-card-icon {
+    color: var(--accent-green);
+    transform: scale(1.1);
+}
+
+.logout-card {
+    background: rgba(255, 68, 68, 0.1);
+    border-color: rgba(255, 68, 68, 0.2);
+}
+
+.logout-card .nav-card-icon,
+.logout-card h3,
+.logout-card p {
+    color: #ff6b6b;
+}
+
+.logout-card:hover {
+    border-color: var(--danger);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 68, 68, 0.2);
+}
+
+.home-footer {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-top: auto;
+}
+
+@keyframes floatLogo {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+    .home-body { padding: 1rem; align-items: flex-start; }
+    .home-container { margin-top: 2rem; gap: 2rem; }
+    .logo-large img { width: 80px; }
+    .logo-large h1 { font-size: 2rem; }
+    .home-nav-grid { grid-template-columns: 1fr; }
+    .nav-card { flex-direction: row; text-align: left; padding: 1.5rem; gap: 1.5rem; align-items: center; }
+    .nav-card-icon { margin-bottom: 0; }
+}
