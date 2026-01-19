@@ -1,5 +1,6 @@
 package com.example.Models;
 
+import com.example.Domain.RoleEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +25,8 @@ public class Users {
     private String nome;
 
     @Column(nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private RoleEnum role;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -53,7 +55,7 @@ public class Users {
     private Arena arena;
 
 
-    public Users(String nome, String role, String email, String senhaHash, String cpf, Boolean ativo, String telefone, Integer idArena) {
+    public Users(String nome, RoleEnum role, String email, String senhaHash, String cpf, Boolean ativo, String telefone, Integer idArena) {
         this.nome = nome;
         this.role = role;
         this.email = email;

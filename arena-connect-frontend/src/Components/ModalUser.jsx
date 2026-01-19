@@ -9,29 +9,35 @@ export default function ModalUser({ onClose }){
     const [cpf,setCpf] = useState('');
     const [telefone,setTelefone] = useState('');
     const [senha, setSenha] = useState('');
-    const [erro, setErro] = useState('');
+    const [error, setErro] = useState('');
+    const [confirmarSenha, setConfirmarSenha] = useState('');
 
-    const handleRegisterUser = async (e) => {
+    const handleRegisterClient = async (e) => {
         e.preventDefault();
         setErro('');
 
         try{
-            const response = await axios.post('http://localhost:8080/api/users/register', {
+            const response = await axios.post('http://localhost:8080/api/users/register-client', {
                 nome: nome,
                 email: email,
                 cpf: cpf,
                 telefone: telefone,
-                senha: senha
+                senha: senha,
+                confirmarSenha: confirmarSenha
             });
 
-            if(response.ok){
-                alert("Cadastro realizado!");
+            if (response.data.success) {
+                alert(response.data.message);
                 navigate("/login");
             } else {
                 setErro("dados invalidos");
             }
-        } catch (error){
-            setErro("Falha ao registrar. Verifique se o Java está rodando e o CORS configurado.");
+        } catch (err) {
+            if (err.response && err.response.data?.message) {
+                setErro(err.response.data.message);
+            } else {
+                setErro("Erro inesperado ao registrar usuário");
+            }
         }
     }
 
@@ -45,7 +51,7 @@ export default function ModalUser({ onClose }){
                         </button>
                     </div>
 
-                    <form onSubmit={handleRegisterUser} className="form form-grid">
+                    <form onSubmit={handleRegisterClient} className="form form-grid">
 
                         <div className="form-group col-span-2">
                             <label>Nome Completo *</label>
@@ -90,12 +96,18 @@ export default function ModalUser({ onClose }){
 
                         <div className="form-group">
                             <label>Confirmar Senha *</label>
-                            <input type="password" name="confirmPassword" placeholder="••••••••" required minLength="6"/>
+                            <input type="password" name="confirmPassword" placeholder="••••••••" required minLength="6"
+                                   value={confirmarSenha}
+                                   onChange={(e) => setConfirmarSenha(e.target.value)}/>
                         </div>
 
-                        <input type="hidden" name="role" value="CLIENTE"/>
 
                         <div className="modal-actions col-span-2">
+                                {error && (
+                                    <p className="error-text" style={{ color: "red" }}>
+                                        {error}
+                                    </p>
+                                )}
                             <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
                             <button type="submit" className="btn-primary">Criar Conta</button>
                         </div>

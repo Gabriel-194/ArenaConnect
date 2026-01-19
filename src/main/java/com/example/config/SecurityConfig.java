@@ -37,9 +37,8 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/users/register", "/api/users/register-partner").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/users/register-client", "/api/users/register-partner").permitAll()
 
-                        // Libera arquivos estáticos (caso acesse direto pelo navegador)
                         .requestMatchers("/", "/index.html", "/assets/**", "/styles/**", "/favicon.ico").permitAll()
 
                         .anyRequest().authenticated()

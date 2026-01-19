@@ -27,7 +27,7 @@ public class UserRegistrationDTO {
     @Size(min = 6, message = "Senha deve ter no mínimo 6 caracteres")
     private String senha;
 
-    private String role;
+    private String confirmarSenha;
 
     @NotBlank(message = "CPF é obrigatório")
     @CPF(message = "CPF inválido")
@@ -36,7 +36,7 @@ public class UserRegistrationDTO {
     private String telefone;
     private Integer idArena;
 
-    public boolean isEmailValid() {
+    public static boolean isEmailValid(String email) {
         return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
     }
 
@@ -49,6 +49,5 @@ public class UserRegistrationDTO {
         if (telefone == null) return null;
         return telefone.replaceAll("\\D", "");
     }
-
 
 }

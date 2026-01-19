@@ -2,17 +2,23 @@ package com.example.Controller;
 
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.UserRegistrationDTO;
+import com.example.Models.Users;
 import com.example.Service.UserService;
 import com.example.Service.ArenaService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -27,39 +33,40 @@ public class UserController {
     private ArenaService arenaService;
 
 
-    @PostMapping("/register")
-    public String registerUser(
-            @Valid @ModelAttribute("userDTO") UserRegistrationDTO dto,
-            BindingResult bindingResult,
-            Model model,
-            @RequestParam(name = "confirmPassword", required = false) String confirmPassword,
-            RedirectAttributes redirectAttributes
-    ) {
+    @PostMapping("/register-client")
+    public ResponseEntity<?> registerCliente(@RequestBody UserRegistrationDTO dto) {
+        try {
+            Users user = userService.registrarCliente(dto);
 
-        model.addAttribute("parceiroDTO", new PartnerRegistrationDTO());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Usuário cadastrado com sucesso");
+            response.put("email", user.getEmail());
 
-        if (bindingResult.hasErrors()) {
-            model.addAttribute("tipoCadastro", "cliente");
-            return "register";
+            logger.info("✅ cliente registrado com sucesso: {}", user.getEmail());
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (IllegalArgumentException e) {
+            logger.warn("❌ Erro de validação no registro: {}", e.getMessage());
+
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of(
+                            "success", false,
+                            "message", e.getMessage()
+                    ));
+
+        } catch (Exception e) {
+            logger.error("❌ Erro inesperado no registro", e);
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Erro interno ao processar registro"
+                    ));
         }
-
-        boolean success = userService.registerCliente(
-                dto,
-                confirmPassword,
-                bindingResult
-        );
-
-        if (!success || bindingResult.hasErrors()) {
-            model.addAttribute("tipoCadastro", "cliente");
-            return "register";
-        }
-
-        redirectAttributes.addFlashAttribute(
-                "successMessage",
-                "Cadastro realizado com sucesso! Você já pode fazer login."
-        );
-
-        return "redirect:/login";
     }
 
 
