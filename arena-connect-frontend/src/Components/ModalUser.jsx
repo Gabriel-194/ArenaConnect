@@ -2,6 +2,23 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const maskCPF = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+        .replace(/(-\d{2})\d+?$/, "$1");
+};
+
+const maskPhone = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2")
+        .replace(/(-\d{4})\d+?$/, "$1");
+};
+
 export default function ModalUser({ onClose }){
     const navigate = useNavigate();
     const [nome, setNome] = useState('');
@@ -20,8 +37,8 @@ export default function ModalUser({ onClose }){
             const response = await axios.post('http://localhost:8080/api/users/register-client', {
                 nome: nome,
                 email: email,
-                cpf: cpf,
-                telefone: telefone,
+                cpf: cpf.replace(/\D/g,""),
+                telefone: telefone.replace(/\D/g, ""),
                 senha: senha,
                 confirmarSenha: confirmarSenha
             });
@@ -72,14 +89,14 @@ export default function ModalUser({ onClose }){
                                 required
                                 maxLength="14"
                                 value={cpf}
-                                onChange={(e) => setCpf(e.target.value)}
+                                onChange={(e) => setCpf(maskCPF(e.target.value))}
                             />
                         </div>
 
                         <div className="form-group">
                             <label>Telefone</label>
                             <input type="tel" placeholder="(00) 00000-0000" maxLength="15" value={telefone}
-                                   onChange={(e) => setTelefone(e.target.value)}/>
+                                   onChange={(e) => setTelefone(maskPhone(e.target.value))}/>
                         </div>
 
                         <div className="form-group col-span-2">

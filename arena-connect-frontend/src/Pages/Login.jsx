@@ -16,18 +16,32 @@ export default function Login(){
         setErro('');
 
         try{
-            const response = await axios.post('http://localhost:8080/api/auth/login', {
-                email: email,
-                senha: senha,
-                headers: { "Content-Type": "application/json" }
-            });
+            const response = await axios.post('http://localhost:8080/api/auth/login',
+                {
+                    email: email,
+                    senha: senha
+                },
+                {
+                    headers: { "Content-Type": "application/json" },
+                    withCredentials: true
+                }
+            );
 
-            const token = response.data.token;
-            sessionStorage.setItem('token', token);
             navigate('/home');
         } catch (error) {
-            console.error(error);
-            setErro("Falha no login. Verifique se o Java está rodando e o CORS configurado.");
+            console.error("Erro no login:", error);
+
+            // AQUI ESTÁ A CORREÇÃO MÁGICA 👇
+            if (error.response && error.response.data && error.response.data.message) {
+                // Se o backend respondeu (ex: 401), mostramos a mensagem dele
+                setErro(error.response.data.message);
+            } else if (error.request) {
+                // Se nem houve resposta (Backend off ou CORS)
+                setErro("Sem resposta do servidor. Verifique se o Java está rodando.");
+            } else {
+                // Erro genérico
+                setErro("Erro ao tentar fazer login.");
+            }
         }
     }
 
@@ -44,8 +58,7 @@ export default function Login(){
 
                 {erro && (
                     <div className="alert alert-danger" style={{
-                        color: 'red', textAlign: 'center', marginBottom: '15px',
-                        background: '#ffe6e6', padding: '10px', borderRadius: '4px'
+                        color: 'red', textAlign: 'center', marginBottom: '15px', padding: '10px', borderRadius: '4px'
                     }}>
                         {erro}
                     </div>

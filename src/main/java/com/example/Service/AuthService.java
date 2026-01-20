@@ -4,6 +4,8 @@ import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
 import com.example.Models.Users;
 import com.example.Repository.UserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,24 +29,24 @@ public class AuthService {
     @Autowired
     JwtService jwtService;
 
-    public LoginResponseDTO login(@RequestBody LoginRequestDTO dto) {
+    public LoginResponseDTO login( LoginRequestDTO dto, HttpServletResponse response) {
         logger.info("🔐 Tentativa de login: {}", dto.getEmail());
 
         Optional<Users> userOpt = userRepository.findByEmail(dto.getEmail());
 
         if (userOpt.isEmpty()) {
-            return new LoginResponseDTO(false, "Email ou senha incorretos", null, null,null);
+            return new LoginResponseDTO(false, "Email ou senha incorretos", null,null);
         }
 
         Users user = userOpt.get();
 
         if (!user.getAtivo()) {
             logger.warn("❌ Usuário inativo: {}", dto.getEmail());
-            return new LoginResponseDTO(false, "Usuário desativado", null, null,null);
+            return new LoginResponseDTO(false, "Usuário desativado", null,null);
         }
 
         if (!passwordEncoder.matches(dto.getSenha(), user.getSenhaHash())) {
-            return new LoginResponseDTO(false, "Email ou senha incorretos", null, null,null);
+            return new LoginResponseDTO(false, "Email ou senha incorretos", null,null);
         }
 
         Integer arenaId = (user.getArena() != null) ? user.getArena().getId() : null;
@@ -61,7 +63,10 @@ public class AuthService {
         user.setToken(token);
         userRepository.save(user);
 
-        return new LoginResponseDTO(true, "Login realizado com sucesso", token, user.getNome() , user.getEmail());
+        jakarta.servlet.http.Cookie jwtCookie = jwtService.createJwtCookie(token);
+        response.addCookie(jwtCookie);
+
+        return new LoginResponseDTO(true, "Login realizado com sucesso", user.getNome() , user.getEmail());
     }
 
     public boolean validateToken(String token) {

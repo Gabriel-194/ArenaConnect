@@ -9,28 +9,17 @@ export default function Home(){
     const handleLogout = async (e) => {
         e.preventDefault();
 
-        const token = sessionStorage.getItem('token')
-
-        if(!token) {
-            navigate('/login');
-            return;
-        }
-
         try {
             await axios.post(
-                'http://localhost:8080/api/auth/logout', {},
+                'http://localhost:8080/api/auth/logout',
+                {},
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+                    withCredentials: true
                 }
             );
-
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('user');
             navigate('/login');
         }
     }

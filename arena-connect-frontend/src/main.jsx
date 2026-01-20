@@ -9,6 +9,8 @@ import Register from "./Pages/Register.jsx";
 import Home from './pages/Home';
 import PrivateRoute from "./Components/PrivateRoute.jsx";
 
+
+
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <BrowserRouter>

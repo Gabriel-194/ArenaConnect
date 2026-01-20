@@ -3,10 +3,12 @@ package com.example.Controller;
 import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
 import com.example.Service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,20 +22,21 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse response) {
         try{
-            LoginResponseDTO response = authService.login(loginRequestDTO);
+            LoginResponseDTO LoginResponse = authService.login(loginRequestDTO, response);
 
-            if (response.getSuccess()){
-                return ResponseEntity.ok(response);
+            if (LoginResponse.getSuccess()){
+                return ResponseEntity.ok(LoginResponse);
+
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(LoginResponse);
             }
         } catch (Exception e){
+            e.printStackTrace();
             LoginResponseDTO loginResponseDTO = new LoginResponseDTO(
                     false,
                     "erro interno ao processar login",
-                    null,
                     null,
                     null
             );
@@ -42,9 +45,9 @@ public class AuthController {
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<Map<String, Object>> validateToken(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<Map<String, Object>> validateToken(HttpServletRequest request) {
         try {
-            String token = extractToken(authHeader);
+            String token = extractToken(request);
 
             if (token == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -64,9 +67,9 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request) {
         try{
-            String token = extractToken(authHeader);
+            String token = extractToken(request);
 
             if (token == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -75,6 +78,12 @@ public class AuthController {
 
             authService.logout(token);
 
+            Cookie cookie = new Cookie("accessToken", null);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(false);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", "Logout realizado com sucesso"
@@ -82,15 +91,20 @@ public class AuthController {
 
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("success", false, "message", "Erro ao logout"));
+                    .body(Map.of("success", false, "message", "Erro ao realizar logout"));
         }
     }
 
-    private String extractToken(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-        return null;
+    private String extractToken(HttpServletRequest request) {
+       Cookie[] cookies = request.getCookies();
+       if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("accessToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+       }
+       return null;
     }
 
 

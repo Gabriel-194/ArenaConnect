@@ -2,6 +2,40 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const maskCPF = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})/, "$1-$2")
+        .replace(/(-\d{2})\d+?$/, "$1");
+};
+
+const maskCNPJ = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/^(\d{2})(\d)/, "$1.$2")
+        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+        .replace(/\.(\d{3})(\d)/, ".$1/$2")
+        .replace(/(\d{4})(\d)/, "$1-$2")
+        .replace(/(-\d{2})\d+?$/, "$1");
+};
+
+const maskPhone = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2")
+        .replace(/(-\d{4})\d+?$/, "$1");
+};
+
+const maskCEP = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/^(\d{5})(\d)/, "$1-$2")
+        .replace(/(-\d{3})\d+?$/, "$1");
+};
+
 export default function ModalPartners({onClose}) {
     const navigate = useNavigate();
     const [nomeUser, setNomeUser] = useState('');
@@ -19,6 +53,28 @@ export default function ModalPartners({onClose}) {
     const [cidadeArena, setCidadeArena] = useState('');
     const [estadoArena, setEstadoArena] = useState('');
 
+    const checkCEP =async (e) => {
+        const cep = e.target.value.replace(/\D/g, '');
+        try{
+            document.getElementById('cep-status').style.display = 'block';
+
+            const res = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
+
+            if (!res.data.erro) {
+                setEnderecoArena(res.data.logradouro + (res.data.bairro ? `, ${res.data.bairro}` : ''));
+                setCidadeArena(res.data.localidade);
+                setEstadoArena(res.data.uf);
+                // Foca no número ou complemento se precisar
+            } else {
+                alert('CEP não encontrado!');
+            }
+        } catch (err) {
+            console.error("Erro ao buscar CEP", err);
+        } finally {
+            document.getElementById('cep-status').style.display = 'none';
+        }
+    }
+
     const handlePartnerRegister = async (e) =>{
         e.preventDefault();
         setErro('');
@@ -27,14 +83,14 @@ export default function ModalPartners({onClose}) {
             const response = await axios.post("http://localhost:8080/api/users/register-partner",{
                 nomeUser: nomeUser,
                 emailAdmin: emailAdmin,
-                cpfUser: cpfUser,
-                telefoneUser:  telefoneUser,
+                cpfUser: cpfUser.replace(/\D/g, ""),
+                telefoneUser: telefoneUser.replace(/\D/g, ""),
                 senhaAdmin:  senhaAdmin,
                 confirmarSenha: confirmarSenha,
                 //arenaDatas
                 nomeArena: nameArena,
-                cnpjArena: cnpjArena,
-                cepArena: cepArena,
+                cnpjArena: cnpjArena.replace(/\D/g, ""),
+                cepArena: cepArena.replace(/\D/g, ""),
                 enderecoArena: enderecoArena,
                 cidadeArena: cidadeArena,
                 estadoArena:estadoArena
@@ -75,12 +131,12 @@ export default function ModalPartners({onClose}) {
 
                     <div className="form-group">
                         <label>CPF *</label>
-                        <input type="text" placeholder="000.000.000-00" required maxLength="14" value={cpfUser} onChange={(e)=> setCpf(e.target.value)}/>
+                        <input type="text" placeholder="000.000.000-00" required maxLength="14" value={cpfUser} onChange={(e)=> setCpf(maskCPF(e.target.value))}/>
                     </div>
 
                     <div className="form-group">
                         <label>Celular / WhatsApp</label>
-                        <input type="tel" placeholder="(00) 00000-0000" maxLength="15" value={telefoneUser} onChange={(e)=> setTelefone(e.target.value)}/>
+                        <input type="tel" placeholder="(00) 00000-0000" maxLength="15" value={telefoneUser} onChange={(e)=> setTelefone(maskPhone(e.target.value))}/>
                     </div>
 
                     <div className="form-group col-span-2">
@@ -111,13 +167,15 @@ export default function ModalPartners({onClose}) {
 
                     <div className="form-group">
                         <label>CNPJ da Empresa *</label>
-                        <input type="text"  placeholder="00.000.000/0000-00" required maxLength="18" value={cnpjArena} onChange={(e) =>setCnpjArena(e.target.value)} />
+                        <input type="text"  placeholder="00.000.000/0000-00" required maxLength="18" value={cnpjArena} onChange={(e) =>setCnpjArena(maskCNPJ(e.target.value))} />
                     </div>
 
                     <div className="form-group">
                         <label>CEP *</label>
-                        <input type="text" placeholder="00000-000" required maxLength="9" value={cepArena} onChange={(e)=>setCepArena(e.target.value)}/>
-                        <small id="cep-status" style={{color: "white", display: "none"}}>Buscando...</small>
+                        <input type="text" placeholder="00000-000" required maxLength="9" value={cepArena}
+                               onChange={(e)=>setCepArena(maskCEP(e.target.value))}
+                               onBlur={checkCEP}/>
+                        <small id="cep-status" style={{color: "var(--accent-green)", display: "none"}}>Buscando endereço...</small>
                     </div>
 
                     <div className="form-group col-span-2">

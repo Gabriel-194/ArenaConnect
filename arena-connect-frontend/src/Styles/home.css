@@ -1,22 +1,28 @@
+/* 1. Correção da Estrutura Principal */
 .home-body {
-    min-height: 100vh;
+    height: 100vh; /* Fixa a altura (não use min-height se quer sem scroll) */
+    width: 100vw;
+    overflow: hidden; /* Corta qualquer excesso */
     display: flex;
     align-items: center;
     justify-content: center;
     background: radial-gradient(circle at center, #1a2e20, var(--bg-primary));
     padding: 2rem;
-    width: 100%;
+    box-sizing: border-box; /* <--- O SEGREDO: Faz o padding caber dentro dos 100vh */
 }
 
 .home-container {
     width: 100%;
     max-width: 1000px;
+    height: 100%; /* Mudado de 100vh para 100% do espaço disponível */
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* Centraliza verticalmente */
     gap: 3rem;
 }
 
+/* ... (Mantenha .home-header, .logo-large, etc. iguais até chegar no Media Query) ... */
 .home-header {
     text-align: center;
     display: flex;
@@ -134,9 +140,55 @@
     50% { transform: translateY(-10px); }
 }
 
+/* 2. Media Query Específico para Notebooks (Altura < 800px) */
+/* Aqui reduzimos os TAMANHOS das suas classes reais */
+@media (max-height: 800px) {
+    .home-body {
+        padding: 1rem; /* Reduz borda da tela */
+    }
+
+    .home-container {
+        gap: 1.5rem; /* Aproxima os blocos verticalmente */
+    }
+
+    /* Logo menor */
+    .logo-large img {
+        width: 80px;
+        margin-bottom: 0.5rem;
+    }
+
+    .logo-large h1 {
+        font-size: 2rem;
+    }
+
+    /* Grid mais compacto */
+    .home-nav-grid {
+        gap: 1rem;
+    }
+
+    /* Cards menores */
+    .nav-card {
+        padding: 1.2rem;
+    }
+
+    .nav-card-icon {
+        margin-bottom: 0.8rem;
+        transform: scale(0.8); /* Ícone um pouco menor visualmente */
+    }
+
+    .nav-card h3 {
+        font-size: 1.2rem;
+    }
+
+    .nav-card p {
+        font-size: 0.8rem;
+    }
+}
+
+/* Media Query para Mobile (Largura) */
 @media (max-width: 768px) {
-    .home-body { padding: 1rem; align-items: flex-start; }
-    .home-container { margin-top: 2rem; gap: 2rem; }
+    .home-body { padding: 1rem; align-items: flex-start; height: auto; overflow: auto; } /* No celular permitimos scroll */
+    .home-container { margin-top: 2rem; gap: 2rem; height: auto; }
     .logo-large img { width: 80px; }
     .logo-large h1 { font-size: 2rem; }
     .home-nav-grid { grid-template-columns: 1fr; }

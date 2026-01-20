@@ -3,7 +3,7 @@ package com.example.Service;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.InvalidKeyException;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.WeakKeyException;
+import jakarta.servlet.http.Cookie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,6 +56,15 @@ public class JwtService {
         } catch (InvalidKeyException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Cookie createJwtCookie(String token){
+        Cookie cookie = new Cookie("accessToken", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge((int) (expiration / 1000));
+        return cookie;
     }
 
     public boolean validateToken(String token){
