@@ -1,6 +1,5 @@
 import {useState} from 'react'
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import ModalUser from "../Components/ModalUser.jsx";
 import ModalPartners from "../Components/ModalPartners.jsx";
 

@@ -1,0 +1,160 @@
+
+.quadra-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.quadra-actions button {
+    background: var(--accent-green);
+}
+/* =========================================
+   ESTILOS ESPECÍFICOS - QUADRAS
+   ========================================= */
+
+/* --- Grid Principal --- */
+.courts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+/* --- Cartão da Quadra --- */
+.court-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.court-card:hover {
+    border-color: var(--accent-green);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Luz de Status (Bolinha no canto) --- */
+.court-status {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05); /* Anel sutil */
+}
+
+.court-status.success {
+    background-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+.court-status.danger {
+    background-color: #ff4444;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.6);
+}
+
+/* --- Informações do Card --- */
+.court-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding-right: 20px; /* Evita texto por cima do status */
+}
+
+.court-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.5rem;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-label {
+    color: var(--text-secondary);
+}
+
+.info-value {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* --- Botões de Ação do Card --- */
+.court-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: auto; /* Empurra botões para o final se o card esticar */
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.court-actions button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    padding: 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+    font-weight: 600;
+}
+
+/* Botão Verde (Disponível / Ativar) */
+.btn-success {
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.btn-success:hover {
+    background: var(--success);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+}
+
+/* Botão Vermelho (Manutenção / Desativar) */
+.btn-danger {
+    border: 1px solid var(--danger);
+    color: var(--danger);
+}
+
+.btn-danger:hover {
+    background: var(--danger);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.2);
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+    .court-actions {
+        flex-direction: column;
+    }
+
+    .court-card {
+        padding: 1.25rem;
+    }
+}
+
+
