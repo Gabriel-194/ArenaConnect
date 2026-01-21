@@ -1,84 +1,241 @@
-import {useState} from "react";
+import React, { useState } from "react";
 import axios from 'axios';
-import '../Styles/components.css'
+import styled, { keyframes } from 'styled-components';
+import '../Styles/components.css';
 
-
-
-export default function ModalCourts({onClose}) {
+export default function ModalCourts({ onClose,onSuccess }) {
     const [nome, setNome] = useState('');
-    const [tipo,setTipo] = useState('');
-    const [valorHora,setValorHora] = useState('');
+    const [tipo, setTipo] = useState('');
+    const [valorHora, setValorHora] = useState('');
     const [error, setErro] = useState('');
 
-    const handleCreateCourt = async (e) =>{
-        try{
-            const response = await axios.post("http://localhost:8080/quadra/createQuadra",{
-                nome:nome,
-                tipo_quadra: tipo,
-                valor_hora: valorHora
-            });
+    const handleCreateCourt = async (e) => {
+        e.preventDefault();
+        setErro('');
 
-            if (response.data.success) {
-                alert(response.data.message);
+        try {
+            const response = await axios.post("http://localhost:8080/quadra/createQuadra", {
+                    nome: nome,
+                    tipo_quadra: tipo,
+                    valor_hora: valorHora
+                },
+                {
+                    withCredentials: true,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+            if (response.status === 200 || response.status === 201) {
                 alert("Quadra cadastrada com sucesso!");
-            } else {
-                alert(setErro("Dados invalidos"));
+
+                onSuccess();
+                onClose();
             }
-        } catch (error) {
-            if (err.response && err.response.data?.message) {
-                setErro(err.response.data.message);
+
+        } catch (err) {
+            console.error("Erro:", err);
+
+            if (err.response && err.response.data) {
+
+                setErro(err.response.data.message || "Erro ao processar requisição.");
             } else {
-                setErro("Erro inesperado ao registrar usuário");
+                setErro("Erro de conexão com o servidor.");
             }
         }
     }
 
+
+    const handleModalClick = (e) => {
+        e.stopPropagation();
+    }
+
     return (
-        <div className="modal">
-            <div className="modal-content">
-                <div className="modal-header">
-                    <h3>Nova Quadra</h3>
-                    <button type="button" className="modal-close" onClick={onClose}>
-                        &times;
-                    </button>
+        <div className="modal" onClick={onClose}>
+            <StyledWrapper onClick={handleModalClick}>
+                <div className="form-container">
+
+                    <div className="form-header">
+                        <span className="form-title">Nova Quadra</span>
+                        <button type="button" className="close-btn" onClick={onClose}>&times;</button>
+                    </div>
+
+                    <form className="form" onSubmit={handleCreateCourt}>
+                        <div className="form-group">
+                            <label htmlFor="nome">Nome da Quadra</label>
+                            <input
+                                required
+                                name="nome"
+                                id="nome"
+                                type="text"
+                                placeholder="Ex: Quadra 1"
+                                value={nome}
+                                onChange={(e) => setNome(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="tipo">Tipo da Quadra</label>
+                            <input
+                                required
+                                name="tipo"
+                                id="tipo"
+                                type="text"
+                                placeholder="Ex: Futsal"
+                                value={tipo}
+                                onChange={(e) => setTipo(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="valor">Valor por Hora (R$)</label>
+                            <input
+                                required
+                                name="valor"
+                                id="valor"
+                                type="number"
+                                step="0.01"
+                                placeholder="150.00"
+                                value={valorHora}
+                                onChange={(e) => setValorHora(e.target.value)}
+                            />
+                        </div>
+
+                        {error && <p className="error-text">{error}</p>}
+
+                        <button type="submit" className="form-submit-btn">
+                            Cadastrar Quadra
+                        </button>
+                    </form>
                 </div>
-
-                <form className="form" onSubmit={handleCreateCourt}>
-                    <div className="form-group">
-                        <label>Nome da Quadra</label>
-                        <input type="text" placeholder="Ex: Quadra 1" value={nome}
-                               onChange={(e) => setNome(e.target.value)} required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Tipo da quadra</label>
-                        <input type="text" placeholder="Ex: futsal" value={tipo}
-                            onChange={(e) => setTipo(e.target.value)} required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label>Valor por Hora (R$)</label>
-                        <input type="number" placeholder="150.00" step="0.01" value={valorHora}
-                            onChange={(e) => setValorHora(e.target.value)} required
-                        />
-                    </div>
-
-                    {error && <p className="error-text">{error}</p>}
-
-                    <div className="form-actions">
-                        <button type="button" className="btn-secondary" onClick={onClose}>
-                            Cancelar
-                        </button>
-
-                        <button type="submit" className="btn-primary">
-                            Cadastrar
-                        </button>
-                    </div>
-                </form>
-            </div>
+            </StyledWrapper>
         </div>
     );
-
 }
+
+
+const gradient = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
+
+const StyledWrapper = styled.div`
+    .form-container {
+        width: 400px;
+        background: linear-gradient(#212121, #212121) padding-box,
+        linear-gradient(145deg, transparent 35%, #4ade80, #062904) border-box;
+        border: 2px solid transparent;
+        padding: 32px 24px;
+        font-size: 14px;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-sizing: border-box;
+        border-radius: 16px;
+        background-size: 200% 100%;
+        animation: ${gradient} 5s ease infinite;
+        position: relative;
+    }
+
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .form-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .close-btn {
+        background: transparent;
+        border: none;
+        color: #717171;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .close-btn:hover {
+        color: #4ade80;
+    }
+
+    .form-container button:active {
+        scale: 0.95;
+    }
+
+    .form-container .form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-container .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .form-container .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #9e9e9e;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .form-container .form-group input {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        color: #fff;
+        font-family: inherit;
+        background-color: transparent;
+        border: 1px solid #414141;
+    }
+
+    .form-container .form-group input::placeholder {
+        opacity: 0.5;
+    }
+
+    .form-container .form-group input:focus {
+        outline: none;
+        border-color: #4ade80;
+    }
+
+    .form-submit-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        font-family: inherit;
+        color: #9e9e9e;
+        font-weight: 600;
+        width: 100%;
+        background: #313131;
+        border: 1px solid #414141;
+        padding: 12px 16px;
+        font-size: inherit;
+        gap: 8px;
+        margin-top: 8px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.3s;
+    }
+
+    .form-submit-btn:hover {
+        background-color: #fff;
+        border-color: #fff;
+        color: #212121;
+    }
+
+    .error-text {
+        color: #ff4d4d;
+        font-size: 0.9rem;
+        text-align: center;
+        margin: 0;
+    }
+`;

@@ -6,11 +6,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
+import com.example.Service.JwtService;
 
 
 @Component
@@ -19,6 +20,9 @@ import java.io.IOException;
 public class TenantFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(TenantFilter.class);
+
+    @Autowired
+    private JwtService jwtService;
 
 
     private boolean isPublicEndpoint(String uri) {
@@ -47,6 +51,43 @@ public class TenantFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        chain.doFilter(request, response);
+        HttpServletRequest req = (HttpServletRequest) request;
+        HttpServletResponse res = (HttpServletResponse) response;
+
+
+        String requestURI = req.getRequestURI();
+        if (isPublicEndpoint(requestURI)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String token = null;
+        if (req.getCookies() != null) {
+            for (Cookie cookie : req.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (token != null) {
+            try {
+
+                String tenantSchema = jwtService.getArenaSchemaFromToken(token);
+
+                if (tenantSchema != null) {
+                    TenantContext.setCurrentTenant(tenantSchema);
+                }
+            } catch (Exception e) {
+                logger.error("Erro ao definir tenant: " + e.getMessage());
+            }
+        }
+
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
+        }
     }
 }

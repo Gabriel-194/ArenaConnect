@@ -38,6 +38,18 @@ public class QuadraService {
             throw new IllegalArgumentException("Dados da Quadra não podem estar vazios");
         }
 
+        if (quadra.getNome().isEmpty()) {
+            throw new IllegalArgumentException("Nome da quadra deve ser informada");
+
+        } else if (quadra.getTipo_quadra().isEmpty()) {
+            throw new IllegalArgumentException("Tipo de quadra deve ser informada");
+
+        } else if (quadra.getValor_hora() == null) {
+            throw new IllegalArgumentException("Valor da quadra deve ser informada");
+
+        }
+
+        quadra.setAtivo(true);
         return quadraRepository.salvarComSchema(quadra, configurarSchema());
     }
 

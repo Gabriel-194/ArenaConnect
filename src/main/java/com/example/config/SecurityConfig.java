@@ -1,5 +1,6 @@
 package com.example.config;
 
+import com.example.Multitenancy.TenantFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,9 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    @Autowired
+    private TenantFilter tenantFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -49,6 +53,7 @@ public class SecurityConfig {
                 )
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .logout(logout -> logout
                 .logoutUrl("/logout")
