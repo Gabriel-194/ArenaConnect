@@ -10,6 +10,7 @@ export default function Quadras () {
     const [showModalCourts,setModalCourts] = useState(false);
     const [quadras, setQuadras] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editingQuadra, setEditingQuadra] = useState(null);
 
     useEffect(() => {
         findCourts();
@@ -28,6 +29,33 @@ export default function Quadras () {
         }
     }
 
+    const handleEditClick = (quadra) => {
+        setEditingQuadra(quadra);
+        setModalCourts(true);
+    }
+
+    const handleNewClick = () => {
+        setEditingQuadra(null);
+        setModalCourts(true);
+    }
+
+    const handleStatusChange = async (quadra) => {
+        if (!window.confirm(`Deseja realmente ${quadra.ativo ? 'desativar' : 'ativar'} esta quadra?`)) {
+            return;
+        }
+
+        try {
+            await axios.post('http://localhost:8080/quadra/changeStatusQuadra',
+                { id: quadra.id },
+                { withCredentials: true }
+            );
+            findCourts();
+        } catch (error) {
+            console.error("Erro ao alterar status:", error);
+            alert("Erro ao alterar status.");
+        }
+    }
+
     return (
         <div className={'dashboard-container'}>
             <Sidebar />
@@ -42,7 +70,7 @@ export default function Quadras () {
                     </div>
 
                     <div className="header-actions">
-                        <button className="btn-primary" onClick={() => setModalCourts(true)}>
+                        <button className="btn-primary" onClick={handleNewClick}>
                             + Nova Quadra
                         </button>
                     </div>
@@ -70,19 +98,18 @@ export default function Quadras () {
                                     <div className="info-row">
                                         <span className="info-label">Status</span>
                                         <span className="info-value">
-                                            {quadra.ativo ? 'Disponível' : 'Manutenção'}
+                                            {quadra.ativo ? 'Ativa' : 'Desativada'}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div className="court-actions">
-                                    <button className="btn-secondary">
+                                    <button className="btn-secondary" onClick={() => handleEditClick(quadra)}>
                                         Editar
                                     </button>
 
                                     <button
-                                        className={quadra.ativo ? "btn-danger" : "btn-success"}
-                                    >
+                                        className={quadra.ativo ? "btn-danger" : "btn-success"} onClick={() => handleStatusChange(quadra)}>
                                         {quadra.ativo ? 'Desativar' : 'Ativar'}
                                     </button>
                                 </div>
@@ -93,8 +120,9 @@ export default function Quadras () {
             </main>
 
             {showModalCourts && (
-                <ModalCourts onClose={() => {setModalCourts(false)}}
+                <ModalCourts onClose={() => {setModalCourts(false); setEditingQuadra(null);}}
                              onSuccess={findCourts}
+                             quadraToEdit={editingQuadra}
                 />
             )}
         </div>

@@ -1,36 +1,58 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
 import '../Styles/components.css';
 
-export default function ModalCourts({ onClose,onSuccess }) {
+export default function ModalCourts({ onClose,onSuccess,quadraToEdit }) {
     const [nome, setNome] = useState('');
     const [tipo, setTipo] = useState('');
     const [valorHora, setValorHora] = useState('');
     const [error, setErro] = useState('');
 
-    const handleCreateCourt = async (e) => {
+    useEffect(() => {
+        if(quadraToEdit) {
+            setNome(quadraToEdit.nome || '');
+            setTipo(quadraToEdit.tipo_quadra || '');
+            setValorHora(quadraToEdit.valor_hora || '');
+        }else {
+            setNome('');
+            setTipo('');
+            setValorHora('');
+        }
+    }, [quadraToEdit]);
+
+    const handleSave = async (e) => {
         e.preventDefault();
         setErro('');
 
         try {
-            const response = await axios.post("http://localhost:8080/quadra/createQuadra", {
-                    nome: nome,
-                    tipo_quadra: tipo,
-                    valor_hora: valorHora
-                },
-                {
-                    withCredentials: true,
-                    headers: { 'Content-Type': 'application/json' }
-                });
+            let response;
+            const config = {
+                withCredentials: true,
+                headers: { 'Content-Type': 'application/json' }
+            };
 
-            if (response.status === 200 || response.status === 201) {
-                alert("Quadra cadastrada com sucesso!");
+            const datas = {
+                nome: nome,
+                tipo_quadra: tipo,
+                valor_hora: parseFloat(valorHora)
+            };
 
-                onSuccess();
-                onClose();
+            if (quadraToEdit) {
+                response = await axios.put(
+                    "http://localhost:8080/quadra",
+                    { ...datas, id: quadraToEdit.id },
+                    config
+                );
+            } else {
+                response = await axios.post("http://localhost:8080/quadra/createQuadra", datas,config);
             }
 
+            if (response.status === 200 || response.status === 201) {
+                alert(quadraToEdit ? "Quadra atualizada!" : "Quadra cadastrada!");
+                if (onSuccess) onSuccess();
+                onClose();
+            }
         } catch (err) {
             console.error("Erro:", err);
 
@@ -54,11 +76,11 @@ export default function ModalCourts({ onClose,onSuccess }) {
                 <div className="form-container">
 
                     <div className="form-header">
-                        <span className="form-title">Nova Quadra</span>
+                        <h3>{quadraToEdit ? 'Editar Quadra' : 'Nova Quadra'}</h3>
                         <button type="button" className="close-btn" onClick={onClose}>&times;</button>
                     </div>
 
-                    <form className="form" onSubmit={handleCreateCourt}>
+                    <form className="form" onSubmit={handleSave}>
                         <div className="form-group">
                             <label htmlFor="nome">Nome da Quadra</label>
                             <input
@@ -102,7 +124,7 @@ export default function ModalCourts({ onClose,onSuccess }) {
                         {error && <p className="error-text">{error}</p>}
 
                         <button type="submit" className="form-submit-btn">
-                            Cadastrar Quadra
+                            {quadraToEdit ? 'Salvar Alterações' : 'Cadastrar'}
                         </button>
                     </form>
                 </div>
