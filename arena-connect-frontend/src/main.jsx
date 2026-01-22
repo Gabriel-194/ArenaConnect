@@ -11,14 +11,16 @@ import Register from "./Pages/Register.jsx";
 import Home from './Pages/Home';
 import PrivateRoute from "./Components/PrivateRoute.jsx";
 import Quadras from "./Pages/Quadras.jsx";
+import LandingPage from "./Pages/landingPage.jsx";
 
 
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
         <BrowserRouter>
             <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/landingPage" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Navigate to="/login" />} />
                 <Route path="/register" element={<Register/>} />
                 <Route path="/home" element={<PrivateRoute> <Home /> </PrivateRoute>}/>
                 <Route path="/quadras" element={<PrivateRoute> <Quadras /> </PrivateRoute>}/>

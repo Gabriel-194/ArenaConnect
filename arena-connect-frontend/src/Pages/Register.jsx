@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
 import { Link, useNavigate } from 'react-router-dom';
 import ModalUser from "../Components/ModalUser.jsx";
 import ModalPartners from "../Components/ModalPartners.jsx";
@@ -9,19 +9,32 @@ export default function Register (){
 
     const [showModalCliente, setShowModalCliente] = useState(false);
     const [showModalParceiro, setShowModalParceiro] = useState(false);
-    const navigate = useNavigate();
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('type');
+
+        if (type === 'partner') {
+            setShowModalParceiro(true);
+        } else if (type === 'client') {
+            setShowModalCliente(true);
+        } else {
+            setShowModalCliente(false);
+            setShowModalParceiro(false);
+        }
+    }, []);
 
 
     return (
         <div className="login-container">
             <div className="login-card">
-                <div className="login-header">
+                <Link to={"/landingPage"} className="login-header" style={{ textDecoration: 'none', color: 'white' }}>
                     <div className="logo">
                         <img src="/Assets/3-removebg-preview.png" alt="logo" style={{width: "80px"}}/>
                         <h1 style={{ fontFamily: "'Racing Sans One', cursive" }}>Arena Connect</h1>
                     </div>
                     <p className="subtitle">Escolha o tipo de cadastro</p>
-                </div>
+                </Link>
 
                 <div className="register-type-container">
                     <button type="button" className="register-type-btn" onClick={() => setShowModalCliente(true)}>

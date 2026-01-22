@@ -31,15 +31,11 @@ export default function Login(){
         } catch (error) {
             console.error("Erro no login:", error);
 
-            // AQUI ESTÁ A CORREÇÃO MÁGICA 👇
             if (error.response && error.response.data && error.response.data.message) {
-                // Se o backend respondeu (ex: 401), mostramos a mensagem dele
                 setErro(error.response.data.message);
             } else if (error.request) {
-                // Se nem houve resposta (Backend off ou CORS)
-                setErro("Sem resposta do servidor. Verifique se o Java está rodando.");
+                setErro("Sem resposta do servidor. Verifique se o servidor está rodando.");
             } else {
-                // Erro genérico
                 setErro("Erro ao tentar fazer login.");
             }
         }
@@ -48,13 +44,13 @@ export default function Login(){
     return (
         <div className="login-container">
             <div className="login-card">
-                <div className="login-header">
+                <Link to={"/landingPage"} className="login-header" style={{ textDecoration: 'none', color: 'white' }}>
                     <div className="logo">
                         <img src="/Assets/3-removebg-preview.png" alt="logo" style={{ width: '80px' }} />
                         <h1 style={{ fontFamily: "'Racing Sans One', cursive" }}>Arena Connect</h1>
                     </div>
                     <p className="subtitle">Gestão inteligente de arenas esportivas</p>
-                </div>
+                </Link>
 
                 {erro && (
                     <div className="alert alert-danger" style={{
