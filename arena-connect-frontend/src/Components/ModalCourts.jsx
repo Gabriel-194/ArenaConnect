@@ -11,9 +11,9 @@ export default function ModalCourts({ onClose,onSuccess,quadraToEdit }) {
 
     useEffect(() => {
         if(quadraToEdit) {
-            setNome(quadraToEdit.nome || '');
-            setTipo(quadraToEdit.tipo_quadra || '');
-            setValorHora(quadraToEdit.valor_hora || '');
+            setNome(quadraToEdit.nome);
+            setTipo(quadraToEdit.tipo_quadra);
+            setValorHora(quadraToEdit.valor_hora );
         }else {
             setNome('');
             setTipo('');

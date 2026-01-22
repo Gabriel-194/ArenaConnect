@@ -297,10 +297,17 @@ const Footer = () => {
     );
 };
 
+const isMobile = () => {
+    window.matchMedia('(pointer: coarse)').matches;
+}
+
+
 const LandingPage = () => {
     const scrollRef = useRef(null);
 
     useEffect(() => {
+        if (isMobile()) return;
+
         const container = scrollRef.current;
         if (!container) return;
 
@@ -310,7 +317,7 @@ const LandingPage = () => {
 
             e.preventDefault();
 
-            container.scrollLeft += e.deltaY * 3;
+            container.scrollLeft += e.deltaY * 2;
         };
         window.addEventListener('wheel', handleScroll, { passive: false });
 
@@ -324,11 +331,7 @@ const LandingPage = () => {
             <LiquidBackground />
             <Navbar />
 
-            {/* Wrapper Horizontal com a referência */}
-            <div
-                ref={scrollRef}
-                className="horizontal-outer-wrapper"
-            >
+            <div ref={scrollRef} className="horizontal-outer-wrapper">
                 <HeroSection />
                 <FeaturesSection />
                 <Footer />

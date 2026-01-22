@@ -12,6 +12,7 @@ import Home from './Pages/Home';
 import PrivateRoute from "./Components/PrivateRoute.jsx";
 import Quadras from "./Pages/Quadras.jsx";
 import LandingPage from "./Pages/landingPage.jsx";
+import Times from "./Pages/Times.jsx"
 
 
 createRoot(document.getElementById('root')).render(
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/register" element={<Register/>} />
                 <Route path="/home" element={<PrivateRoute> <Home /> </PrivateRoute>}/>
                 <Route path="/quadras" element={<PrivateRoute> <Quadras /> </PrivateRoute>}/>
+                <Route path="/times" element={<PrivateRoute> <Times /> </PrivateRoute>}/>
             </Routes>
         </BrowserRouter>
     </React.StrictMode>,

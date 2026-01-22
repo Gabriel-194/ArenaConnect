@@ -1,8 +1,11 @@
 import {Link, useNavigate} from "react-router-dom";
 import axios from "axios";
+import {useLocation} from "react-router-dom";
+
 
 export default function Sidebar(){
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleLogout = async (e) => {
         e.preventDefault();
@@ -21,10 +24,12 @@ export default function Sidebar(){
         }
     }
 
+    const isActive = (path) => location.pathname === path ? 'active' : '';
+
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <a href="/" className="logo-compact" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <a href="/home" className="logo-compact" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <img src="/Assets/3-removebg-preview.png" alt="Voltar ao Início" width="100" height="100"/>
                     <span style={{fontFamily: "'Racing Sans One', cursive", fontSize: '25px'}}>
                         Arena Connect
@@ -54,16 +59,21 @@ export default function Sidebar(){
                     <span>Campeonatos</span>
                 </Link>
 
-                <Link to="/quadras" className="nav-item active">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2v8h10V6H5z" />
+                <Link to="/quadras" className={`nav-item ${isActive('/quadras')}`}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                        <line x1="8" y1="21" x2="16" y2="21" />
+                        <line x1="12" y1="17" x2="12" y2="21" />
                     </svg>
                     <span>Quadras</span>
                 </Link>
 
-                <Link to="/times" className="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                <Link to="/times" className={`nav-item ${isActive('/times')}`}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                     <span>Times</span>
                 </Link>

@@ -533,25 +533,39 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
 
-    padding-top: 80px;
-    padding-bottom: 1rem;
+
+    padding: 0;
     box-sizing: border-box;
 
     position: relative;
+    scroll-snap-align: start;
 }
 
 .features .container {
-    height: 100%;
+    width: 100%;
+    max-width: 1280px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
 }
 
 .features-header {
-    text-align: center;
+    margin-top: -2vh;
     margin-bottom: 2rem !important;
-    flex-shrink: 0;
+    text-align: center;
+}
+
+
+@media (max-height: 800px) {
+    .features {
+
+        justify-content: flex-start;
+        padding-top: 90px; /* Altura da navbar + folga */
+        padding-bottom: 2rem;
+    }
 }
 
 .features-grid {
@@ -589,7 +603,7 @@ body {
     inset: -1px;
     border-radius: var(--radius-3xl);
     opacity: 0;
-    transition: opacity 0.5s;
+    transition: opacity 0.90s;
     filter: blur(24px);
     z-index: -1;
 }
@@ -699,7 +713,7 @@ body {
 
 .footer-brand p {
     color: var(--white-50);
-    font-size: 0.875rem;
+    font-size: 1.1rem;
     line-height: 1.6;
     margin: 1.5rem 0;
 }
@@ -734,6 +748,7 @@ body {
 }
 
 .footer-links h4 {
+    font-size: 1.3rem;
     font-weight: 600;
     color: var(--white);
     margin-bottom: 1rem;
@@ -749,7 +764,7 @@ body {
 .footer-links a {
     color: var(--white-50);
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 1.1rem;
     transition: color 0.3s;
 }
 
@@ -767,6 +782,7 @@ body {
     gap: 1rem;
     max-width: 1280px;
     margin: 0 auto;
+    font-size: 1rem;
 }
 
 @media (min-width: 768px) {
@@ -777,7 +793,7 @@ body {
 
 .footer-copyright {
     color: var(--white-40);
-    font-size: 0.875rem;
+    font-size: 1rem;
 }
 
 .footer-legal {
@@ -789,7 +805,7 @@ body {
 .footer-legal a {
     color: var(--white-40);
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 1rem;
     transition: color 0.3s;
 }
 
@@ -859,5 +875,15 @@ body, html {
 }
 .horizontal-outer-wrapper::-webkit-scrollbar {
     display: none;
+}
+
+@media (max-width: 768px) {
+    .horizontal-outer-wrapper {
+        flex-direction: column;
+        width: 100vw;
+        height: auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
 }
 

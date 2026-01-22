@@ -58,6 +58,10 @@
     color: var(--text-secondary);
 }
 
+/* =========================================
+   LIQUID GLASS CARDS (Estilo Feature Section)
+   ========================================= */
+
 .home-nav-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -66,78 +70,126 @@
 }
 
 .nav-card {
-    background: rgba(21, 25, 21, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px;
+    position: relative;
+    /* 1. Base de Vidro Escuro */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(24px); /* Desfoque forte */
+    -webkit-backdrop-filter: blur(24px);
+
+    /* 2. Borda sutil e arredondada */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px; /* Igual ao landingPage --radius-3xl */
+
     padding: 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     text-decoration: none;
-    color: var(--text-primary);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+    color: var(--text-primary, #fff);
+
+    /* 3. Transições suaves */
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden; /* Importante para o brilho não vazar */
     cursor: pointer;
+    z-index: 1; /* Garante que o texto fique acima do brilho */
 }
 
+/* O "Líquido" (Glow Interno) */
+.nav-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Gradiente igual ao da Landing Page (Verde Neon) */
+    background: linear-gradient(135deg, rgba(57, 255, 20, 0.5), transparent 60%);
+    opacity: 0; /* Começa invisível */
+    transition: opacity 0.5s ease;
+    z-index: -1; /* Fica atrás do texto */
+    filter: blur(20px); /* Suaviza o gradiente */
+}
+
+/* Efeito Hover */
+.nav-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: rgba(57, 255, 20, 0.5); /* Borda fica verde */
+    background: rgba(255, 255, 255, 0.08); /* Clareia levemente o fundo */
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5); /* Sombra profunda */
+}
+
+/* Ativa o brilho líquido no hover */
+.nav-card:hover::before {
+    opacity: 0.2; /* Mostra o brilho verde sutilmente */
+}
+
+/* Ícones */
 .nav-card-icon {
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.6);
     margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
+    transition: transform 0.3s ease, color 0.3s ease;
+    /* Adiciona um fundo sutil no ícone igual à landing page */
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
 }
 
+.nav-card:hover .nav-card-icon {
+    color: #39ff14; /* Verde Neon */
+    background: rgba(57, 255, 20, 0.1);
+    transform: scale(1.1);
+}
+
+/* Tipografia */
 .nav-card h3 {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
     font-family: 'Racing Sans One', cursive;
+    color: #fff;
 }
 
 .nav-card p {
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.6);
     font-size: 0.9rem;
+    transition: color 0.3s;
 }
 
-.nav-card:hover {
-    transform: translateY(-10px);
-    border-color: var(--accent-green);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(57, 255, 20, 0.2);
+.nav-card:hover p {
+    color: #fff;
 }
 
-.nav-card:hover .nav-card-icon {
-    color: var(--accent-green);
-    transform: scale(1.1);
-}
-
+/* =========================================
+   ESTILO ESPECÍFICO PARA O BOTÃO SAIR (VERMELHO)
+   ========================================= */
 .logout-card {
-    background: rgba(255, 68, 68, 0.1);
     border-color: rgba(255, 68, 68, 0.2);
 }
 
-.logout-card .nav-card-icon,
-.logout-card h3,
-.logout-card p {
+/* Muda o brilho líquido para Vermelho */
+.logout-card::before {
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.6), transparent 60%);
+}
+
+.logout-card .nav-card-icon {
     color: #ff6b6b;
+    background: rgba(255, 68, 68, 0.1);
 }
 
 .logout-card:hover {
-    border-color: var(--danger);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 68, 68, 0.2);
+    border-color: #ff4444;
 }
 
-.home-footer {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    margin-top: auto;
+.logout-card:hover .nav-card-icon {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.2);
 }
 
-@keyframes floatLogo {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+.logout-card h3,
+.logout-card p {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 /* 2. Media Query Específico para Notebooks (Altura < 800px) */
