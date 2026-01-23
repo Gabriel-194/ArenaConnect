@@ -126,5 +126,21 @@ public class JwtService {
         }
     }
 
+    public String getRoleFromToken(String token) {
+        try{
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return claims.get("role", String.class);
+        }catch (Exception e){
+            return null;
+        }
+    }
+
 }
 

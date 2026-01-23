@@ -4,7 +4,6 @@ import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
 import com.example.Models.Users;
 import com.example.Repository.UserRepository;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -12,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
+import com.example.Domain.RoleEnum;
 
 import java.util.Optional;
 
@@ -106,6 +105,32 @@ public class AuthService {
             user.setToken(null);
             userRepository.save(user);
             logger.info("✅ Logout realizado: {}", email);
+        }
+    }
+
+    public Users getUserByToken(String token) {
+        String email = jwtService.getEmailFromToken(token);
+        if (email == null) {
+            return null;
+        }
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    public String determineRedirectUrl(RoleEnum role) {
+        if (role == null) return "/";
+
+        switch (role) {
+            case ADMIN:
+                return "/home";
+            case SUPERADMIN:
+                return "/homeSuperAdmin";
+
+            case CLIENTE:
+
+                return "/homeClient";
+
+            default:
+                return "/";
         }
     }
 }

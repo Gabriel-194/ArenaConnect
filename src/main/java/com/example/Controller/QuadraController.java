@@ -4,12 +4,14 @@ import com.example.Models.Quadra;
 import com.example.Service.QuadraService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/quadra")
+@RequestMapping("/api/quadra")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
 public class QuadraController {
 
     @Autowired

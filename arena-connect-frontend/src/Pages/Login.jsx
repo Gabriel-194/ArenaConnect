@@ -27,7 +27,10 @@ export default function Login(){
                 }
             );
 
-            navigate('/home');
+            const destination = response.data.redirectUrl || '/home';
+            console.log("Redirecting to:", destination); // Debug log
+            navigate(destination);
+
         } catch (error) {
             console.error("Erro no login:", error);
 

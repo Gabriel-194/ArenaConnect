@@ -3,8 +3,9 @@ import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import Loader from './Loader';
 
-const PrivateRoute = ({ children }) => {
+const PrivateRoute = ({ children, adminOnly = false, clientOnly = false }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [userHomeUrl, setUserHomeUrl] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -14,20 +15,37 @@ const PrivateRoute = ({ children }) => {
                     withCredentials:true
                 });
 
-                setIsAuthenticated(response.data.valid);
+                if (response.data.valid) {
+                    setIsAuthenticated(true);
+                    setUserHomeUrl(response.data.redirectUrl);
+                } else {
+                    setIsAuthenticated(false);
+                }
             }catch (error) {
                 setIsAuthenticated(false);
             }finally {
                 setLoading(false);
-        }
-    };
-    verifyToken();
-}, []);
+            }
+        };
+        verifyToken();
+    }, []);
 
-    if (loading) {
-        return <Loader />;
+    if (loading) return <Loader />;
+
+    if (!isAuthenticated) return <Navigate to="/login" />;
+
+
+
+    if (adminOnly && userHomeUrl === '/homeClient') {
+        return <Navigate to="/homeClient" replace />;
     }
-    return isAuthenticated ? children : <Navigate to="/login" />;
+
+
+    if (clientOnly && userHomeUrl === '/home') {
+        return <Navigate to="/home" replace />;
+    }
+
+    return children;
 };
 
 export default PrivateRoute;

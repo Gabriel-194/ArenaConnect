@@ -40,12 +40,12 @@ export default function ModalCourts({ onClose,onSuccess,quadraToEdit }) {
 
             if (quadraToEdit) {
                 response = await axios.put(
-                    "http://localhost:8080/quadra",
+                    "http://localhost:8080/api/quadra",
                     { ...datas, id: quadraToEdit.id },
                     config
                 );
             } else {
-                response = await axios.post("http://localhost:8080/quadra/createQuadra", datas,config);
+                response = await axios.post("http://localhost:8080/api/quadra/createQuadra", datas,config);
             }
 
             if (response.status === 200 || response.status === 201) {

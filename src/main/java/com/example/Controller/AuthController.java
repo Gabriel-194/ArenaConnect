@@ -2,7 +2,9 @@ package com.example.Controller;
 
 import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
+import com.example.Models.Users;
 import com.example.Service.AuthService;
+import com.example.Service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,8 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+    @Autowired
+    private JwtService jwtService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse response) {
@@ -49,15 +53,20 @@ public class AuthController {
         try {
             String token = extractToken(request);
 
-            if (token == null) {
+            if (token == null || !authService.validateToken(token)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("valid", false, "message", "Token não fornecido"));
+                        .body(Map.of("valid", false));
             }
 
-            boolean isValid = authService.validateToken(token);
+            Users user = authService.getUserByToken(token);
+
+            String correctPage = authService.determineRedirectUrl(user.getRole());
+
+            String role = jwtService.getRoleFromToken(token);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("valid", isValid);
+            response.put("valid", true);
+            response.put("redirectUrl", correctPage);
 
             return ResponseEntity.ok(response);
         } catch (Exception e){
@@ -105,6 +114,19 @@ public class AuthController {
             }
        }
        return null;
+    }
+
+    private String getUrlByRole(String role) {
+        if (role == null){
+            return "/login";
+        }
+
+        switch (role) {
+            case "superadmin": return "/homeSuperAdmin";
+            case  "ADMIN": return "/home";
+            case "CLIENTE": return "/homeClient";
+            default:return "/login";
+        }
     }
 
 

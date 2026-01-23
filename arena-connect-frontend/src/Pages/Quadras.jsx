@@ -18,7 +18,7 @@ export default function Quadras () {
 
     const findCourts = async () => {
         try{
-            const response = await axios.get('http://localhost:8080/quadra', {
+            const response = await axios.get('http://localhost:8080/api/quadra', {
                 withCredentials:true
             })
             setQuadras(response.data)
@@ -45,7 +45,7 @@ export default function Quadras () {
         }
 
         try {
-            await axios.post('http://localhost:8080/quadra/changeStatusQuadra',
+            await axios.post('http://localhost:8080/api/quadra/changeStatusQuadra',
                 { id: quadra.id },
                 { withCredentials: true }
             );

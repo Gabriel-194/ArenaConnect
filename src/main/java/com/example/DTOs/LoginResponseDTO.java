@@ -18,5 +18,6 @@ public class LoginResponseDTO {
         this.message = message;
         this.username = username;
         this.email = email;
+
     }
 }

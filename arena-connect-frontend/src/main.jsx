@@ -23,9 +23,9 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/landingPage" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register/>} />
-                <Route path="/home" element={<PrivateRoute> <Home /> </PrivateRoute>}/>
-                <Route path="/quadras" element={<PrivateRoute> <Quadras /> </PrivateRoute>}/>
-                <Route path="/times" element={<PrivateRoute> <Times /> </PrivateRoute>}/>
+                <Route path="/home" element={<PrivateRoute adminOnly={true}><Home /></PrivateRoute>}/>
+                <Route path="/quadras" element={<PrivateRoute adminOnly={true}><Quadras /></PrivateRoute>}/>
+                <Route path="/times" element={<PrivateRoute adminOnly={true}> <Times /> </PrivateRoute>}/>
             </Routes>
         </BrowserRouter>
     </React.StrictMode>,

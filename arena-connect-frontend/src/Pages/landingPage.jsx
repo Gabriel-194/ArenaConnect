@@ -317,7 +317,7 @@ const LandingPage = () => {
 
             e.preventDefault();
 
-            container.scrollLeft += e.deltaY * 2;
+            container.scrollLeft += e.deltaY * 1;
         };
         window.addEventListener('wheel', handleScroll, { passive: false });
 
