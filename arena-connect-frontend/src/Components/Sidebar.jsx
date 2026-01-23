@@ -17,6 +17,7 @@ export default function Sidebar(){
                     withCredentials: true
                 }
             );
+            localStorage.removeItem('userName');
         } catch (error) {
             console.error('Logout error:', error);
         } finally {

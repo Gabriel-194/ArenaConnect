@@ -27,8 +27,11 @@ export default function Login(){
                 }
             );
 
+            const nomeDoUsuario = response.data.username;
+            localStorage.setItem('userName', nomeDoUsuario);
+
             const destination = response.data.redirectUrl || '/home';
-            console.log("Redirecting to:", destination); // Debug log
+            console.log("Redirecting to:", destination);
             navigate(destination);
 
         } catch (error) {

@@ -62,11 +62,11 @@ public class AuthController {
 
             String correctPage = authService.determineRedirectUrl(user.getRole());
 
-            String role = jwtService.getRoleFromToken(token);
 
             Map<String, Object> response = new HashMap<>();
             response.put("valid", true);
             response.put("redirectUrl", correctPage);
+            response.put("nome", user.getNome());
 
             return ResponseEntity.ok(response);
         } catch (Exception e){

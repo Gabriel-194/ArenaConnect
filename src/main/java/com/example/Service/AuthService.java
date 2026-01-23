@@ -56,7 +56,8 @@ public class AuthService {
                 user.getEmail(),
                 user.getRole().name(),
                 arenaId,
-                arenaSchema
+                arenaSchema,
+                user.getNome()
         );
 
         user.setToken(token);

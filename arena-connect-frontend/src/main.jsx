@@ -13,6 +13,7 @@ import PrivateRoute from "./Components/PrivateRoute.jsx";
 import Quadras from "./Pages/Quadras.jsx";
 import LandingPage from "./Pages/landingPage.jsx";
 import Times from "./Pages/Times.jsx"
+import HomeCLient from "./Pages/HomeClient.jsx";
 
 
 createRoot(document.getElementById('root')).render(
@@ -26,6 +27,8 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/home" element={<PrivateRoute adminOnly={true}><Home /></PrivateRoute>}/>
                 <Route path="/quadras" element={<PrivateRoute adminOnly={true}><Quadras /></PrivateRoute>}/>
                 <Route path="/times" element={<PrivateRoute adminOnly={true}> <Times /> </PrivateRoute>}/>
+                <Route path="/homeClient" element={<PrivateRoute clientOnly={true}> <HomeCLient /> </PrivateRoute>}/>
+
             </Routes>
         </BrowserRouter>
     </React.StrictMode>,

@@ -25,12 +25,13 @@ public class JwtService {
     @Value("${jwt.expiration:86400000}")
     private Long expiration;
 
-    public String generateToken(Integer userId, String email, String role , Integer arenaId, String arenaSchema){
+    public String generateToken(Integer userId, String email, String role , Integer arenaId, String arenaSchema, String nome){
         try {
             Map<String, Object> claims = new HashMap<String, Object>();
             claims.put("userId", userId);
             claims.put("email", email);
             claims.put("role", role);
+            claims.put("nome", nome);
 
             if (arenaId != null) {
                 claims.put("idArena", arenaId);

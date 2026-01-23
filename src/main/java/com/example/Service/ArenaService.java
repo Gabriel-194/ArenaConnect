@@ -101,7 +101,7 @@ public class ArenaService {
         }
     }
 
-    public List<Arena> listarArenas() {
+    public List<Arena> getArenaAtivo() {
         logger.info("Listando todas as arenas");
         return arenaRepository.findByAtivoTrue();
     }

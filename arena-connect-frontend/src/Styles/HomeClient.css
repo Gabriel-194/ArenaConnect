@@ -1,0 +1,257 @@
+/* --- Base Mobile --- */
+.client-body {
+    background-color: #09090b;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+
+    /* MUDANÇA PRINCIPAL AQUI: */
+    height: 100vh;            /* Altura exata da tela */
+    display: flex;            /* Flexbox para organizar verticalmente */
+    flex-direction: column;   /* Um item embaixo do outro */
+    overflow: hidden;         /* Impede a página inteira de rolar */
+    position: relative;
+}
+
+/* Background Líquido Fixo (Fica atrás de tudo) */
+.liquid-background-fixed {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: radial-gradient(circle at top, #1a2e20, #000);
+}
+
+.blob {
+    position: absolute;
+    filter: blur(80px);
+    opacity: 0.4;
+    border-radius: 50%;
+    animation: floatBlob 10s infinite alternate;
+}
+.blob-1 { top: -10%; left: -10%; width: 300px; height: 300px; background: var(--neon-green, #39ff14); }
+.blob-2 { bottom: 20%; right: -10%; width: 250px; height: 250px; background: #16a34a; }
+
+@keyframes floatBlob {
+    from { transform: translate(0,0); }
+    to { transform: translate(20px, 40px); }
+}
+
+/* --- Classe Utilitária: Painel de Vidro (Glass) --- */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* --- Header --- */
+.client-header {
+    /* Não precisa mais de position: sticky, pois ele é o item 1 do flex */
+    flex-shrink: 0; /* Garante que o header não encolha */
+    z-index: 50;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+
+    /* Garante que fique acima do conteúdo ao rolar */
+    position: relative;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); /* Sombra mais forte pra separar */
+}
+
+.user-avatar {
+    width: 45px; height: 45px;
+    background: linear-gradient(135deg, var(--neon-green, #39ff14), #16a34a);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; color: #000;
+    margin-right: 12px;
+}
+
+.user-greeting p { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin: 0; }
+.user-greeting h3 { font-size: 1.1rem; margin: 0; font-family: 'Racing Sans One', cursive; }
+
+.header-user { display: flex; align-items: center; }
+
+.btn-icon-glass {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* --- Conteúdo --- */
+.client-content {
+    /* MUDANÇA PRINCIPAL AQUI: */
+    flex: 1;                  /* Ocupa todo o espaço que sobrar entre o header e o fim */
+    overflow-y: auto;         /* Habilita o SCROLL vertical só aqui */
+    overflow-x: hidden;       /* Remove scroll horizontal */
+
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem;
+
+    /* Espaço extra no final para o último card não ficar atrás do menu */
+    padding-bottom: 100px;
+}
+
+.client-content::-webkit-scrollbar {
+    width: 6px;
+}
+.client-content::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 4px;
+}
+.client-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Busca */
+.search-bar {
+    display: flex; align-items: center;
+    padding: 0.8rem 1rem;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+}
+.search-bar input {
+    background: transparent; border: none; outline: none;
+    color: #fff; width: 100%; margin-left: 10px; font-size: 1rem;
+}
+.search-icon { color: rgba(255,255,255,0.5); }
+
+/* Categorias */
+.categories-scroll {
+    display: flex; gap: 0.8rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    scrollbar-width: none; /* Firefox */
+}
+.categories-scroll::-webkit-scrollbar { display: none; } /* Chrome */
+
+.category-pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.8);
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+.category-pill.active {
+    background: var(--neon-green, #39ff14);
+    color: #000;
+    font-weight: 600;
+    border-color: var(--neon-green, #39ff14);
+    box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+}
+
+/* --- Arena Cards (O Destaque) --- */
+.section-title { font-size: 1.25rem; margin-bottom: 1rem; font-weight: 600; }
+
+.arenas-list { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.arena-card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.2s;
+    padding: 12px;
+}
+.arena-card:active { transform: scale(0.98); }
+
+/* Glow líquido interno */
+.liquid-glow {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(57, 255, 20, 0.1), transparent 60%);
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+}
+.arena-card:hover .liquid-glow { opacity: 1; }
+
+.arena-image-container {
+    height: 140px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.img-placeholder-gradient {
+    width: 100%; height: 100%;
+    background: linear-gradient(45deg, #1a2e20, #064e3b);
+}
+
+.arena-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 8px;
+}
+
+.arena-info h4 { margin: 0; font-size: 1.1rem; color: #fff; }
+
+.arena-header-row {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+}
+
+.arena-rating {
+    display: flex; align-items: center; gap: 4px;
+    color: #ffd700; font-weight: bold; font-size: 0.9rem;
+}
+
+.arena-address {
+    font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0 0 12px 0;
+}
+
+.arena-footer-row {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+}
+
+.price-tag { font-size: 0.9rem; color: rgba(255,255,255,0.8); }
+.price-tag strong { color: var(--neon-green, #39ff14); font-size: 1.1rem; }
+
+.btn-book-mini {
+    background: rgba(255,255,255,0.1);
+    color: #fff; border: none; padding: 6px 16px; border-radius: 12px;
+    font-size: 0.85rem; font-weight: 600;
+}
+
+/* --- Bottom Nav --- */
+.bottom-nav {
+    position: absolute; /* Fixo em relação ao pai (client-body) */
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    border-radius: 24px;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    z-index: 100;
+
+    /* Garante o efeito de vidro em cima dos cards */
+    backdrop-filter: blur(15px);
+    background: rgba(32, 32, 36, 0.85);
+}
+
+.nav-icon-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; text-decoration: none;
+    color: rgba(255,255,255,0.5); font-size: 0.75rem;
+    transition: color 0.3s;
+}
+
+.nav-icon-item.active {
+    color: var(--neon-green, #39ff14);
+}
+.nav-icon-item.active svg {
+    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.6));
+}
