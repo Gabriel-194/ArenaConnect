@@ -1,0 +1,52 @@
+package com.example.Repository.Custom;
+
+import com.example.Models.Agendamentos;
+import com.example.Models.Quadra;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private void definirSchema(String schema) {
+        if (schema == null || schema.isEmpty()) schema = "public";
+        entityManager.createNativeQuery("SET search_path TO " + schema).executeUpdate();
+    }
+
+
+    @Override
+    public Agendamentos salvarComSchema(Agendamentos agendamento, String schema) {
+        definirSchema(schema);
+        if (agendamento.getId_agendamento() == null) {
+            entityManager.persist(agendamento);
+            return agendamento;
+        } else {
+            return entityManager.merge(agendamento);
+        }
+    }
+
+    @Override
+    public List<Agendamentos> findAgendamentosDoDiaComSchema(Integer idQuadra, LocalDateTime inicio, LocalDateTime fim, String schema) {
+
+            definirSchema(schema);
+
+            String jpql = "SELECT a FROM Agendamentos a WHERE a.id_quadra = :idQuadra " +
+                    "AND a.data_inicio >= :inicio AND a.data_inicio < :fim " +
+                    "AND a.status <> 'CANCELADO'";
+
+            TypedQuery<Agendamentos> query = entityManager.createQuery(jpql, Agendamentos.class);
+            query.setParameter("idQuadra", idQuadra);
+            query.setParameter("inicio", inicio);
+            query.setParameter("fim", fim);
+
+            return query.getResultList();
+    }
+
+
+}

@@ -50,7 +50,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/users/register-client", "/api/users/register-partner").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**", "/styles/**", "/favicon.ico").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE")
+
+                        // Permite GET para quadras ativas (clientes podem ver)
+                        .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
+
+                        // Permite GET para arenas (clientes podem ver lista)
+                        .requestMatchers(HttpMethod.GET, "/api/arena").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
+
+                        // Permite POST para criar agendamentos (clientes podem reservar)
+                        .requestMatchers(HttpMethod.POST, "/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
+
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -73,7 +82,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "X-Tenant-ID","Content-Type"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Tenant-ID", "Accept", "Origin", "X-Requested-With"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
