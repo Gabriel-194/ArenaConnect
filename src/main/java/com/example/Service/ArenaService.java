@@ -106,17 +106,6 @@ public class ArenaService {
         return arenaRepository.findByAtivoTrue();
     }
 
-    public Arena buscarArenaPorId(long id) {
-        logger.info("Buscando arena por ID: {}", id);
-        return arenaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Arena não encontrada para o Id ID:" + id));
-    }
-
-    public List<Arena> buscarArenasPorNome(String name) {
-        logger.info("Buscando arenas por nome: {}", name);
-        return arenaRepository.findByNameContainingIgnoreCaseAndAtivoTrue(name);
-    }
-
     public void validarArena(PartnerRegistrationDTO dto) {
         if (dto.getNomeArena() == null || dto.getNomeArena().isBlank())
             throw new IllegalArgumentException("Nome da arena é obrigatório");

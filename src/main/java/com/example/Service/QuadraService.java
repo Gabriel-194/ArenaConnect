@@ -32,6 +32,12 @@ public class QuadraService {
     }
 
     @Transactional
+    public List<Quadra> getAtivasPorArena() {
+        String schema = configurarSchema();
+        return quadraRepository.listarAtivasComSchema(schema);
+    }
+
+    @Transactional
     public Quadra cadastrar(Quadra quadra) {
         if (quadra == null) {
             logger.error("❌ Tentativa de cadastrar quadra nula");
@@ -65,9 +71,6 @@ public class QuadraService {
         quadraRepository.alterarStatusComSchema(id, configurarSchema());
     }
 
-    public List<Quadra> findByAtivoTrue() {
-        return quadraRepository.findByAtivoTrue();
-    }
 
 
     @Transactional

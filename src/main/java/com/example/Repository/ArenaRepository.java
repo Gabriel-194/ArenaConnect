@@ -13,8 +13,6 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
 
     List<Arena> findByAtivoTrue();
 
-    List<Arena> findByNameContainingIgnoreCaseAndAtivoTrue(String name);
-
 
     @Query("SELECT a.schemaName FROM Arena a WHERE a.id = :arenaId")
     String findSchemaNameById(Long arenaId);

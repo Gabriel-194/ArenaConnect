@@ -10,4 +10,5 @@ public interface QuadraRepositoryCustom {
     List<Quadra> listarTodasComSchema(String schema);
     Optional<Quadra> buscarPorIdComSchema(Integer id, String schema);
     void alterarStatusComSchema(Integer id, String schema);
+    List<Quadra> listarAtivasComSchema(String schema);
 }

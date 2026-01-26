@@ -8,6 +8,4 @@ import java.util.List;
 
 public interface QuadraRepository extends JpaRepository<Quadra, Integer>, QuadraRepositoryCustom {
 
-    List<Quadra> findByAtivoTrue();
-
 }

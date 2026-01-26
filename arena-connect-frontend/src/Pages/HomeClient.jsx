@@ -1,6 +1,7 @@
 import {useState,useEffect} from "react";
 import '../Styles/HomeClient.css'
 import axios from "axios";
+import ModalBooking from "../Components/ModalBooking.jsx";
 
 export default function HomeClient() {
     const username = localStorage.getItem('userName') || 'Atleta';
@@ -8,6 +9,7 @@ export default function HomeClient() {
     const [loading, setLoading] = useState(true);
     const [arenas,setArenas] = useState([]);
     const [searchItem,setSearchItem] = useState("");
+    const [selectedArena, setSelectedArena] = useState(null);
 
     const filteredArenas = arenas.filter(arena => {
 
@@ -60,7 +62,6 @@ export default function HomeClient() {
                 </button>
             </header>
 
-            {/* --- Área de Conteúdo Principal --- */}
             <main className="client-content">
 
                 {/* Barra de Busca */}
@@ -85,7 +86,7 @@ export default function HomeClient() {
                     ) : (
                         filteredArenas.length > 0 ? (
                             filteredArenas.map((arena) => (
-                                <div key={arena.id} className="arena-card glass-panel">
+                                <div key={arena.schemaName} className="arena-card glass-panel">
                                     <div className="liquid-glow"></div>
 
                                     <div className="arena-image-container">
@@ -103,18 +104,19 @@ export default function HomeClient() {
                                         </p>
 
                                         <div className="arena-footer-row">
-                            <span className="price-tag">
-                                A partir de <strong>R$ {arena.price || '80'}</strong>
-                            </span>
-                                            {/* O botão ainda não faz nada, lembra de adicionar a função depois */}
-                                            <button className="btn-book-mini">Agendar</button>
+                                            <span className="price-tag">
+                                                A partir de <strong>R$ {arena.price || '80'}</strong>
+                                            </span>
+                                            <button className="btn-book-mini" onClick={() => setSelectedArena(arena)}>
+                                                Agendar
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                            )) // <---
+                            ))
                             ): (
                             <div style={{textAlign: 'center', padding: '20px', color: '#aaa'}}>
-                                <p>Nenhuma arena encontrada para "{searchTerm}"</p>
+                                <p>Nenhuma arena encontrada para "{searchItem}"</p>
                             </div>
                         )
                         )}
@@ -122,13 +124,14 @@ export default function HomeClient() {
                         {!loading && arenas.length === 0 && (
                             <p style={{color: '#aaa', textAlign: 'center'}}>Nenhuma arena encontrada.</p>
                         )}
+                </div>
 
-                    </div>
-                {/* Espaço extra para não ficar escondido atrás do menu inferior */}
+                {selectedArena && (
+                    <ModalBooking arena={selectedArena} onClose={() => setSelectedArena(null)} />
+                )}
+
                 <div style={{ height: '100px' }}></div>
             </main>
-
-            {/* --- Bottom Navigation (Menu Inferior Fixo) --- */}
             <nav className="bottom-nav glass-panel">
                 <a href="#" className="nav-icon-item active">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

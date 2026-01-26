@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/quadra")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN','CLIENTE')")
 public class QuadraController {
 
     @Autowired
@@ -30,6 +30,12 @@ public class QuadraController {
     @GetMapping
     public ResponseEntity<List<Quadra>> getAllQuadra() {
         List<Quadra> quadras = quadraService.getAll();
+        return ResponseEntity.ok(quadras);
+    }
+
+    @GetMapping("/courtAtivas")
+    public ResponseEntity<List<Quadra>> getCourtAtivas() {
+        List<Quadra> quadras = quadraService.getAtivasPorArena();
         return ResponseEntity.ok(quadras);
     }
 

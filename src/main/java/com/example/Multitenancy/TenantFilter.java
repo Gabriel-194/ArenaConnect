@@ -71,19 +71,17 @@ public class TenantFilter implements Filter {
             }
         }
 
-        if (token != null) {
-            try {
+        String tenantHeader = req.getHeader("X-Tenant-ID");
 
-                String tenantSchema = jwtService.getArenaSchemaFromToken(token);
+        if (tenantHeader != null && !tenantHeader.isEmpty()) {
 
-                if (tenantSchema != null) {
-                    TenantContext.setCurrentTenant(tenantSchema);
-                }
-            } catch (Exception e) {
-                logger.error("Erro ao definir tenant: " + e.getMessage());
+            TenantContext.setCurrentTenant(tenantHeader);
+        } else if (token != null) {
+            String tenantSchema = jwtService.getArenaSchemaFromToken(token);
+            if (tenantSchema != null) {
+                TenantContext.setCurrentTenant(tenantSchema);
             }
         }
-
         try {
             chain.doFilter(request, response);
         } finally {

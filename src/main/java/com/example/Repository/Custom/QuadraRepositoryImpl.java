@@ -3,6 +3,7 @@ package com.example.Repository.Custom;
 import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,9 +45,17 @@ public class QuadraRepositoryImpl implements QuadraRepositoryCustom {
     @Override
     public void alterarStatusComSchema(Integer id, String schema) {
         definirSchema(schema);
-        entityManager.createQuery("UPDATE Quadra q SET q.ativo = NOT q.ativo WHERE q.id = :id")
+        entityManager.createQuery("UPDATE Quadra q SET q.ativo = CASE WHEN q.ativo = true THEN false ELSE true END WHERE q.id = :id")
                 .setParameter("id", id)
                 .executeUpdate();
     }
+
+    @Override
+    public List<Quadra> listarAtivasComSchema(String schema) {
+        String sql = "SELECT * FROM " + schema + ".quadras WHERE ativo = true";
+        Query query = entityManager.createNativeQuery(sql, Quadra.class);
+        return query.getResultList();
+    }
+
 }
 
