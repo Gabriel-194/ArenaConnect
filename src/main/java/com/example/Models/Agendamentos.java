@@ -30,4 +30,10 @@ public class Agendamentos {
 
     private String cliente_avulso;
 
+    @Transient
+    private String nomeCliente;
+
+    @Transient
+    private String quadraNome;
+
 }

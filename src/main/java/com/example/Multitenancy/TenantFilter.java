@@ -54,7 +54,6 @@ public class TenantFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-
         String requestURI = req.getRequestURI();
         if (isPublicEndpoint(requestURI)) {
             chain.doFilter(request, response);

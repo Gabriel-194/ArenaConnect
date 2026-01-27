@@ -4,6 +4,7 @@ import com.example.Models.Agendamentos;
 import com.example.Models.Users;
 import com.example.Multitenancy.TenantContext;
 import com.example.Repository.AgendamentoRepository;
+import com.example.Repository.QuadraRepository;
 import com.example.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class AgendamentoService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private QuadraRepository quadraRepository;
 
     @Autowired
     private AgendamentoRepository agendamentoRepository;
@@ -98,5 +102,31 @@ public class AgendamentoService {
 
         newBooking.setStatus("CONFIRMADO");
         return agendamentoRepository.salvarComSchema(newBooking, configurarSchema());
+    }
+
+    @Transactional
+    public List<Agendamentos> findAllAgendamentos(Integer idQuadra, LocalDate data) {
+        String schema = configurarSchema();
+
+        if(schema == null || schema.isEmpty()) {
+            throw new IllegalArgumentException("O identificador da arena (schema) é obrigatório.");
+        }
+        List<Agendamentos> agendamento = agendamentoRepository.findAllAgendamentos(idQuadra, data,schema);
+
+        for(Agendamentos a : agendamento) {
+            String nomeCliente = userRepository.findById(a.getId_user())
+                    .map(user -> user.getNome())
+                    .orElse("Usuario não encontrado");
+
+            a.setNomeCliente(nomeCliente);
+
+            String nomeQuadra = quadraRepository.findById(a.getId_quadra())
+                    .map(quadra -> quadra.getNome())
+                    .orElse("Quadra não encontrada");
+
+            a.setQuadraNome(nomeQuadra);
+        }
+
+        return  new ArrayList<>(agendamento);
     }
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -47,6 +48,35 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
 
             return query.getResultList();
     }
+
+    @Override
+    public List<Agendamentos> findAllAgendamentos(Integer idQuadra, LocalDate data, String schema){
+        definirSchema(schema);
+
+        StringBuilder jpql = new StringBuilder("SELECT a FROM Agendamentos a WHERE 1=1 ");
+
+        if (idQuadra != null) {
+            jpql.append(" AND a.id_quadra = :idQuadra ");
+        }
+
+        if (data != null) {
+            jpql.append(" AND a.data_inicio >= :inicio AND a.data_inicio < :fim ");
+        }
+
+        TypedQuery<Agendamentos> query = entityManager.createQuery(jpql.toString(), Agendamentos.class);
+
+        if (idQuadra != null) {
+            query.setParameter("idQuadra", idQuadra);
+        }
+        if (data != null) {
+            query.setParameter("inicio", data.atStartOfDay());
+            query.setParameter("fim", data.plusDays(1).atStartOfDay());
+        }
+
+        return query.getResultList();
+    }
+
+
 
 
 }

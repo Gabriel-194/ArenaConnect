@@ -51,21 +51,19 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/api/users/register-client", "/api/users/register-partner").permitAll()
                         .requestMatchers("/", "/index.html", "/assets/**", "/styles/**", "/favicon.ico").permitAll()
 
-                        // Permite GET para quadras ativas (clientes podem ver)
-                        .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE", "ADMIN")
 
-                        // Permite GET para arenas (clientes podem ver lista)
                         .requestMatchers(HttpMethod.GET, "/api/arena").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
 
-                        // Permite POST para criar agendamentos (clientes podem reservar)
-                        .requestMatchers(HttpMethod.POST, "/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/agendamentos/allAgendamentos").hasAnyRole("CLIENTE", "ADMIN")
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(tenantFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(tenantFilter, JwtAuthenticationFilter.class)
 
                 .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")

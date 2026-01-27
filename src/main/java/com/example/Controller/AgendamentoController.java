@@ -17,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agendamentos")
+@PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
 public class AgendamentoController {
 
     @Autowired
@@ -27,6 +28,14 @@ public class AgendamentoController {
     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data){
 
         return ResponseEntity.ok(agendamentoService.getHorariosDisponiveis(idQuadra, data));
+    }
+
+    @GetMapping("/allAgendamentos")
+    public ResponseEntity<List<Agendamentos>> findAllAgendamentos(@RequestParam(required = false) Integer idQuadra,
+                                                                  @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data){
+
+        List<Agendamentos> lista = agendamentoService.findAllAgendamentos(idQuadra, data);
+        return ResponseEntity.ok(lista);
     }
 
     @PostMapping("/reservar")

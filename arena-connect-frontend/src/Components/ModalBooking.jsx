@@ -107,7 +107,6 @@ export default function ModalBooking({ arena, onClose }) {
                 id_quadra: selectedQuadra.id,
                 data_inicio: dataInicioISO,
                 valor: selectedQuadra.valor_hora,
-                cliente_avulso: "Não",
                 status: "CONFIRMADO"
             };
 
