@@ -8,10 +8,20 @@ export default function ModalBooking({ arena, onClose }) {
     const [loading, setLoading] = useState(true);
 
     const[selectedQuadra,setSelectedQuadra] = useState();
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Hoje
     const [availableHours, setAvailableHours] = useState([]);
     const [loadingHours, setLoadingHours] = useState(false);
     const [selectedHour, setSelectedHour] = useState(null);
+
+    const getTodayLocal = () => {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const today = getTodayLocal();
+    const [selectedDate, setSelectedDate] = useState(today);
 
 
     useEffect(() => {
@@ -42,8 +52,10 @@ export default function ModalBooking({ arena, onClose }) {
 
     useEffect(() => {
         if (selectedQuadra && selectedDate) {
-            const fetchHours = async () => {
+            const fetchAndFilterHours = async () => {
                 setLoadingHours(true);
+                setAvailableHours([]);
+                setSelectedHour(null);
                 try {
                     const response = await axios.get(`http://localhost:8080/api/agendamentos/disponibilidade`, {
                         params: {
@@ -53,7 +65,24 @@ export default function ModalBooking({ arena, onClose }) {
                         withCredentials: true,
                         headers: { 'X-Tenant-ID': arena.schemaName }
                     });
-                    setAvailableHours(response.data);
+
+                    const rawHours = response.data;
+                    let filteredHours = rawHours;
+
+                    if (selectedDate === today) {
+                        const now = new Date();
+                        const currentHour = now.getHours();
+                        const currentMinute = now.getMinutes();
+
+                        filteredHours = rawHours.filter(hour => {
+                            const [h, m] = hour.toString().split(':').map(Number);
+
+                            if (h > currentHour) return true;
+                            if (h === currentHour && m > currentMinute) return true;
+                            return false;
+                        });
+                    }
+                    setAvailableHours(filteredHours);
                 } catch (err) {
                     console.error("Erro ao buscar horários:", err);
                     setAvailableHours([]);
@@ -61,20 +90,21 @@ export default function ModalBooking({ arena, onClose }) {
                     setLoadingHours(false);
                 }
             };
-            fetchHours();
+            fetchAndFilterHours();
         }
-    }, [selectedQuadra, selectedDate, arena.schemaName]);
+    }, [selectedQuadra, selectedDate, arena.schemaName, today]);
+
+
     const handleConfirmBooking = async (hour) => {
         const hourString = String(selectedHour);
 
         const dataInicioISO = `${selectedDate}T${hourString.length === 5 ? hourString + ':00' : hourString}`;
 
-        if(!window.confirm(`Confirmar reserva para ${selectedDate} às ${hour}?`)) return;
+        if(!window.confirm(`Confirmar reserva ?`)) return;
 
         try{
             const agendamentoData = {
                 id_quadra: selectedQuadra.id,
-                id_user: 1, // TODO: Substituir pelo ID do usuário logado (localStorage)
                 data_inicio: dataInicioISO,
                 valor: selectedQuadra.valor_hora,
                 cliente_avulso: "Não",
@@ -85,6 +115,9 @@ export default function ModalBooking({ arena, onClose }) {
                 withCredentials: true,
                 headers: { 'X-Tenant-ID': arena.schemaName }
             });
+
+            alert(`✅ Sucesso!\n\nQuadra: ${selectedQuadra.nome}\nData: ${selectedDate}\nHorário: ${hourString}\n\nSua reserva foi realizada!`);
+            onClose();
         } catch (error) {
             console.error("Erro ao agendar:", error);
             alert("Erro ao realizar o agendamento. Tente novamente.");
@@ -100,7 +133,6 @@ export default function ModalBooking({ arena, onClose }) {
             <StyledWrapper onClick={e => e.stopPropagation()}>
                 <div className="form-container">
 
-                    {/* HEADER */}
                     <div className="form-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             {selectedQuadra && (
@@ -113,7 +145,6 @@ export default function ModalBooking({ arena, onClose }) {
                         <button type="button" className="close-btn" onClick={onClose}>&times;</button>
                     </div>
 
-                    {/* CONTENT */}
                     <div className="form-content">
                         {loading ? (
                             <p className="loading-text">Carregando...</p>
@@ -139,7 +170,7 @@ export default function ModalBooking({ arena, onClose }) {
                                 <div className="booking-section">
                                     <div className="form-group">
                                         <label>Escolha a data:</label>
-                                        <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="date-input"/>
+                                        <input type="date" min={today} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="date-input"/>
                                     </div>
 
                                     <div className="hours-section">

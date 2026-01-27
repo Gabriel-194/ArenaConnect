@@ -1,11 +1,14 @@
 package com.example.Service;
 
 import com.example.Models.Agendamentos;
+import com.example.Models.Users;
 import com.example.Multitenancy.TenantContext;
 import com.example.Repository.AgendamentoRepository;
+import com.example.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,6 +20,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class AgendamentoService {
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private AgendamentoRepository agendamentoRepository;
@@ -61,6 +67,14 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamentos createBooking(Agendamentos newBooking){
+
+        String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
+                .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado no banco de dados."));
+
+        newBooking.setId_user(currentUser.getIdUser());
+
         if (newBooking.getId_quadra() == null) {
             throw new IllegalArgumentException("ID da quadra não pode ser nulo");
         }
