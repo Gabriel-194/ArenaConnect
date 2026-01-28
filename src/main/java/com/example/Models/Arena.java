@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.br.CNPJ;
 
-import java.sql.Time;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "arenas", schema = "public")
@@ -35,7 +35,13 @@ public class Arena {
 
     private boolean ativo = true;
 
-    private Time hora_inicio;
-    private Time hora_fim;
+    @Column(name = "hora_inicio")
+    private LocalTime horaInicio;
+
+    @Column(name = "hora_fim")
+    private LocalTime horaFim;
+
+    @Column(name = "dias_funcionamento")
+    private String diasFuncionamento;
 
 }

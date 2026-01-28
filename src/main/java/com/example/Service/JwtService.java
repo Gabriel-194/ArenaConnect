@@ -143,5 +143,35 @@ public class JwtService {
         }
     }
 
+    public Integer getUserIdFromToken(String token) {
+        try{
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            return claims.get("userId", Integer.class);
+        } catch (Exception e){
+            return null;
+        }
+    }
+
+    public Integer getArenaIdFromToken(String token) {
+        try {
+            SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return claims.get("idArena", Integer.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 }
 

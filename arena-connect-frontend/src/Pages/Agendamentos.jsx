@@ -3,22 +3,83 @@ import '../Styles/Agendamentos.css';
 import Sidebar from "../Components/Sidebar.jsx";
 import axios from "axios";
 
+const DAYS_MAP = [
+    { code: 'DOM', label: 'D' },
+    { code: 'SEG', label: 'S' },
+    { code: 'TER', label: 'T' },
+    { code: 'QUA', label: 'Q' },
+    { code: 'QUI', label: 'Q' },
+    { code: 'SEX', label: 'S' },
+    { code: 'SAB', label: 'S' }
+];
+
 export default function Agendamentos() {
     const [quadras, setQuadras] = useState([]);
     const [agendamentos,setAgendamentos] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState("");
     const [selectedQuadra, setSelectedQuadra] = useState("");
+
+    const [config, setConfig] = useState({
+        abertura: "07:30",
+        fechamento: "23:30",
+        diasOperacao: []
+    });
 
 
     useEffect(() => {
+        findAllAgendamentos();
         findCourts();
-    },[]);
+        findArenaConfig();
+    }, []);
 
     useEffect(() => {
         findAllAgendamentos();
     }, [selectedDate, selectedQuadra]);
+
+    const findArenaConfig = async () =>{
+        try{
+            const response = await axios.get('http://localhost:8080/api/arena/config',{
+                withCredentials: true
+            });
+
+            setConfig({
+                abertura: response.data.abertura ? response.data.abertura.slice(0,5) : "07:00",
+                fechamento: response.data.fechamento ? response.data.fechamento.slice(0,5) : "23:00",
+                diasOperacao: response.data.diasOperacao || []
+            });
+        }catch (error) {
+            console.error("Erro ao carregar configurações da arena:", error);
+        }
+    };
+
+    const toggleDay = (dayCode) => {
+        setConfig(prev => {
+            const isActive = prev.diasOperacao.includes(dayCode);
+            let newDays;
+
+            if(isActive){
+                newDays = prev.diasOperacao.filter(d => d !== dayCode)
+            } else {
+                // Se não tem, adiciona
+                newDays = [...prev.diasOperacao, dayCode];
+            }
+            return { ...prev, diasOperacao: newDays };
+        });
+    };
+
+    const handleUpdateConfig = async () => {
+        try {
+            await axios.put('http://localhost:8080/api/arena/config', config, {
+                withCredentials: true
+            });
+            alert("✅ Configurações atualizadas com sucesso!");
+        } catch (error) {
+            console.error("Erro ao atualizar:", error);
+            alert("Erro ao salvar configurações.");
+        }
+    };
 
     const findCourts = async () => {
         try {
@@ -73,12 +134,12 @@ export default function Agendamentos() {
                                 <div className="admin-filters glass-inner">
                                     <div className="filter-box">
                                         <label>Calendário</label>
-                                        <input type="date" className="input-glass"/>
+                                        <input type="date" className="input-glass" value={selectedDate} onChange={(e)=>setSelectedDate(e.target.value)}/>
                                     </div>
                                     <div className="filter-box">
                                         <label>Selecionar Quadra</label>
-                                        <select className="input-glass">
-                                            <option value="">Todas as Unidades</option>
+                                        <select className="input-glass" value={selectedQuadra} onChange={(e)=>setSelectedQuadra(e.target.value)}>
+                                            <option value="">Todas as Quadras</option>
                                             {quadras.map((quadra) => (
                                                 <option key={quadra.id} value={quadra.id}>
                                                     {quadra.nome}
@@ -86,34 +147,70 @@ export default function Agendamentos() {
                                             ))}
                                         </select>
                                     </div>
+                                    {(selectedDate || selectedQuadra) && (
+                                        <button className="clear-filter-btn" onClick={() => { setSelectedDate(""); setSelectedQuadra(""); }} title="Limpar filtros">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                        </button>
+                                    )}
                                 </div>
                             </header>
 
                             {/* card for bookings */}
                             <div className="bookings-scroll-area">
-                                {agendamentos.length > 0 ?(
-                                    agendamentos.map((agendamento)=>(
-                                        <div key={agendamento.id} className={"booking-card-mini"}>
-                                            <div className={"card-time-column"}>
-                                                <span className={"mini-time"}>
-                                                    {new Date(agendamento.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {agendamentos.length > 0 ? (
+                                    agendamentos.map((agendamento) => (
+                                        <div key={agendamento.id_agendamento} className="booking-card-mini">
+
+                                            {/* 1. Coluna de Tempo + Data */}
+                                            <div className="card-time-column">
+                                                <span className="mini-time">
+                                                {new Date(agendamento.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                                {/* Adicionando a DATA aqui */}
+                                                <span className="mini-date">
+                                                {new Date(agendamento.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                                                 </span>
                                             </div>
-                                            <div className={"card-info-column"}>
-                                                <span className={"mini-client"}>
+
+                                            <div className="card-info-column">
+                                                <span className="mini-client">
                                                    {agendamento.nomeCliente || "Cliente"}
                                                 </span>
                                                 <span className="mini-details">
                                                     {agendamento.quadraNome}
                                                 </span>
                                             </div>
+
                                             <div className="card-status-column">
                                                 <span className={`mini-status ${agendamento.status.toLowerCase()}`}>
                                                     {agendamento.status}
                                                 </span>
                                             </div>
+
+                                            {/* 2. Botões de Ação */}
                                             <div className="card-actions-column">
-                                                {/* Botões de ação... */}
+                                                {/* Botão Editar */}
+                                                <button className="mini-action-btn edit" title="Editar Agendamento">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
+                                                    </svg>
+                                                </button>
+
+                                                {/* Botão Cancelar */}
+                                                <button
+                                                    className="mini-action-btn cancel"
+                                                    title="Cancelar Agendamento"
+                                                    onClick={() => handleCancel(agendamento.id_agendamento)} // Futura função
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -132,11 +229,15 @@ export default function Agendamentos() {
                                     <div className="time-inputs-row">
                                         <div className="input-unit">
                                             <span>Abertura</span>
-                                            <input type="time" className="input-glass" defaultValue="07:30"/>
+                                            <input type="time" className="input-glass" value={config.abertura}
+                                                   onChange={(e) => setConfig({...config, abertura: e.target.value})}
+                                            />
                                         </div>
                                         <div className="input-unit">
                                             <span>Fechamento</span>
-                                            <input type="time" className="input-glass" defaultValue="23:30"/>
+                                            <input type="time" className="input-glass" value={config.fechamento}
+                                                   onChange={(e) => setConfig({...config, fechamento: e.target.value})}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -144,16 +245,22 @@ export default function Agendamentos() {
                                 <div className="config-card">
                                     <h5>Dias de Operação</h5>
                                     <div className="week-grid">
-                                        {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((dia, i) => (
-                                            <label key={i} className="day-toggle">
-                                                <input type="checkbox" defaultChecked/>
-                                                <div className="day-box">{dia}</div>
-                                            </label>
-                                        ))}
+                                        {DAYS_MAP.map((day) => {
+                                            const isActive = config.diasOperacao.includes(day.code);
+                                            return (
+                                                <button
+                                                    key={day.code}
+                                                    className={`day-btn ${isActive ? 'active' : ''}`}
+                                                    onClick={() => toggleDay(day.code)}
+                                                >
+                                                    {day.label}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
 
-                                <button className="btn-save-glass">
+                                <button className="btn-save-glass" onClick={handleUpdateConfig}>
                                     Atualizar Configurações
                                 </button>
                             </div>

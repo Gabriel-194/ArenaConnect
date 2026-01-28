@@ -1,14 +1,13 @@
 package com.example.Controller;
 
+import com.example.DTOs.ArenaConfigDTO;
 import com.example.Models.Arena;
-import com.example.Models.Quadra;
 import com.example.Service.ArenaService;
+import com.example.Service.JwtService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -20,10 +19,43 @@ public class ArenaController {
     @Autowired
     private ArenaService arenaService;
 
+    @Autowired
+    private JwtService jwtService;
+
     @GetMapping
     public ResponseEntity<List<Arena>> getArenaAtivo() {
         List<Arena> arenas = arenaService.getArenaAtivo();
         return ResponseEntity.ok(arenas);
 
+    }
+
+    @GetMapping("/config")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ArenaConfigDTO> getArenaConfig(@CookieValue("accessToken") String token) {
+        Integer arenaId = jwtService.getArenaIdFromToken(token);
+
+        if (arenaId == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        return ResponseEntity.ok(arenaService.getArenaConfig(arenaId));
+
+    }
+
+    @PutMapping("/config")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateConfig(@CookieValue("accessToken") String token,
+                                          @RequestBody ArenaConfigDTO dto) {
+        Integer arenaId = jwtService.getArenaIdFromToken(token);
+        if (arenaId == null) {
+            return ResponseEntity.badRequest().body("Token inválido ou sem arena vinculada.");
+        }
+
+        try {
+            arenaService.atualizarConfigArena(arenaId, dto);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
+        }
     }
 }

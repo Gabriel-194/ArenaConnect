@@ -50,7 +50,7 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     }
 
     @Override
-    public List<Agendamentos> findAllAgendamentos(Integer idQuadra, LocalDate data, String schema){
+    public List<Agendamentos> findAllAgendamentos(Integer idQuadra, LocalDate data, String schema) {
         definirSchema(schema);
 
         StringBuilder jpql = new StringBuilder("SELECT a FROM Agendamentos a WHERE 1=1 ");
@@ -62,6 +62,7 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         if (data != null) {
             jpql.append(" AND a.data_inicio >= :inicio AND a.data_inicio < :fim ");
         }
+        jpql.append(" ORDER BY a.data_inicio ASC");
 
         TypedQuery<Agendamentos> query = entityManager.createQuery(jpql.toString(), Agendamentos.class);
 

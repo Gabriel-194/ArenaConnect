@@ -1,5 +1,6 @@
 package com.example.Service;
 
+import com.example.DTOs.ArenaConfigDTO;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.Models.Arena;
 import com.example.Repository.ArenaRepository;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -130,5 +133,39 @@ public class ArenaService {
         if (arenaRepository.existsByCnpj(cnpjLimpo)) {
             throw new IllegalArgumentException("CNPJ existente.");
         }
+    }
+
+    public ArenaConfigDTO getArenaConfig(Integer idArena) {
+        Arena arena = arenaRepository.findById(Long.valueOf(idArena))
+                .orElseThrow(() -> new RuntimeException("Arena não encontrada"));
+
+        ArenaConfigDTO dto = new ArenaConfigDTO();
+
+        dto.setAbertura(arena.getHoraInicio());
+        dto.setFechamento(arena.getHoraFim());
+
+        if (arena.getDiasFuncionamento() != null && !arena.getDiasFuncionamento().isEmpty()) {
+            dto.setDiasOperacao(Arrays.asList(arena.getDiasFuncionamento().split(",")));
+        } else {
+            dto.setDiasOperacao(new ArrayList<>());
+        }
+
+        return dto;
+    }
+
+    public void atualizarConfigArena(Integer idArena, ArenaConfigDTO dto) {
+        Arena arena = arenaRepository.findById(Long.valueOf(idArena))
+                .orElseThrow(() -> new RuntimeException("Arena não encontrada"));
+
+        if(dto.getAbertura() != null) arena.setHoraInicio(dto.getAbertura());
+        if(dto.getFechamento() != null) arena.setHoraFim(dto.getFechamento());
+
+        if (dto.getDiasOperacao() != null && !dto.getDiasOperacao().isEmpty()) {
+            String diasString = String.join(",", dto.getDiasOperacao());
+            arena.setDiasFuncionamento(diasString);
+        } else {
+            arena.setDiasFuncionamento("");
+        }
+        arenaRepository.save(arena);
     }
 }
