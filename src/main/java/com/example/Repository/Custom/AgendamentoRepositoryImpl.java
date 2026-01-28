@@ -4,10 +4,12 @@ import com.example.Models.Agendamentos;
 import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
@@ -77,7 +79,30 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         return query.getResultList();
     }
 
+    @Override
+    public List<Agendamentos> findAgendamentosClients(Integer idUser) {
+        List<Agendamentos> allAgendamentos = new ArrayList<>();
 
+        String schemaQuery = "select nspname from pg_namespace where nspname not like 'pg_%' and nspname not like 'information_schema' and nspname != 'public'";
 
+        List<String> schemas = entityManager.createNativeQuery(schemaQuery).getResultList();
 
+        try {
+            for (String schema : schemas ){
+
+                String sql = "SELECT * FROM " + schema + ".agendamentos WHERE id_cliente = :idUser";
+                Query query = entityManager.createNativeQuery(sql, Agendamentos.class);
+                query.setParameter("idUser", idUser);
+
+                List<Agendamentos> schemaResults = query.getResultList();
+
+                allAgendamentos.addAll(schemaResults);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching from schema " + e.getMessage());
+        }
+
+        return allAgendamentos;
+    }
 }

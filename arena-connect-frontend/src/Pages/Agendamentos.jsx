@@ -62,7 +62,7 @@ export default function Agendamentos() {
             if(isActive){
                 newDays = prev.diasOperacao.filter(d => d !== dayCode)
             } else {
-                // Se não tem, adiciona
+
                 newDays = [...prev.diasOperacao, dayCode];
             }
             return { ...prev, diasOperacao: newDays };
@@ -264,17 +264,9 @@ export default function Agendamentos() {
                                     Atualizar Configurações
                                 </button>
                             </div>
-
-                            <div className="arena-info-footer">
-                                <div className="indicator-row">
-                                    <span className="dot pulse-green"></span>
-                                    <span>Arena Online</span>
-                                </div>
-                            </div>
                         </aside>
-
                     </div>
                 </div>
             </div>
-        );
+    );
 }

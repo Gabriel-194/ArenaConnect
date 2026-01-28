@@ -18,4 +18,7 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
     String findSchemaNameById(Long arenaId);
 
     boolean existsByCnpj(String cnpj);
+
+    Optional<Arena> findBySchemaName(String schemaName);
+
 }

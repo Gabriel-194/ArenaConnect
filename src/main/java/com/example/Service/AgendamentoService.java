@@ -1,9 +1,12 @@
 package com.example.Service;
 
 import com.example.Models.Agendamentos;
+import com.example.Models.Arena;
+import com.example.Models.Quadra;
 import com.example.Models.Users;
 import com.example.Multitenancy.TenantContext;
 import com.example.Repository.AgendamentoRepository;
+import com.example.Repository.ArenaRepository;
 import com.example.Repository.QuadraRepository;
 import com.example.Repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -31,6 +34,9 @@ public class AgendamentoService {
     @Autowired
     private AgendamentoRepository agendamentoRepository;
 
+    @Autowired
+    private ArenaRepository arenaRepository;
+
     private String configurarSchema() {
         String currentTenant = TenantContext.getCurrentTenant();
 
@@ -45,8 +51,11 @@ public class AgendamentoService {
     public List<LocalTime> getHorariosDisponiveis(Integer idQuadra, LocalDate data) {
         String schema = configurarSchema();
 
-        LocalTime abertura = LocalTime.of(7, 30);
-        LocalTime fechamento = LocalTime.of(23, 30);
+        Arena arena = arenaRepository.findBySchemaName(schema)
+                .orElseThrow(() -> new RuntimeException("Arena não encontrada para o schema: " + schema));
+
+        LocalTime abertura = (arena.getHoraInicio() != null) ? arena.getHoraInicio() : LocalTime.of(6, 00);
+        LocalTime fechamento = (arena.getHoraFim() != null) ? arena.getHoraFim() : LocalTime.of(23, 00);
 
         LocalDateTime inicioDia = data.atStartOfDay();
         LocalDateTime fimDia = data.plusDays(1).atStartOfDay();
@@ -128,5 +137,16 @@ public class AgendamentoService {
         }
 
         return  new ArrayList<>(agendamento);
+    }
+
+    public List<Agendamentos> findAgendamentosClients(){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+
+        List<Agendamentos> agendamentos = agendamentoRepository.findAgendamentosClients(user.getIdUser());
+
+        return  new ArrayList<>(agendamentos);
     }
 }

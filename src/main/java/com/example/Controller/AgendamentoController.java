@@ -61,4 +61,12 @@ public class AgendamentoController {
             return ResponseEntity.internalServerError().body(error);
         }
     }
+
+    @GetMapping("/agendamentosClients")
+    public ResponseEntity<List<Agendamentos>> getAgendamentosClients(){
+
+        List<Agendamentos> lista =  agendamentoService.findAgendamentosClients();
+        return ResponseEntity.ok(lista);
+    }
+
 }

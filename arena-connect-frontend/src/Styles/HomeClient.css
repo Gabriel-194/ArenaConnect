@@ -3,29 +3,27 @@
     background-color: #09090b;
     color: #fff;
     font-family: 'Inter', sans-serif;
-
-    /* MUDANÇA PRINCIPAL AQUI: */
-    height: 100vh;            /* Altura exata da tela */
-    display: flex;            /* Flexbox para organizar verticalmente */
-    flex-direction: column;   /* Um item embaixo do outro */
-    overflow: hidden;         /* Impede a página inteira de rolar */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     position: relative;
 }
 
-/* Background Líquido Fixo (Fica atrás de tudo) */
+
 .liquid-background-fixed {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     z-index: 0;
     pointer-events: none;
     overflow: hidden;
-    background: radial-gradient(circle at top, #1a2e20, #000);
+    background: radial-gradient(circle at top, rgb(29, 43, 34), #000);
 }
 
 .blob {
     position: absolute;
     filter: blur(80px);
-    opacity: 0.4;
+    opacity: 0.15;
     border-radius: 50%;
     animation: floatBlob 10s infinite alternate;
 }
@@ -47,8 +45,7 @@
 
 /* --- Header --- */
 .client-header {
-    /* Não precisa mais de position: sticky, pois ele é o item 1 do flex */
-    flex-shrink: 0; /* Garante que o header não encolha */
+    flex-shrink: 0;
     z-index: 50;
     padding: 1rem 1.5rem;
     display: flex;
@@ -56,10 +53,8 @@
     align-items: center;
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
-
-    /* Garante que fique acima do conteúdo ao rolar */
     position: relative;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3); /* Sombra mais forte pra separar */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 .user-avatar {
@@ -87,16 +82,12 @@
 
 /* --- Conteúdo --- */
 .client-content {
-    /* MUDANÇA PRINCIPAL AQUI: */
-    flex: 1;                  /* Ocupa todo o espaço que sobrar entre o header e o fim */
-    overflow-y: auto;         /* Habilita o SCROLL vertical só aqui */
-    overflow-x: hidden;       /* Remove scroll horizontal */
-
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
     z-index: 1;
     padding: 1.5rem;
-
-    /* Espaço extra no final para o último card não ficar atrás do menu */
     padding-bottom: 100px;
 }
 
@@ -130,9 +121,9 @@
     overflow-x: auto;
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
-.categories-scroll::-webkit-scrollbar { display: none; } /* Chrome */
+.categories-scroll::-webkit-scrollbar { display: none; }
 
 .category-pill {
     background: rgba(255,255,255,0.05);
@@ -165,7 +156,6 @@
 }
 .arena-card:active { transform: scale(0.98); }
 
-/* Glow líquido interno */
 .liquid-glow {
     position: absolute; inset: 0;
     background: linear-gradient(135deg, rgba(57, 255, 20, 0.1), transparent 60%);
@@ -199,11 +189,6 @@
     display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
 }
 
-.arena-rating {
-    display: flex; align-items: center; gap: 4px;
-    color: #ffd700; font-weight: bold; font-size: 0.9rem;
-}
-
 .arena-address {
     font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0 0 12px 0;
 }
@@ -225,7 +210,7 @@
 
 /* --- Bottom Nav --- */
 .bottom-nav {
-    position: absolute; /* Fixo em relação ao pai (client-body) */
+    position: absolute;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
@@ -236,8 +221,6 @@
     justify-content: space-around;
     padding: 12px;
     z-index: 100;
-
-    /* Garante o efeito de vidro em cima dos cards */
     backdrop-filter: blur(15px);
     background: rgba(32, 32, 36, 0.85);
 }
