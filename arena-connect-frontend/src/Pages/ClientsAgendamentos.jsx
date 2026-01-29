@@ -10,28 +10,48 @@ export default function ClientAgendamentos(){
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchBookings = async () =>{
-            try{
-                const response = await axios.get('http://localhost:8080/api/agendamentos/agendamentosClients',{
-                    withCredentials: true,
-                });
-                setBookings(response.data);
-            } catch (error) {
-                console.error("Erro ao buscar agendamentos:", error);
-            } finally {
-                setLoading(false);
-            }
+    const fetchBookings = async () =>{
+        try{
+            const response = await axios.get('http://localhost:8080/api/agendamentos/agendamentosClients',{
+                withCredentials: true,
+            });
+            setBookings(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar agendamentos:", error);
+        } finally {
+            setLoading(false);
         }
+    }
+
+    useEffect(() => {
         fetchBookings()
     }, []);
+
+    const handleCancelBooking = async (idAgendamento,schemaName) => {
+        if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
+        try{
+            const response = await axios.put(`http://localhost:8080/api/agendamentos/${idAgendamento}/status`,{
+                status:"CANCELADO"
+            },{
+                withCredentials:true,
+                headers :{
+                    'X-TENANT-id' : schemaName
+                }
+            });
+            alert("Agendamento cancelado com sucesso");
+            await fetchBookings();
+        } catch (error) {
+            console.error("Erro ao cancelar:", error);
+            alert(error.response?.data?.error || "Erro ao cancelar agendamento.");
+        }
+    }
 
     const getAgendamentosFiltrados = () => {
         const now = new Date();
         now.setHours(0, 0, 0, 0);
 
         return bookings.filter(booking =>{
-            const bookingDate = new Date(booking.data_inicio);
+            const bookingDate = new Date(booking.dataInicio);
             const bookingDateOnly = new Date(bookingDate);
             bookingDateOnly.setHours(0, 0, 0, 0);
 
@@ -42,8 +62,8 @@ export default function ClientAgendamentos(){
             }
         })
             .sort((a, b) => {
-                const dateA = new Date(a.data_inicio);
-                const dateB = new Date(b.data_inicio);
+                const dateA = new Date(a.dataInicio);
+                const dateB = new Date(b.dataInicio);
                 return filterType === 'upcoming' ? dateA - dateB : dateB - dateA;
             });
     };
@@ -96,21 +116,20 @@ export default function ClientAgendamentos(){
                     {loading ? (
                         <p style={{textAlign: 'center', color: '#888'}}>Carregando...</p>
                     ) : (
-                        /* CHAMADA DA FUNÇÃO AQUI: */
                         getAgendamentosFiltrados().length > 0 ? (
                             getAgendamentosFiltrados().map((booking) => (
-                                <div key={`${booking.schemaName}-${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
+                                <div key={`${booking.schemaName}-${booking.idAgendamentoArena}`} className="arena-card glass-panel booking-card">
                                     <div className="liquid-glow"></div>
 
                                     <div className="booking-header-row">
                                         <div className="booking-time-group">
                                             <div className="date-box">
                                                 <span className="date-label">Data</span>
-                                                <span className="date-value">{formatDate(booking.data_inicio)}</span>
+                                                <span className="date-value">{formatDate(booking.dataInicio)}</span>
                                             </div>
                                             <div className="time-info">
-                                                <h4>{formatTime(booking.data_inicio)}</h4>
-                                                <span>até {formatTime(booking.data_fim)}</span>
+                                                <h4>{formatTime(booking.dataInicio)}</h4>
+                                                <span>até {formatTime(booking.dataFim)}</span>
                                             </div>
                                         </div>
 
@@ -121,11 +140,15 @@ export default function ClientAgendamentos(){
 
                                     <div className="booking-body">
                                         <h4 style={{ marginBottom: '4px', color: '#fff' }}>
-                                            {booking.arenaName || 'Arena Desconhecida'}
+                                            {booking.nomeArena || 'Arena Desconhecida'}
                                         </h4>
 
+                                        <p style={{ margin: 0, fontSize: '0.9rem', color: '#ccc' }}>
+                                            {booking.nomeQuadra || `Quadra...`}
+                                        </p>
+
                                         <p className="booking-address" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
-                                            {booking.enderecoArena || 'Endereço não disponível'}
+                                            {booking.enderecoResumido || 'Endereço não disponível'}
                                         </p>
                                     </div>
 
@@ -135,7 +158,8 @@ export default function ClientAgendamentos(){
                                         </span>
 
                                         {booking.status !== 'CANCELADO' && filterType === 'upcoming' && (
-                                            <button className="btn-cancel">Cancelar</button>
+                                            <button className="btn-cancel" onClick={() => handleCancelBooking(booking.idAgendamentoArena, booking.schemaName)}
+                                            >Cancelar</button>
                                         )}
                                     </div>
                                 </div>
