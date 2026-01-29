@@ -161,3 +161,88 @@
     font-weight: 600;
     cursor: default;
 }
+
+@media (min-width: 768px) {
+
+    .client-body {
+        max-width: 100%;
+        margin: 0;
+        background-color: #09090b;
+        border: none;
+        box-shadow: none;
+    }
+
+    .client-header-container,
+    header {
+        width: 100%;
+        max-width: 100%;
+        left: 0 !important;
+        transform: none !important;
+        border-radius: 0 0 16px 16px;
+        padding: 1.5rem 3rem;
+    }
+
+    .client-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        padding-top: 2rem;
+    }
+
+    .arenas-list {
+        display: grid;
+
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+    }
+
+    .booking-card {
+        height: 100%;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .client-nav,
+    nav,
+    .bottom-navigation {
+        width: 100%;
+        max-width: 100%;
+        left: 0 !important;
+        bottom: 0 !important;
+        transform: none !important;
+        border-radius: 0;
+        background: rgba(20, 20, 20, 0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .client-nav > div,
+    nav > div {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .liquid-background-fixed {
+        max-width: 100%;
+        border-radius: 0;
+        transform: none;
+        left: 0;
+    }
+
+    .blob-1 { top: -200px; left: -200px; width: 600px; height: 600px; opacity: 0.1; }
+    .blob-2 { bottom: -200px; right: -200px; width: 500px; height: 500px; opacity: 0.1; }
+
+    .client-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .client-content::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .client-content::-webkit-scrollbar-thumb {
+        background-color: transparent;
+    }
+}

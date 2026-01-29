@@ -1,12 +1,71 @@
 import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import axios from "axios";
 
 import "../Styles/ClientsAgendamentos.css"
 
 export default function ClientAgendamentos(){
     const [filterType, setFilterType] = useState('upcoming');
+    const [bookings, setBookings] = useState([]);
+    const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        const fetchBookings = async () =>{
+            try{
+                const response = await axios.get('http://localhost:8080/api/agendamentos/agendamentosClients',{
+                    withCredentials: true,
+                });
+                setBookings(response.data);
+            } catch (error) {
+                console.error("Erro ao buscar agendamentos:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchBookings()
+    }, []);
+
+    const getAgendamentosFiltrados = () => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        return bookings.filter(booking =>{
+            const bookingDate = new Date(booking.data_inicio);
+            const bookingDateOnly = new Date(bookingDate);
+            bookingDateOnly.setHours(0, 0, 0, 0);
+
+            if(filterType === 'upcoming'){
+                return bookingDate >= now && booking.status !== 'CANCELADO';
+            } else {
+                return bookingDate < now || booking.status === 'CANCELADO';
+            }
+        })
+            .sort((a, b) => {
+                const dateA = new Date(a.data_inicio);
+                const dateB = new Date(b.data_inicio);
+                return filterType === 'upcoming' ? dateA - dateB : dateB - dateA;
+            });
+    };
+
+    const getStatusClass = (status) => {
+        switch (status?.toUpperCase()) {
+            case 'CONFIRMADO': return 'status-confirmed';
+            case 'PENDENTE': return 'status-pending';
+            case 'CANCELADO': return 'status-canceled';
+            default: return 'status-completed';
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "--/--";
+        return new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    };
+
+    const formatTime = (dateString) => {
+        if (!dateString) return "--:--";
+        return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
 
 
     return (
@@ -26,94 +85,69 @@ export default function ClientAgendamentos(){
                             onClick={() => setFilterType('upcoming')}>
                         Próximos Jogos
                     </button>
-                    <button className={`category-pill ${filterType === 'upcoming' ? 'active' : ''}`}
-                            onClick={() => setFilterType('upcoming')}>
+                    <button
+                        className={`category-pill ${filterType === 'history' ? 'active' : ''}`}
+                        onClick={() => setFilterType('history')}>
                         Histórico
                     </button>
                 </div>
 
                 <div className="arenas-list">
+                    {loading ? (
+                        <p style={{textAlign: 'center', color: '#888'}}>Carregando...</p>
+                    ) : (
+                        /* CHAMADA DA FUNÇÃO AQUI: */
+                        getAgendamentosFiltrados().length > 0 ? (
+                            getAgendamentosFiltrados().map((booking) => (
+                                <div key={`${booking.schemaName}-${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
+                                    <div className="liquid-glow"></div>
 
-                    {/* CARD 1: Exemplo de Confirmado */}
-                    <div className="arena-card glass-panel booking-card">
-                        <div className="liquid-glow"></div>
+                                    <div className="booking-header-row">
+                                        <div className="booking-time-group">
+                                            <div className="date-box">
+                                                <span className="date-label">Data</span>
+                                                <span className="date-value">{formatDate(booking.data_inicio)}</span>
+                                            </div>
+                                            <div className="time-info">
+                                                <h4>{formatTime(booking.data_inicio)}</h4>
+                                                <span>até {formatTime(booking.data_fim)}</span>
+                                            </div>
+                                        </div>
 
-                        {/* Linha do Topo: Data e Status */}
-                        <div className="booking-header-row">
-                            <div className="booking-time-group">
-                                <div className="date-box">
-                                    <span className="date-label">Data</span>
-                                    <span className="date-value">15/11</span>
+                                        <span className={`status-badge ${getStatusClass(booking.status)}`}>
+                                            {booking.status || 'Agendado'}
+                                        </span>
+                                    </div>
+
+                                    <div className="booking-body">
+                                        <h4 style={{ marginBottom: '4px', color: '#fff' }}>
+                                            {booking.arenaName || 'Arena Desconhecida'}
+                                        </h4>
+
+                                        <p className="booking-address" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
+                                            {booking.enderecoArena || 'Endereço não disponível'}
+                                        </p>
+                                    </div>
+
+                                    <div className="booking-footer">
+                                        <span className="price-tag">
+                                            Valor: <strong>R$ {booking.valor ? booking.valor.toFixed(2) : '0.00'}</strong>
+                                        </span>
+
+                                        {booking.status !== 'CANCELADO' && filterType === 'upcoming' && (
+                                            <button className="btn-cancel">Cancelar</button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="time-info">
-                                    <h4>19:00</h4>
-                                    <span>até 20:00</span>
-                                </div>
+                            ))
+                        ) : (
+                            <div style={{textAlign: 'center', color: '#888', padding: '20px'}}>
+                                <p>Nenhum agendamento encontrado.</p>
                             </div>
-
-                            <span className="status-badge status-confirmed">
-                            Confirmado
-                        </span>
-                        </div>
-
-                        {/* Corpo: Infos da Arena */}
-                        <div className="booking-body">
-                            <h4>Arena Central</h4>
-                            <p>Quadra 1 (Sintética)</p>
-                            <p className="booking-address">Rua das Flores, 123</p>
-                        </div>
-
-                        {/* Rodapé: Preço e Botão */}
-                        <div className="booking-footer">
-                        <span className="price-tag">
-                            Valor: <strong>R$ 120,00</strong>
-                        </span>
-
-                            <button className="btn-cancel">
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* CARD 2: Exemplo de Pendente */}
-                    <div className="arena-card glass-panel booking-card">
-                        <div className="liquid-glow"></div>
-
-                        <div className="booking-header-row">
-                            <div className="booking-time-group">
-                                <div className="date-box">
-                                    <span className="date-label">Data</span>
-                                    <span className="date-value">20/11</span>
-                                </div>
-                                <div className="time-info">
-                                    <h4>18:00</h4>
-                                    <span>até 19:30</span>
-                                </div>
-                            </div>
-
-                            <span className="status-badge status-pending">
-                            Pendente
-                        </span>
-                        </div>
-
-                        <div className="booking-body">
-                            <h4>Arena Power</h4>
-                            <p>Quadra Areia 2</p>
-                            <p className="booking-address">Av. do Estado, 500</p>
-                        </div>
-
-                        <div className="booking-footer">
-                        <span className="price-tag">
-                            Valor: <strong>R$ 90,00</strong>
-                        </span>
-
-                            <button className="btn-cancel">
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-
+                        )
+                    )}
                 </div>
+
 
                 <div style={{ height: '100px' }}></div>
             </main>

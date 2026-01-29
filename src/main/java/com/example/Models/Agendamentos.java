@@ -36,4 +36,13 @@ public class Agendamentos {
     @Transient
     private String quadraNome;
 
+    @Transient
+    private String schemaName;
+
+    @Transient
+    private String arenaName;
+
+    @Transient
+    private String enderecoArena;
+
 }

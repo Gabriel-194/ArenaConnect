@@ -69,8 +69,8 @@ public class AgendamentoService {
         List<LocalTime> horariosDisponiveis = new ArrayList<>();
         LocalTime atual = abertura;
 
-        while(atual.isBefore(fechamento)) {
-            if(!horariosOcupados.contains(atual)) {
+        while (atual.isBefore(fechamento)) {
+            if (!horariosOcupados.contains(atual)) {
                 horariosDisponiveis.add(atual);
             }
             atual = atual.plusHours(1);
@@ -79,7 +79,7 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public Agendamentos createBooking(Agendamentos newBooking){
+    public Agendamentos createBooking(Agendamentos newBooking) {
 
         String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -117,12 +117,12 @@ public class AgendamentoService {
     public List<Agendamentos> findAllAgendamentos(Integer idQuadra, LocalDate data) {
         String schema = configurarSchema();
 
-        if(schema == null || schema.isEmpty()) {
+        if (schema == null || schema.isEmpty()) {
             throw new IllegalArgumentException("O identificador da arena (schema) é obrigatório.");
         }
-        List<Agendamentos> agendamento = agendamentoRepository.findAllAgendamentos(idQuadra, data,schema);
+        List<Agendamentos> agendamento = agendamentoRepository.findAllAgendamentos(idQuadra, data, schema);
 
-        for(Agendamentos a : agendamento) {
+        for (Agendamentos a : agendamento) {
             String nomeCliente = userRepository.findById(a.getId_user())
                     .map(user -> user.getNome())
                     .orElse("Usuario não encontrado");
@@ -136,10 +136,11 @@ public class AgendamentoService {
             a.setQuadraNome(nomeQuadra);
         }
 
-        return  new ArrayList<>(agendamento);
+        return new ArrayList<>(agendamento);
     }
 
-    public List<Agendamentos> findAgendamentosClients(){
+    @Transactional
+    public List<Agendamentos> findAgendamentosClients() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Users user = userRepository.findByEmail(email)
@@ -147,6 +148,23 @@ public class AgendamentoService {
 
         List<Agendamentos> agendamentos = agendamentoRepository.findAgendamentosClients(user.getIdUser());
 
-        return  new ArrayList<>(agendamentos);
+        for (Agendamentos a : agendamentos) {
+            String schema = a.getSchemaName();
+            Integer idQuadra = a.getId_quadra();
+
+            if (schema != null && idQuadra != null) {
+
+                arenaRepository.findBySchemaName(schema).ifPresent(arena -> {
+                    a.setArenaName(arena.getName());
+                    a.setEnderecoArena(arena.getEndereco() + " - " + arena.getCidade());
+                });
+
+                quadraRepository.buscarPorIdComSchema(idQuadra, schema).ifPresent(quadra -> {
+                    a.setQuadraNome(quadra.getNome());
+                });
+            }
+        }
+
+        return new ArrayList<>(agendamentos);
     }
 }

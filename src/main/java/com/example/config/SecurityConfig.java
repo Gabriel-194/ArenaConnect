@@ -48,17 +48,17 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/auth/**", "/api/users/register-client", "/api/users/register-partner").permitAll()
-                        .requestMatchers("/", "/index.html", "/assets/**", "/styles/**", "/favicon.ico").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE", "ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/arena").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/agendamentos/allAgendamentos").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers("/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN")
 
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
 
