@@ -87,9 +87,7 @@ export default function HomeClient() {
                                         </p>
 
                                         <div className="arena-footer-row">
-                                            <span className="price-tag">
-                                                A partir de <strong>R$ {arena.price || '80'}</strong>
-                                            </span>
+                                            <span>{/*espaço pro botao de agendar ficar no canto*/}</span>
                                             <button className="btn-book-mini" onClick={() => setSelectedArena(arena)}>
                                                 Agendar
                                             </button>

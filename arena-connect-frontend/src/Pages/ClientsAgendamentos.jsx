@@ -56,9 +56,9 @@ export default function ClientAgendamentos(){
             bookingDateOnly.setHours(0, 0, 0, 0);
 
             if(filterType === 'upcoming'){
-                return bookingDate >= now && booking.status !== 'CANCELADO';
+                return bookingDate >= now && booking.status !== 'CANCELADO' && booking.status !== 'FINALIZADO';
             } else {
-                return bookingDate < now || booking.status === 'CANCELADO';
+                return bookingDate < now || booking.status === 'CANCELADO' || booking.status === 'FINALIZADO';
             }
         })
             .sort((a, b) => {

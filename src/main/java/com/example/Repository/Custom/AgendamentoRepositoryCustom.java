@@ -15,8 +15,6 @@ public interface AgendamentoRepositoryCustom {
 
     List<Agendamentos> findAllAgendamentos (Integer idQuadra, LocalDate data, String schema);
 
-    List<Agendamentos> findAgendamentosClients(Integer idUser);
-
     Optional<Agendamentos> buscarPorIdComSchema(Integer id, String schema);
 
 }

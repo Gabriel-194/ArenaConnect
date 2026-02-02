@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import '../Styles/Agendamentos.css';
 import Sidebar from "../Components/Sidebar.jsx";
 import axios from "axios";
+import ModalEditBooking from "../Components/ModalEditBooking.jsx";
 
 const DAYS_MAP = [
     { code: 'DOM', label: 'D' },
@@ -17,6 +18,8 @@ export default function Agendamentos() {
     const [quadras, setQuadras] = useState([]);
     const [agendamentos,setAgendamentos] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const [editingBooking, setEditingBooking] = useState(null);
 
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedQuadra, setSelectedQuadra] = useState("");
@@ -111,6 +114,28 @@ export default function Agendamentos() {
         }
     }
 
+    const handleStatusUpdate = async (idAgendamento,newStatus) => {
+        const actionVerb = newStatus === 'CANCELADO' ? 'cancelar' : 'finalizar';
+
+        if (!confirm(`Tem certeza que deseja ${actionVerb} este agendamento?`)) return;
+
+        try {
+            await axios.put(`http://localhost:8080/api/agendamentos/${idAgendamento}/status`, {
+                status: newStatus
+            }, {
+                withCredentials: true
+            });
+            alert(`Agendamento ${newStatus === 'CANCELADO' ? 'cancelado' : 'finalizado'} com sucesso!`);
+            findAllAgendamentos();
+
+        } catch (error) {
+            console.error("Erro ao cancelar:", error);
+            const msg = error.response?.data?.error || error.response?.data || "Erro ao cancelar.";
+            alert(typeof msg === 'object' ? JSON.stringify(msg) : msg);
+        }
+    }
+
+
     return (
             <div className="admin-body">
                 <Sidebar/>
@@ -128,7 +153,7 @@ export default function Agendamentos() {
                             <header className="admin-header">
                                 <div>
                                     <h2 className="glass-title">Painel de Agendamentos</h2>
-                                    <p className="glass-subtitle">Controle total das reservas e quadras</p>
+                                    <p className="glass-subtitle">Controle total das reservas</p>
                                 </div>
 
                                 <div className="admin-filters glass-inner">
@@ -185,32 +210,46 @@ export default function Agendamentos() {
                                             </div>
 
                                             <div className="card-status-column">
-                                                <span className={`mini-status ${agendamento.status.toLowerCase()}`}>
-                                                    {agendamento.status}
+                                                <span className={`mini-status ${agendamento.status ? agendamento.status.toLowerCase() : ''}`}>
+                                                        {agendamento.status}
                                                 </span>
                                             </div>
 
-                                            {/* 2. Botões de Ação */}
-                                            <div className="card-actions-column">
-                                                {/* Botão Editar */}
-                                                <button className="mini-action-btn edit" title="Editar Agendamento">
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
-                                                    </svg>
-                                                </button>
 
-                                                {/* Botão Cancelar */}
-                                                <button
-                                                    className="mini-action-btn cancel"
-                                                    title="Cancelar Agendamento"
-                                                    onClick={() => handleCancel(agendamento.id_agendamento)} // Futura função
-                                                >
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                    </svg>
-                                                </button>
+                                            <div className="card-actions-column">
+                                                {(agendamento.status !== 'CANCELADO' && agendamento.status !== 'FINALIZADO') && (
+                                                    <button className="mini-action-btn edit" title="Editar Agendamento" onClick={() => setEditingBooking(agendamento)}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
+                                                        </svg>
+                                                    </button>
+                                                )}
+
+                                                {(agendamento.status !== 'CANCELADO' && agendamento.status !== 'FINALIZADO' && agendamento.status !== 'PENDENTE') && (
+                                                    <button
+                                                        className="mini-action-btn check"
+                                                        title="Finalizar Agendamento"
+                                                        onClick={() => handleStatusUpdate(agendamento.id_agendamento, 'FINALIZADO')}
+                                                    >
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                                        </svg>
+                                                    </button>
+                                                )}
+
+                                                {(agendamento.status !== 'CANCELADO' && agendamento.status !== 'FINALIZADO' && agendamento.status !== 'CONFIRMADO') && (
+                                                    <button
+                                                        className="mini-action-btn cancel"
+                                                        title="Cancelar Agendamento"
+                                                        onClick={() => handleStatusUpdate(agendamento.id_agendamento, 'CANCELADO')}
+                                                    >
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                        </svg>
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ))
@@ -267,6 +306,14 @@ export default function Agendamentos() {
                         </aside>
                     </div>
                 </div>
+                {editingBooking && (
+                    <ModalEditBooking
+                        bookingToEdit={editingBooking}
+                        quadras={quadras}
+                        onClose={() => setEditingBooking(null)}
+                        onSuccess={findAllAgendamentos}
+                    />
+                )}
             </div>
     );
 }

@@ -81,42 +81,6 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     }
 
     @Override
-    public List<Agendamentos> findAgendamentosClients(Integer idUser) {
-        List<Agendamentos> allAgendamentos = new ArrayList<>();
-
-        // Sua query para pegar schemas
-        String schemaQuery = "select nspname from pg_namespace where nspname not like 'pg_%' and nspname not like 'information_schema' and nspname != 'public'";
-
-        List<String> schemas = entityManager.createNativeQuery(schemaQuery).getResultList();
-
-        try {
-            for (String schema : schemas ){
-
-                String sql = "SELECT * FROM " + schema + ".agendamentos WHERE id_user = :idUser";
-                Query query = entityManager.createNativeQuery(sql, Agendamentos.class);
-                query.setParameter("idUser", idUser);
-
-                List<Agendamentos> schemaResults = query.getResultList();
-
-                for(Agendamentos a : schemaResults) {
-                    a.setSchemaName(schema);
-                }
-
-                allAgendamentos.addAll(schemaResults);
-
-                entityManager.clear();
-
-            }
-
-        } catch (Exception e) {
-
-            throw new RuntimeException("Error fetching from schema " + e.getMessage());
-        }
-
-        return allAgendamentos;
-    }
-
-    @Override
     public Optional<Agendamentos> buscarPorIdComSchema(Integer id, String schema) {
         definirSchema(schema);
         Agendamentos agendamento = entityManager.find(Agendamentos.class, id);
