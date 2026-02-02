@@ -2,6 +2,7 @@ import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
 import {useEffect, useState} from "react";
 import axios from "axios";
+import ModalEditBooking from "../Components/ModalEditBooking.jsx";
 
 import "../Styles/ClientsAgendamentos.css"
 
@@ -9,6 +10,21 @@ export default function ClientAgendamentos(){
     const [filterType, setFilterType] = useState('upcoming');
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [editingBooking, setEditingBooking] = useState(null);
+    const [quadras,setQuadras] = useState([]);
+
+    const findCourts = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/quadra', {
+                withCredentials: true
+            });
+            setQuadras(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar quadras:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const fetchBookings = async () =>{
         try{
@@ -163,10 +179,27 @@ export default function ClientAgendamentos(){
                                             Valor: <strong>R$ {booking.valor ? booking.valor.toFixed(2) : '0.00'}</strong>
                                         </span>
 
-                                        {booking.status !== 'CANCELADO' && filterType === 'upcoming' && (
-                                            <button className="btn-cancel" onClick={() => handleCancelBooking(booking.idAgendamentoArena, booking.schemaName)}
-                                            >Cancelar</button>
-                                        )}
+                                        <div className="card-actions">
+                                            {(booking.status !== 'CANCELADO' && booking.status !== 'FINALIZADO' && filterType === 'upcoming') && (
+                                                <button
+                                                    className="mini-action-btn edit"
+                                                    title="Editar Agendamento"
+                                                    onClick={() => setEditingBooking(booking) && findCourts()}
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
+                                                    </svg>
+                                                </button>
+                                            )}
+
+                                            {(booking.status !== 'CANCELADO' && booking.status !== 'FINALIZADO' && filterType === 'upcoming') && (
+                                                <button className="btn-cancel" onClick={() => handleCancelBooking(booking.id_agendamento, booking.schemaName)}
+                                                >Cancelar</button>
+                                            )}
+                                        </div>
+
+
                                     </div>
                                 </div>
                             ))
@@ -183,6 +216,15 @@ export default function ClientAgendamentos(){
             </main>
 
             <ClientNav active="agendamentos" />
+
+            {editingBooking && (
+                <ModalEditBooking
+                    bookingToEdit={editingBooking}
+                    onClose={() => setEditingBooking(null)}
+                    onSuccess={fetchBookings}
+                />
+            )}
+
         </div>
     );
 }

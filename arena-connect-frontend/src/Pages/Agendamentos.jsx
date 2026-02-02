@@ -77,7 +77,7 @@ export default function Agendamentos() {
             await axios.put('http://localhost:8080/api/arena/config', config, {
                 withCredentials: true
             });
-            alert("✅ Configurações atualizadas com sucesso!");
+            toast.success("Status atualizado com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar:", error);
             alert("Erro ao salvar configurações.");

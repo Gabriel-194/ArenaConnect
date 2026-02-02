@@ -26,7 +26,6 @@ export default function ModalEditBooking({ bookingToEdit, onClose, onSuccess }) 
     useEffect(() => {
         const init = async () => {
             try {
-
                 const response = await axios.get(`http://localhost:8080/api/quadra`, {
                     withCredentials: true
                 });

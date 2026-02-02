@@ -19,6 +19,7 @@ import ClientsAgendamentos from "./Pages/ClientsAgendamentos.jsx";
 
 createRoot(document.getElementById('root')).render(
     <React.StrictMode>
+
         <BrowserRouter>
             <Routes>
                 <Route path="/" element={<LandingPage />} />

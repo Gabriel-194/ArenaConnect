@@ -257,3 +257,33 @@
         background-color: transparent;
     }
 }
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Estilo do Botão de Ícone (Igual ao Admin) */
+.mini-action-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.mini-action-btn.edit:hover {
+    background: rgba(0, 200, 255, 0.1);
+    border-color: #00c8ff;
+    color: #00c8ff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 10px rgba(0, 200, 255, 0.2);
+}

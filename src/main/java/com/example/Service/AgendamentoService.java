@@ -78,13 +78,25 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamentos createBooking(Agendamentos newBooking) {
+        String currentSchema = configurarSchema();
 
-        String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (newBooking.getId_agendamento() != null) {
+            Agendamentos agendamentoOriginal = agendamentoRepository.buscarPorIdComSchema(newBooking.getId_agendamento(), currentSchema)
+                    .orElseThrow(() -> new RuntimeException("Agendamento não encontrado para edição."));
 
-        Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
-                .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado no banco de dados."));
+            newBooking.setId_user(agendamentoOriginal.getId_user());
 
-        newBooking.setId_user(currentUser.getIdUser());
+            if (newBooking.getStatus() == null) {
+                newBooking.setStatus(agendamentoOriginal.getStatus());
+            }
+        } else {
+            String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+            Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
+                    .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado."));
+
+            newBooking.setId_user(currentUser.getIdUser());
+        }
+
 
         if (newBooking.getId_quadra() == null) {
             throw new IllegalArgumentException("ID da quadra não pode ser nulo");
@@ -107,8 +119,12 @@ public class AgendamentoService {
             newBooking.setData_fim(newBooking.getData_inicio().plusHours(1));
         }
 
-        newBooking.setStatus("PENDENTE");
-        String currentSchema = configurarSchema();
+        if (newBooking.getId_agendamento() == null) {
+            newBooking.setStatus("PENDENTE");
+        } else if (newBooking.getStatus() == null) {
+            newBooking.setStatus("PENDENTE");
+        }
+
         Agendamentos savedBooking = agendamentoRepository.salvarComSchema(newBooking, currentSchema);
 
         salvarHistorico(savedBooking, currentSchema);
@@ -118,10 +134,13 @@ public class AgendamentoService {
 
     private void salvarHistorico(Agendamentos original, String schema) {
         try {
-            AgendamentoHistorico historico = new AgendamentoHistorico();
+            AgendamentoHistorico historico = historicoRepository
+                    .findBySchemaNameAndIdAgendamentoArena(schema,original.getId_agendamento())
+                    .orElse(new AgendamentoHistorico());
 
             historico.setIdUser(original.getId_user());
             historico.setSchemaName(schema);
+            historico.setIdAgendamentoArena(original.getId_agendamento());
             historico.setIdAgendamentoArena(original.getId_agendamento());
             historico.setDataInicio(original.getData_inicio());
             historico.setDataFim(original.getData_fim());

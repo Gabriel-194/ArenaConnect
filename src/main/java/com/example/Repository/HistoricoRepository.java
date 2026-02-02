@@ -17,4 +17,6 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
 
     @Query("SELECT h FROM AgendamentoHistorico h WHERE h.idUser = :idUser ORDER BY h.dataInicio DESC")
     List<AgendamentoHistorico> buscarHistoricoPorUsuario(@Param("idUser") Integer idUser);
+
+    Optional<AgendamentoHistorico> findBySchemaNameAndIdAgendamentoArena(String schemaName, Integer idAgendamentoArena);
 }
