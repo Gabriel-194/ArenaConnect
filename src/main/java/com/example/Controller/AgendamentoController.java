@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.Models.AgendamentoHistorico;
 import com.example.Models.Agendamentos;
 import com.example.Repository.AgendamentoRepository;
 import com.example.Service.AgendamentoService;
@@ -63,10 +64,25 @@ public class AgendamentoController {
     }
 
     @GetMapping("/agendamentosClients")
-    public ResponseEntity<List<Agendamentos>> getAgendamentosClients(){
-
-        List<Agendamentos> lista =  agendamentoService.findAgendamentosClients();
+    public ResponseEntity<List<AgendamentoHistorico>> getAgendamentosClients(){
+        List<AgendamentoHistorico> lista = agendamentoService.findAgendamentosClients();
         return ResponseEntity.ok(lista);
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> atualizarStatus(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
+        try {
+            String novoStatus = payload.get("status");
+
+            agendamentoService.atualizarStatus(id, novoStatus);
+            return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso!"));
+
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
+        }
     }
 
 }

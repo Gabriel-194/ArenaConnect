@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
 
@@ -113,5 +114,13 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         }
 
         return allAgendamentos;
+    }
+
+    @Override
+    public Optional<Agendamentos> buscarPorIdComSchema(Integer id, String schema) {
+        definirSchema(schema);
+        Agendamentos agendamento = entityManager.find(Agendamentos.class, id);
+
+        return Optional.ofNullable(agendamento);
     }
 }

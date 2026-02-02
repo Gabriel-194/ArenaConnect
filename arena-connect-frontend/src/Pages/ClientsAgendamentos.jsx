@@ -70,10 +70,16 @@ export default function ClientAgendamentos(){
 
     const getStatusClass = (status) => {
         switch (status?.toUpperCase()) {
-            case 'CONFIRMADO': return 'status-confirmed';
-            case 'PENDENTE': return 'status-pending';
-            case 'CANCELADO': return 'status-canceled';
-            default: return 'status-completed';
+            case 'CONFIRMADO':
+                return 'status-confirmed';
+            case 'PENDENTE':
+                return 'status-pending';
+            case 'FINALIZADO':
+                return 'status-completed';
+            case 'CANCELADO':
+                return 'status-canceled';
+            default:
+                return 'status-completed';
         }
     };
 
@@ -90,9 +96,9 @@ export default function ClientAgendamentos(){
 
     return (
         <div className="client-body">
-            <div className="liquid-background-fixed">
-                <div className="blob blob-1"></div>
-                <div className="blob blob-2"></div>
+            <div className="client-background-fixed">
+                <div className="client-blob client-blob-1"></div>
+                <div className="client-blob client-blob-2"></div>
             </div>
 
             <ClientHeader />

@@ -1,5 +1,23 @@
-/* --- Filtros (Abas) --- */
+/* --- FUNDO ESPECÍFICO DO CLIENTE (Renomeado para isolar) --- */
+.client-background-fixed {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background: radial-gradient(circle at top, rgb(29, 43, 34), #000);
+}
 
+.client-blob {
+    position: absolute;
+    filter: blur(80px);
+    opacity: 0.15;
+    border-radius: 50%;
+    animation: floatBlob 10s infinite alternate;
+}
+
+.client-blob-1 { top: -10%; left: -10%; width: 300px; height: 300px; background: var(--neon-green, #39ff14); }
+.client-blob-2 { bottom: 20%; right: -10%; width: 250px; height: 250px; background: #16a34a; }
 
 /* --- Card de Agendamento --- */
 .booking-card {
@@ -27,7 +45,7 @@
     gap: 12px;
 }
 
-/* Caixa da Data (O quadrado cinza) */
+/* Caixa da Data */
 .date-box {
     background: rgba(255, 255, 255, 0.05);
     padding: 8px 12px;
@@ -75,7 +93,6 @@
     letter-spacing: 0.5px;
 }
 
-/* Cores dos Status */
 .status-confirmed {
     background: rgba(57, 255, 20, 0.15);
     color: #4ade80;
@@ -96,12 +113,12 @@
 }
 
 .status-completed {
-    background: rgba(255, 255, 255, 0.1);
-    color: #aaa;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgb(5, 11, 44);
+    color: #1237d3;
+    border: 1px solid rgb(52, 93, 239);
 }
 
-/* --- Corpo do Card (Infos da Arena) --- */
+/* --- Corpo do Card --- */
 .booking-body {
     padding-bottom: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -125,14 +142,13 @@
     color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* --- Rodapé do Card (Preço e Botões) --- */
+/* --- Rodapé do Card --- */
 .booking-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Botão Cancelar */
 .btn-cancel {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
@@ -150,7 +166,6 @@
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
-/* Botão Detalhes (Desativado) */
 .btn-details-disabled {
     background: rgba(255, 255, 255, 0.05);
     color: rgba(255, 255, 255, 0.3);
@@ -163,7 +178,6 @@
 }
 
 @media (min-width: 768px) {
-
     .client-body {
         max-width: 100%;
         margin: 0;
@@ -173,7 +187,7 @@
     }
 
     .client-header-container,
-    header {
+    .client-header {
         width: 100%;
         max-width: 100%;
         left: 0 !important;
@@ -191,7 +205,6 @@
 
     .arenas-list {
         display: grid;
-
         grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
         gap: 24px;
     }
@@ -202,7 +215,6 @@
     }
 
     .client-nav,
-    nav,
     .bottom-navigation {
         width: 100%;
         max-width: 100%;
@@ -215,8 +227,7 @@
         border-top: 1px solid rgba(255,255,255,0.1);
     }
 
-    .client-nav > div,
-    nav > div {
+    .client-nav > div {
         max-width: 600px;
         margin: 0 auto;
         display: flex;
@@ -224,15 +235,15 @@
         width: 100%;
     }
 
-    .liquid-background-fixed {
+    .client-background-fixed {
         max-width: 100%;
         border-radius: 0;
         transform: none;
         left: 0;
     }
 
-    .blob-1 { top: -200px; left: -200px; width: 600px; height: 600px; opacity: 0.1; }
-    .blob-2 { bottom: -200px; right: -200px; width: 500px; height: 500px; opacity: 0.1; }
+    .client-blob-1 { top: -200px; left: -200px; width: 600px; height: 600px; opacity: 0.1; }
+    .client-blob-2 { bottom: -200px; right: -200px; width: 500px; height: 500px; opacity: 0.1; }
 
     .client-content::-webkit-scrollbar {
         width: 8px;

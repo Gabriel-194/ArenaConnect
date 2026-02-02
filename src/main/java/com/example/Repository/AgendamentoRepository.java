@@ -1,5 +1,6 @@
 package com.example.Repository;
 
+import com.example.Models.AgendamentoHistorico;
 import com.example.Models.Agendamentos;
 import com.example.Models.Arena;
 import com.example.Repository.Custom.AgendamentoRepositoryCustom;
@@ -14,3 +15,4 @@ public interface AgendamentoRepository extends JpaRepository<Agendamentos, Integ
 
 
 }
+

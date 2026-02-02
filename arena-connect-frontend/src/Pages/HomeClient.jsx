@@ -39,9 +39,9 @@ export default function HomeClient() {
     return (
 
         <div className="client-body">
-            <div className="liquid-background-fixed">
-                <div className="blob blob-1"></div>
-                <div className="blob blob-2"></div>
+            <div className="client-background-fixed">
+                <div className="client-blob client-blob-1"></div>
+                <div className="client-blob client-blob-2"></div>
             </div>
 
             <ClientHeader />

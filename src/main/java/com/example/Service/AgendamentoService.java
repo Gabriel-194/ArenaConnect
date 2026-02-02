@@ -1,14 +1,9 @@
 package com.example.Service;
 
-import com.example.Models.Agendamentos;
-import com.example.Models.Arena;
-import com.example.Models.Quadra;
-import com.example.Models.Users;
+import com.example.Domain.RoleEnum;
+import com.example.Models.*;
 import com.example.Multitenancy.TenantContext;
-import com.example.Repository.AgendamentoRepository;
-import com.example.Repository.ArenaRepository;
-import com.example.Repository.QuadraRepository;
-import com.example.Repository.UserRepository;
+import com.example.Repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +31,9 @@ public class AgendamentoService {
 
     @Autowired
     private ArenaRepository arenaRepository;
+
+    @Autowired
+    private HistoricoRepository historicoRepository;
 
     private String configurarSchema() {
         String currentTenant = TenantContext.getCurrentTenant();
@@ -109,8 +107,41 @@ public class AgendamentoService {
             newBooking.setData_fim(newBooking.getData_inicio().plusHours(1));
         }
 
-        newBooking.setStatus("CONFIRMADO");
-        return agendamentoRepository.salvarComSchema(newBooking, configurarSchema());
+        newBooking.setStatus("PENDENTE");
+        String currentSchema = configurarSchema();
+        Agendamentos savedBooking = agendamentoRepository.salvarComSchema(newBooking, currentSchema);
+
+        salvarHistorico(savedBooking, currentSchema);
+
+        return savedBooking;
+    }
+
+    private void salvarHistorico(Agendamentos original, String schema) {
+        try {
+            AgendamentoHistorico historico = new AgendamentoHistorico();
+
+            historico.setIdUser(original.getId_user());
+            historico.setSchemaName(schema);
+            historico.setIdAgendamentoArena(original.getId_agendamento());
+            historico.setDataInicio(original.getData_inicio());
+            historico.setDataFim(original.getData_fim());
+            historico.setStatus(original.getStatus());
+            historico.setValor(original.getValor());
+
+            arenaRepository.findBySchemaName(schema).ifPresent(arena -> {
+                historico.setNomeArena(arena.getName());
+                historico.setEnderecoResumido(arena.getEndereco() + " - " + arena.getCidade());
+            });
+
+            quadraRepository.buscarPorIdComSchema(original.getId_quadra(), schema).ifPresent(quadra -> {
+                historico.setNomeQuadra(quadra.getNome());
+            });
+
+            historicoRepository.save(historico);
+
+        } catch (Exception e) {
+            System.err.println("Erro ao salvar histórico: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -140,31 +171,56 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public List<Agendamentos> findAgendamentosClients() {
+    public List<AgendamentoHistorico> findAgendamentosClients() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
-        List<Agendamentos> agendamentos = agendamentoRepository.findAgendamentosClients(user.getIdUser());
+        return historicoRepository.buscarHistoricoPorUsuario(user.getIdUser());
+    }
 
-        for (Agendamentos a : agendamentos) {
-            String schema = a.getSchemaName();
-            Integer idQuadra = a.getId_quadra();
+    @Transactional
+    public void atualizarStatus(Integer idAgendamento, String novoStatus) {
+        String schema = configurarSchema();
+        String statusAlvo = novoStatus.toUpperCase();
 
-            if (schema != null && idQuadra != null) {
+        // 1. Identificar QUEM está logado
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users usuarioLogado = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não autenticado."));
 
-                arenaRepository.findBySchemaName(schema).ifPresent(arena -> {
-                    a.setArenaName(arena.getName());
-                    a.setEnderecoArena(arena.getEndereco() + " - " + arena.getCidade());
-                });
+        boolean isAdmin = usuarioLogado.getRole() == RoleEnum.ADMIN || usuarioLogado.getRole() == RoleEnum.SUPERADMIN;
 
-                quadraRepository.buscarPorIdComSchema(idQuadra, schema).ifPresent(quadra -> {
-                    a.setQuadraNome(quadra.getNome());
-                });
+        Agendamentos agendamento = agendamentoRepository.buscarPorIdComSchema(idAgendamento, schema)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
+
+
+        if (!isAdmin) {
+            if (!agendamento.getId_user().equals(usuarioLogado.getIdUser())) {
+                throw new SecurityException("Você não tem permissão para alterar este agendamento.");
             }
+
+            if (statusAlvo.equals("FINALIZADO") || statusAlvo.equals("CONFIRMADO")) {
+                throw new SecurityException("Ação não permitida. Aguarde a confirmação do pagamento.");
+            }
+
+            if (!statusAlvo.equals("CANCELADO")) {
+                throw new SecurityException("Status inválido para operação de cliente.");
+            }
+
         }
 
-        return new ArrayList<>(agendamentos);
+
+        agendamento.setStatus(statusAlvo);
+        agendamentoRepository.salvarComSchema(agendamento, schema);
+
+        historicoRepository.buscarPorOrigem(idAgendamento, schema).ifPresent(hist -> {
+            hist.setStatus(statusAlvo);
+            historicoRepository.save(hist);
+        });
     }
+
+
 }
+
