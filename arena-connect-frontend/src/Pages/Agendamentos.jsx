@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import '../Styles/Agendamentos.css';
 import Sidebar from "../Components/Sidebar.jsx";
 import axios from "axios";
-import ModalEditBooking from "../Components/ModalEditBooking.jsx";
+import ModalBooking from "../Components/ModalBooking.jsx";
 
 const DAYS_MAP = [
     { code: 'DOM', label: 'D' },
@@ -77,7 +77,7 @@ export default function Agendamentos() {
             await axios.put('http://localhost:8080/api/arena/config', config, {
                 withCredentials: true
             });
-            toast.success("Status atualizado com sucesso!");
+            window.success("Status atualizado com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar:", error);
             alert("Erro ao salvar configurações.");
@@ -307,9 +307,8 @@ export default function Agendamentos() {
                     </div>
                 </div>
                 {editingBooking && (
-                    <ModalEditBooking
+                    <ModalBooking
                         bookingToEdit={editingBooking}
-                        quadras={quadras}
                         onClose={() => setEditingBooking(null)}
                         onSuccess={findAllAgendamentos}
                     />

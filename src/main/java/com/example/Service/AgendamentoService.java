@@ -78,11 +78,23 @@ public class AgendamentoService {
 
     @Transactional
     public Agendamentos createBooking(Agendamentos newBooking) {
+
+        String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
+                .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado."));
+
         String currentSchema = configurarSchema();
 
         if (newBooking.getId_agendamento() != null) {
             Agendamentos agendamentoOriginal = agendamentoRepository.buscarPorIdComSchema(newBooking.getId_agendamento(), currentSchema)
                     .orElseThrow(() -> new RuntimeException("Agendamento não encontrado para edição."));
+
+            boolean isOwner = agendamentoOriginal.getId_user().equals(currentUser.getIdUser());
+            boolean isAdmin = currentUser.getRole() == RoleEnum.ADMIN;
+
+            if (!isOwner && !isAdmin) {
+                throw new SecurityException("Você não tem permissão para editar este agendamento.");
+            }
 
             newBooking.setId_user(agendamentoOriginal.getId_user());
 
@@ -90,10 +102,6 @@ public class AgendamentoService {
                 newBooking.setStatus(agendamentoOriginal.getStatus());
             }
         } else {
-            String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
-            Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
-                    .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado."));
-
             newBooking.setId_user(currentUser.getIdUser());
         }
 
@@ -135,31 +143,33 @@ public class AgendamentoService {
     private void salvarHistorico(Agendamentos original, String schema) {
         try {
             AgendamentoHistorico historico = historicoRepository
-                    .findBySchemaNameAndIdAgendamentoArena(schema,original.getId_agendamento())
+                    .findBySchemaNameAndIdAgendamento(schema, original.getId_agendamento())
                     .orElse(new AgendamentoHistorico());
 
-            historico.setIdUser(original.getId_user());
             historico.setSchemaName(schema);
-            historico.setIdAgendamentoArena(original.getId_agendamento());
-            historico.setIdAgendamentoArena(original.getId_agendamento());
+
+            historico.setIdUser(original.getId_user());
+            historico.setIdAgendamento(original.getId_agendamento());
+            historico.setId_quadra(original.getId_quadra());
             historico.setDataInicio(original.getData_inicio());
-            historico.setDataFim(original.getData_fim());
+            historico.setData_fim(original.getData_fim());
             historico.setStatus(original.getStatus());
             historico.setValor(original.getValor());
 
             arenaRepository.findBySchemaName(schema).ifPresent(arena -> {
-                historico.setNomeArena(arena.getName());
-                historico.setEnderecoResumido(arena.getEndereco() + " - " + arena.getCidade());
+                historico.setArenaName(arena.getName());
+                historico.setEnderecoArena(arena.getEndereco() + " - " + arena.getCidade());
             });
 
             quadraRepository.buscarPorIdComSchema(original.getId_quadra(), schema).ifPresent(quadra -> {
-                historico.setNomeQuadra(quadra.getNome());
+                historico.setQuadraNome(quadra.getNome());
             });
 
             historicoRepository.save(historico);
 
         } catch (Exception e) {
             System.err.println("Erro ao salvar histórico: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -204,7 +214,6 @@ public class AgendamentoService {
         String schema = configurarSchema();
         String statusAlvo = novoStatus.toUpperCase();
 
-        // 1. Identificar QUEM está logado
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Users usuarioLogado = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não autenticado."));
@@ -229,7 +238,6 @@ public class AgendamentoService {
             }
 
         }
-
 
         agendamento.setStatus(statusAlvo);
         agendamentoRepository.salvarComSchema(agendamento, schema);

@@ -3,7 +3,7 @@ import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
 import '../Styles/components.css';
 
-export default function ModalBooking({ arena, onClose }) {
+export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess }) {
     const [quadras, setQuadras] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -11,6 +11,8 @@ export default function ModalBooking({ arena, onClose }) {
     const [availableHours, setAvailableHours] = useState([]);
     const [loadingHours, setLoadingHours] = useState(false);
     const [selectedHour, setSelectedHour] = useState(null);
+
+    const isEditing = !!bookingToEdit;
 
     const getTodayLocal = () => {
         const date = new Date();
@@ -23,23 +25,56 @@ export default function ModalBooking({ arena, onClose }) {
     const today = getTodayLocal();
     const [selectedDate, setSelectedDate] = useState(today);
 
+    const getHeaders = () => {
+        const headers = { 'Content-Type': 'application/json' };
+
+        if (bookingToEdit?.schemaName) {
+            headers['X-Tenant-ID'] = bookingToEdit.schemaName;
+        }
+
+        else if (arena?.schemaName) {
+            headers['X-Tenant-ID'] = arena.schemaName;
+        }
+        return headers;
+    };
+
 
     useEffect(() => {
-        const fetchQuadras = async () => {
+        const init = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/quadra/courtAtivas`, {
+                const response = await axios.get(`http://localhost:8080/api/quadra`, {
                     withCredentials: true,
-                    headers: { 'X-Tenant-ID': arena.schemaName }
+                    headers: getHeaders()
                 });
                 setQuadras(response.data);
+
+                if (isEditing) {
+                    const courtId = bookingToEdit.id_quadra;
+                    const dateRaw = bookingToEdit.data_inicio;
+
+                    const court = response.data.find(q => q.id === courtId);
+                    if (court) setSelectedQuadra(court);
+
+                    if (dateRaw) {
+                        const dateObj = new Date(dateRaw);
+                        const isoDate = dateObj.toISOString().split('T')[0];
+                        const hourStr = dateObj.toTimeString().split(' ')[0].substring(0, 5);
+
+                        setSelectedDate(isoDate);
+                        setSelectedHour(hourStr);
+                    }
+                } else {
+                    setSelectedDate(today);
+                }
+
             } catch (err) {
-                console.error("Erro ao buscar quadras:", err);
+                console.error("Erro ao inicializar:", err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchQuadras();
-    }, [arena.schemaName]);
+        init();
+    }, [bookingToEdit, arena]);
 
     const handleModalClick = (e) => {
         e.stopPropagation();
@@ -55,7 +90,7 @@ export default function ModalBooking({ arena, onClose }) {
             const fetchAndFilterHours = async () => {
                 setLoadingHours(true);
                 setAvailableHours([]);
-                setSelectedHour(null);
+
                 try {
                     const response = await axios.get(`http://localhost:8080/api/agendamentos/disponibilidade`, {
                         params: {
@@ -63,7 +98,7 @@ export default function ModalBooking({ arena, onClose }) {
                             data: selectedDate
                         },
                         withCredentials: true,
-                        headers: { 'X-Tenant-ID': arena.schemaName }
+                        headers: getHeaders()
                     });
 
                     const rawHours = response.data;
@@ -76,55 +111,70 @@ export default function ModalBooking({ arena, onClose }) {
 
                         filteredHours = rawHours.filter(hour => {
                             const [h, m] = hour.toString().split(':').map(Number);
-
                             if (h > currentHour) return true;
                             if (h === currentHour && m > currentMinute) return true;
                             return false;
                         });
                     }
+
+                    if (isEditing) {
+                        const originalDate = new Date(bookingToEdit.data_inicio).toISOString().split('T')[0];
+                        const originalTime = new Date(bookingToEdit.data_inicio).toTimeString().substring(0,5);
+
+                        if (selectedDate === originalDate && selectedQuadra.id === bookingToEdit.id_quadra) {
+                            if (!filteredHours.includes(originalTime)) {
+                                filteredHours.push(originalTime);
+                                filteredHours.sort();
+                            }
+                        }
+                    }
+
                     setAvailableHours(filteredHours);
                 } catch (err) {
                     console.error("Erro ao buscar horários:", err);
-                    setAvailableHours([]);
                 } finally {
                     setLoadingHours(false);
                 }
             };
             fetchAndFilterHours();
         }
-    }, [selectedQuadra, selectedDate, arena.schemaName, today]);
+    }, [selectedQuadra, selectedDate, isEditing, bookingToEdit]);
 
 
-    const handleConfirmBooking = async (hour) => {
+    const handleConfirm = async () => {
+        if(!selectedHour) return;
+
         const hourString = String(selectedHour);
+        const timeFormatted = hourString.length === 5 ? hourString + ':00' : hourString;
+        const dataInicioISO = `${selectedDate}T${timeFormatted}`;
 
-        const dataInicioISO = `${selectedDate}T${hourString.length === 5 ? hourString + ':00' : hourString}`;
+        const actionText = isEditing ? "Atualizar reserva" : "Confirmar reserva";
+        if(!window.confirm(`${actionText} para ${selectedDate} às ${hourString}?`)) return;
 
-        if(!window.confirm(`Confirmar reserva ?`)) return;
-
-        try{
-            const agendamentoData = {
+        try {
+            const payload = {
                 id_quadra: selectedQuadra.id,
                 data_inicio: dataInicioISO,
                 valor: selectedQuadra.valor_hora,
-                status: "CONFIRMADO"
+                status: isEditing ? bookingToEdit.status : "CONFIRMADO",
+                id_agendamento: isEditing ? bookingToEdit.id_agendamento : null
             };
 
-            await axios.post('http://localhost:8080/api/agendamentos/reservar', agendamentoData, {
+            await axios.post('http://localhost:8080/api/agendamentos/reservar', payload, {
                 withCredentials: true,
-                headers: { 'X-Tenant-ID': arena.schemaName }
+                headers: getHeaders()
             });
 
-            alert(`✅ Sucesso!\n\nQuadra: ${selectedQuadra.nome}\nData: ${selectedDate}\nHorário: ${hourString}\n\nSua reserva foi realizada!`);
-            onClose();
-        } catch (error) {
-            console.error("Erro ao agendar:", error);
-            alert("Erro ao realizar o agendamento. Tente novamente.");
-        }
-    }
+            alert(isEditing ? "Agendamento atualizado!" : "Reserva realizada com sucesso!");
 
-    const handleSelectHour = (hour) => {
-        setSelectedHour(hour);
+            if (onSuccess) onSuccess();
+            onClose();
+
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            const msg = error.response?.data?.message || "Erro ao processar agendamento.";
+            alert(msg);
+        }
     }
 
     return (
@@ -135,11 +185,16 @@ export default function ModalBooking({ arena, onClose }) {
                     <div className="form-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             {selectedQuadra && (
-                                <button className="back-btn" onClick={handleBack}>
+                                <button className="back-btn" onClick={handleBack} title="Trocar Quadra">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                                 </button>
                             )}
-                            <h3>{selectedQuadra ? `Reservar ${selectedQuadra.nome}` : `Quadras em ${arena.name || arena.nome}`}</h3>
+                            <h3>
+                                {selectedQuadra
+                                    ? (isEditing ? `Editar: ${selectedQuadra.nome}` : `Reservar: ${selectedQuadra.nome}`)
+                                    : (isEditing ? "Editar Agendamento" : `Quadras: ${arena?.nome || arena?.name || 'Disponíveis'}`)
+                                }
+                            </h3>
                         </div>
                         <button type="button" className="close-btn" onClick={onClose}>&times;</button>
                     </div>
@@ -149,9 +204,8 @@ export default function ModalBooking({ arena, onClose }) {
                             <p className="loading-text">Carregando...</p>
                         ) : (
                             !selectedQuadra ? (
-                                // LISTA DE QUADRAS
                                 <div className="courts-list">
-                                    {quadras.length > 0 ? quadras.map(quadra => (
+                                    {quadras.map(quadra => (
                                         <div key={quadra.id} className="court-item">
                                             <div className="court-info">
                                                 <span className="court-name">{quadra.nome}</span>
@@ -159,22 +213,41 @@ export default function ModalBooking({ arena, onClose }) {
                                             </div>
                                             <div className="court-action">
                                                 <span className="court-price">R$ {quadra.valor_hora}</span>
-                                                <button className="book-btn" onClick={() => setSelectedQuadra(quadra)}>Ver Horários</button>
+                                                <button className="book-btn" onClick={() => setSelectedQuadra(quadra)}>Selecionar</button>
                                             </div>
                                         </div>
-                                    )) : <p className="loading-text">Nenhuma quadra disponível.</p>}
+                                    ))}
                                 </div>
                             ) : (
-                                // SEÇÃO DE AGENDAMENTO
+
                                 <div className="booking-section">
+
+                                    <div className="current-court-info">
+                                        <div className="court-display-label">Quadra Selecionada:</div>
+                                        <div className="court-display-row">
+                                            <span className="court-display-name">{selectedQuadra.nome}</span>
+                                            <button className="change-court-btn" onClick={handleBack}>
+                                                Trocar
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <div className="form-group">
-                                        <label>Escolha a data:</label>
-                                        <input type="date" min={today} value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="date-input"/>
+                                        <label>Data:</label>
+                                        <input
+                                            type="date"
+                                            min={today}
+                                            value={selectedDate}
+                                            onChange={(e) => {
+                                                setSelectedDate(e.target.value);
+                                                setSelectedHour(null);
+                                            }}
+                                            className="date-input"
+                                        />
                                     </div>
 
                                     <div className="hours-section">
                                         <label className="section-label">Horários Disponíveis:</label>
-
                                         {loadingHours ? (
                                             <div className="loading-text">Verificando agenda...</div>
                                         ) : (
@@ -184,18 +257,21 @@ export default function ModalBooking({ arena, onClose }) {
                                                         {availableHours.map((hour, index) => (
                                                             <div
                                                                 key={index}
-
                                                                 className={`hour-card ${selectedHour === hour ? 'selected' : ''}`}
-                                                                onClick={() => handleSelectHour(hour)}
+                                                                onClick={() => setSelectedHour(hour)}
                                                             >
                                                                 {hour.toString().substring(0, 5)}
                                                             </div>
                                                         ))}
                                                     </div>
-
                                                     <div className="confirm-container">
-                                                        <button className="btn-icon-glass" style={{width: "100px"}} disabled={!selectedHour} onClick={handleConfirmBooking}>
-                                                            {selectedHour ? `Confirmar às ${selectedHour.toString().substring(0, 5)}`
+                                                        <button
+                                                            className="confirm-btn-glass"
+                                                            disabled={!selectedHour}
+                                                            onClick={handleConfirm}
+                                                        >
+                                                            {selectedHour
+                                                                ? (isEditing ? "Salvar Alterações" : "Confirmar Reserva")
                                                                 : 'Selecione um horário'}
                                                         </button>
                                                     </div>
@@ -283,6 +359,44 @@ const StyledWrapper = styled.div`
         line-height: 0.8;
     }
     .close-btn:hover { color: #4ade80; }
+    
+    .change-court-btn {
+        background: transparent;
+        border: 1px solid #4ade80;
+        color: #4ade80;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-left: 10px; 
+    }
+    .change-court-btn:hover {
+        background: #4ade80;
+        color: #000;
+    }
+    
+    .confirm-btn-glass {
+        background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+        border: none;
+        color: #000;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .confirm-btn-glass:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+    .confirm-btn-glass:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+    }
     
     .form-content {
         overflow-y: auto;

@@ -1,12 +1,13 @@
 package com.example.Models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "agendamentos_historico", schema = "public") // Fica sempre no public
+@Table(name = "agendamentos_historico", schema = "public")
 @Getter
 @Setter
 public class AgendamentoHistorico {
@@ -15,31 +16,36 @@ public class AgendamentoHistorico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "id_user", nullable = false)
-    private Integer idUser; // Seu sistema usa Integer para user
+    @JsonProperty("id_user")
+    @Column(name = "id_user")
+    private Integer idUser;
 
-    @Column(name = "schema_name", nullable = false)
-    private String schemaName;
+    @JsonProperty("id_agendamento")
+    @Column(name = "id_agendamento")
+    private Integer idAgendamento;
 
-    @Column(name = "id_origem", nullable = false)
-    private Integer idAgendamentoArena; // ID do agendamento dentro da arena
+    @Column(name = "id_quadra")
+    private Integer id_quadra;
 
-    @Column(name = "nome_arena")
-    private String nomeArena;
-
-    @Column(name = "nome_quadra")
-    private String nomeQuadra;
-
-    @Column(name = "endereco_resumido")
-    private String enderecoResumido;
-
+    @JsonProperty("data_inicio")
     @Column(name = "data_inicio")
     private LocalDateTime dataInicio;
 
     @Column(name = "data_fim")
-    private LocalDateTime dataFim;
+    private LocalDateTime data_fim;
 
     private String status;
 
+    @Column(name = "valor_total")
     private Double valor;
+
+
+
+    private String schemaName;
+
+    private String arenaName;
+
+    private String quadraNome;
+
+    private String enderecoArena;
 }

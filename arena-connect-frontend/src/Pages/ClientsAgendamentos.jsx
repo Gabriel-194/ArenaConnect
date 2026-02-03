@@ -2,29 +2,14 @@ import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
 import {useEffect, useState} from "react";
 import axios from "axios";
-import ModalEditBooking from "../Components/ModalEditBooking.jsx";
-
 import "../Styles/ClientsAgendamentos.css"
+import ModalBooking from "../Components/ModalBooking.jsx";
 
 export default function ClientAgendamentos(){
     const [filterType, setFilterType] = useState('upcoming');
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingBooking, setEditingBooking] = useState(null);
-    const [quadras,setQuadras] = useState([]);
-
-    const findCourts = async () => {
-        try {
-            const response = await axios.get('http://localhost:8080/api/quadra', {
-                withCredentials: true
-            });
-            setQuadras(response.data);
-        } catch (error) {
-            console.error("Erro ao buscar quadras:", error);
-        } finally {
-            setLoading(false);
-        }
-    }
 
     const fetchBookings = async () =>{
         try{
@@ -43,19 +28,21 @@ export default function ClientAgendamentos(){
         fetchBookings()
     }, []);
 
-    const handleCancelBooking = async (idAgendamento,schemaName) => {
+    const handleCancelBooking = async (idAgendamento, schemaName) => {
         if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
         try{
             const response = await axios.put(`http://localhost:8080/api/agendamentos/${idAgendamento}/status`,{
-                status:"CANCELADO"
+                status: "CANCELADO"
             },{
-                withCredentials:true,
-                headers :{
-                    'X-TENANT-id' : schemaName
+                withCredentials: true,
+                headers: {
+                    'X-TENANT-ID': schemaName
                 }
             });
+
             alert("Agendamento cancelado com sucesso");
             await fetchBookings();
+
         } catch (error) {
             console.error("Erro ao cancelar:", error);
             alert(error.response?.data?.error || "Erro ao cancelar agendamento.");
@@ -66,49 +53,44 @@ export default function ClientAgendamentos(){
         const now = new Date();
         now.setHours(0, 0, 0, 0);
 
-        return bookings.filter(booking =>{
-            const bookingDate = new Date(booking.dataInicio);
+        return bookings.filter(booking => {
+            if (!booking.data_inicio) return false;
+
+            const bookingDate = new Date(booking.data_inicio);
             const bookingDateOnly = new Date(bookingDate);
             bookingDateOnly.setHours(0, 0, 0, 0);
 
             if(filterType === 'upcoming'){
-                return bookingDate >= now && booking.status !== 'CANCELADO' && booking.status !== 'FINALIZADO';
+                return bookingDateOnly >= now && booking.status !== 'CANCELADO' && booking.status !== 'FINALIZADO';
             } else {
-                return bookingDate < now || booking.status === 'CANCELADO' || booking.status === 'FINALIZADO';
+                return bookingDateOnly < now || booking.status === 'CANCELADO' || booking.status === 'FINALIZADO';
             }
-        })
-            .sort((a, b) => {
-                const dateA = new Date(a.dataInicio);
-                const dateB = new Date(b.dataInicio);
-                return filterType === 'upcoming' ? dateA - dateB : dateB - dateA;
-            });
+        }).sort((a,b) => {
+            const dateA = new Date(a.data_inicio);
+            const dateB = new Date(b.data_inicio);
+            return filterType === 'upcoming' ? dateA - dateB : dateB - dateA;
+        });
     };
 
     const getStatusClass = (status) => {
         switch (status?.toUpperCase()) {
-            case 'CONFIRMADO':
-                return 'status-confirmed';
-            case 'PENDENTE':
-                return 'status-pending';
-            case 'FINALIZADO':
-                return 'status-completed';
-            case 'CANCELADO':
-                return 'status-canceled';
-            default:
-                return 'status-completed';
+            case 'CONFIRMADO': return 'status-confirmed';
+            case 'PENDENTE': return 'status-pending';
+            case 'CANCELADO': return 'status-canceled';
+            case 'FINALIZADO': return 'status-completed';
+            default: return 'status-completed';
         }
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "--/--";
+        if(!dateString) return '--/--';
         return new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     };
 
     const formatTime = (dateString) => {
-        if (!dateString) return "--:--";
+        if(!dateString) return '--:--';
         return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     };
-
 
     return (
         <div className="client-body">
@@ -120,8 +102,6 @@ export default function ClientAgendamentos(){
             <ClientHeader />
 
             <main className="client-content">
-
-                {/* Filter Tabs */}
                 <div className="categories-scroll" style={{ marginBottom: '20px' }}>
                     <button className={`category-pill ${filterType === 'upcoming' ? 'active' : ''}`}
                             onClick={() => setFilterType('upcoming')}>
@@ -140,18 +120,18 @@ export default function ClientAgendamentos(){
                     ) : (
                         getAgendamentosFiltrados().length > 0 ? (
                             getAgendamentosFiltrados().map((booking) => (
-                                <div key={`${booking.schemaName}-${booking.idAgendamentoArena}`} className="arena-card glass-panel booking-card">
+                                <div key={`${booking.schemaName}-${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
                                     <div className="liquid-glow"></div>
 
                                     <div className="booking-header-row">
                                         <div className="booking-time-group">
                                             <div className="date-box">
                                                 <span className="date-label">Data</span>
-                                                <span className="date-value">{formatDate(booking.dataInicio)}</span>
+                                                <span className="date-value">{formatDate(booking.data_inicio)}</span>
                                             </div>
                                             <div className="time-info">
-                                                <h4>{formatTime(booking.dataInicio)}</h4>
-                                                <span>até {formatTime(booking.dataFim)}</span>
+                                                <h4>{formatTime(booking.data_inicio)}</h4>
+                                                <span>até {formatTime(booking.data_fim)}</span>
                                             </div>
                                         </div>
 
@@ -162,15 +142,13 @@ export default function ClientAgendamentos(){
 
                                     <div className="booking-body">
                                         <h4 style={{ marginBottom: '4px', color: '#fff' }}>
-                                            {booking.nomeArena || 'Arena Desconhecida'}
+                                            {booking.arenaName || 'Arena Desconhecida'}
                                         </h4>
-
                                         <p style={{ margin: 0, fontSize: '0.9rem', color: '#ccc' }}>
-                                            {booking.nomeQuadra || `Quadra...`}
+                                            {booking.quadraNome || `Quadra ${booking.id_quadra}`}
                                         </p>
-
                                         <p className="booking-address" style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
-                                            {booking.enderecoResumido || 'Endereço não disponível'}
+                                            {booking.enderecoArena || 'Endereço não disponível'}
                                         </p>
                                     </div>
 
@@ -184,7 +162,7 @@ export default function ClientAgendamentos(){
                                                 <button
                                                     className="mini-action-btn edit"
                                                     title="Editar Agendamento"
-                                                    onClick={() => setEditingBooking(booking) && findCourts()}
+                                                    onClick={() => setEditingBooking(booking)}
                                                 >
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -198,8 +176,6 @@ export default function ClientAgendamentos(){
                                                 >Cancelar</button>
                                             )}
                                         </div>
-
-
                                     </div>
                                 </div>
                             ))
@@ -211,20 +187,18 @@ export default function ClientAgendamentos(){
                     )}
                 </div>
 
-
                 <div style={{ height: '100px' }}></div>
             </main>
 
             <ClientNav active="agendamentos" />
 
             {editingBooking && (
-                <ModalEditBooking
+                <ModalBooking
                     bookingToEdit={editingBooking}
                     onClose={() => setEditingBooking(null)}
                     onSuccess={fetchBookings}
                 />
             )}
-
         </div>
     );
 }
