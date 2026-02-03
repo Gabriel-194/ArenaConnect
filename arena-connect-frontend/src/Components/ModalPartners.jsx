@@ -37,24 +37,50 @@ const maskCEP = (value) => {
 };
 
 export default function ModalPartners({onClose}) {
-    const navigate = useNavigate();
     const [nomeUser, setNomeUser] = useState('');
-    const [emailAdmin,setEmailAdmin] = useState('');
-    const [cpfUser,setCpf] = useState('');
-    const [telefoneUser,setTelefone] = useState('');
+    const [emailAdmin, setEmailAdmin] = useState('');
+    const [cpfUser, setCpf] = useState('');
+    const [telefoneUser, setTelefone] = useState('');
     const [senhaAdmin, setSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
-    const [error, setErro] = useState('');
-    //arena
+
     const [nameArena, setNameArena] = useState('');
     const [cnpjArena, setCnpjArena] = useState('');
     const [cepArena, setCepArena] = useState('');
-    const [enderecoArena,setEnderecoArena] = useState('');
+    const [enderecoArena, setEnderecoArena] = useState('');
     const [cidadeArena, setCidadeArena] = useState('');
     const [estadoArena, setEstadoArena] = useState('');
+    const [error, setErro] = useState('');
+    const [latitude, setLatitude] = useState(null);
+    const [longitude, setLongitude] = useState(null);
+
+    const fetchCoordinates = async (logradouro, cidade, estado) =>{
+        try{
+            const query = `${logradouro}, ${cidade}, ${estado}, Brasil`;
+            const response = await axios.get(`https://nominatim.openstreetmap.org/search`,{
+                params: {
+                    q: query,
+                    format: 'json',
+                    limit: 1
+                }
+            });
+
+            if (response.data && response.data.length > 0) {
+                const {lat, lon} = response.data[0];
+                setLatitude(parseFloat(lat));
+                setLongitude(parseFloat(lon));
+                console.log("📍 Coordenadas:", lat, lon);
+            }
+        } catch (error) {
+            console.error("Erro ao buscar coordenadas:", error);
+        }
+    };
 
     const checkCEP =async (e) => {
         const cep = e.target.value.replace(/\D/g, '');
+
+        if (cep.length !== 8) return;
+
         try{
             document.getElementById('cep-status').style.display = 'block';
 
@@ -64,7 +90,8 @@ export default function ModalPartners({onClose}) {
                 setEnderecoArena(res.data.logradouro + (res.data.bairro ? `, ${res.data.bairro}` : ''));
                 setCidadeArena(res.data.localidade);
                 setEstadoArena(res.data.uf);
-                // Foca no número ou complemento se precisar
+
+                fetchCoordinates(res.data.logradouro, res.data.localidade, res.data.uf);
             } else {
                 alert('CEP não encontrado!');
             }
@@ -93,12 +120,16 @@ export default function ModalPartners({onClose}) {
                 cepArena: cepArena.replace(/\D/g, ""),
                 enderecoArena: enderecoArena,
                 cidadeArena: cidadeArena,
-                estadoArena:estadoArena
+                estadoArena:estadoArena,
+                latitude: latitude,
+                longitude: longitude
             });
 
             if (response.data.success) {
+                setErro(null);
                 alert(response.data.message);
                 navigate("/login");
+                return;
             } else {
                 setErro("dados invalidos");
             }

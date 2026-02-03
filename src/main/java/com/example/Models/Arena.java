@@ -44,4 +44,10 @@ public class Arena {
     @Column(name = "dias_funcionamento")
     private String diasFuncionamento;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
 }

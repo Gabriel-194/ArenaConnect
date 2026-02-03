@@ -86,6 +86,8 @@ public class UserService {
         arena.setAtivo(true);
         String schemaName = (dto.getNomeArena());
         arena.setSchemaName(schemaName);
+        arena.setLatitude(dto.getLatitude());
+        arena.setLongitude(dto.getLongitude());
 
         arenaService.cadastrarArena(arena);
 

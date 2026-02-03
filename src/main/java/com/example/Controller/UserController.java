@@ -23,6 +23,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -81,7 +82,7 @@ public class UserController {
 
           logger.info("✅ Cliente registrado com sucesso: {}", user.getEmail());
 
-          return ResponseEntity.status(HttpStatus.CREATED).body(response);
+          return ResponseEntity.ok(response);
       } catch (IllegalArgumentException e) {
               logger.warn("❌ Erro de validação no registro: {}", e.getMessage());
 

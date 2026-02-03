@@ -6,7 +6,7 @@ import './Styles/base.css'
 import './Styles/components.css'
 import './Styles/layout.css'
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Register from "./Pages/Register.jsx";
 import Home from './Pages/Home';
 import PrivateRoute from "./Components/PrivateRoute.jsx";

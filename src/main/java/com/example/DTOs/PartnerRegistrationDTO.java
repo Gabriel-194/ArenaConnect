@@ -1,5 +1,6 @@
 package com.example.DTOs;
 
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -43,6 +44,9 @@ public class PartnerRegistrationDTO {
     private String enderecoArena;
     private String cidadeArena;
     private String estadoArena;
+
+    private Double latitude;
+    private Double longitude;
 
     public String getCpfLimpo() {
         return cpfUser != null ? cpfUser.replaceAll("\\D", "") : null;
