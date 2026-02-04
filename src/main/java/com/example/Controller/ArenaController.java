@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController()
 @RequestMapping("/api/arena")
-@PreAuthorize("hasAnyRole('CLIENTE', 'SUPERADMIN')")
 public class ArenaController {
 
     @Autowired

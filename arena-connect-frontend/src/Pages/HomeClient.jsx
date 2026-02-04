@@ -4,30 +4,7 @@ import axios from "axios";
 import ModalBooking from "../Components/ModalBooking.jsx";
 import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
-/*
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371;
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-
-    const rawDist = R * c;
-    let factor = 1;
-
-    if (rawDist <= 2.0) {
-        factor = 1.7;
-    }
-    return rawDist * factor;
-}
-function deg2rad(deg) {
-    return deg * (Math.PI / 180);
-}
-*/
 export default function HomeClient() {
     const [loading, setLoading] = useState(true);
     const [arenas,setArenas] = useState([]);
@@ -36,10 +13,11 @@ export default function HomeClient() {
     const [userLocation, setUserLocation] = useState(null);
 
     const lastUpdateRef = useRef(0);
-    const UPDATE_INTERVAL = 500000;
+    const UPDATE_INTERVAL = 5000000;
 
     useEffect(() => {
         let watchId = null;
+
         if ("geolocation" in navigator) {
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
@@ -51,23 +29,32 @@ export default function HomeClient() {
                         };
                         setUserLocation(newLocation);
                         lastUpdateRef.current = now;
-                        console.log("📍 Localização atualizada:", newLocation);
                     }
                 },
-                (error) => console.error("Erro GPS:", error),
-                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0, distanceFilter: 200 }
+                (error) => {
+                    console.warn("GPS indisponível ou negado:", error.message);
+                    fetchArenasFromBackend();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
+        } else {
+            fetchArenasFromBackend();
         }
+
         return () => { if (watchId !== null) navigator.geolocation.clearWatch(watchId); }
     }, []);
 
 
     useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
+        if (searchItem) {
+            const delayDebounceFn = setTimeout(() => {
+                fetchArenasFromBackend();
+            }, 500);
+            return () => clearTimeout(delayDebounceFn);
+        }
+        if (userLocation) {
             fetchArenasFromBackend();
-        }, 500);
-
-        return () => clearTimeout(delayDebounceFn);
+        }
     }, [searchItem, userLocation]);
 
     const fetchArenasFromBackend = async () => {
@@ -81,7 +68,6 @@ export default function HomeClient() {
             if (searchItem) {
                 params.search = searchItem;
             }
-
             const response = await axios.get('http://localhost:8080/api/arena', {
                 params: params,
                 withCredentials: true
@@ -89,7 +75,9 @@ export default function HomeClient() {
 
             setArenas(response.data);
         } catch (error) {
-            console.error("Erro ao buscar arenas:", error);
+            if (error.response?.status !== 403) {
+                console.error("Erro ao buscar arenas:", error);
+            }
         } finally {
             setLoading(false);
         }
@@ -109,7 +97,6 @@ export default function HomeClient() {
 
         return { ...arena, formattedDistance: formattedDist };
     });
-
 
     return (
         <div className="client-body">

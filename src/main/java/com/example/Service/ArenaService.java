@@ -171,12 +171,14 @@ public class ArenaService {
     }
 
     public List<ArenaDistanceDTO> buscarArenasInteligente(Double lat, Double lon, String search) {
+        List<Object[]> rows;
+
         if (lat == null || lon == null) {
-            return arenaRepository.findRecent(search);
+            rows = arenaRepository.findRecent(search);
+        } else {
+            rows = arenaRepository.findNearestWithDistance(lat, lon, search);
         }
 
-        List<Object[]> rows =
-                arenaRepository.findNearestWithDistance(lat, lon, search);
 
         return rows.stream().map(row -> {
             ArenaDistanceDTO dto = new ArenaDistanceDTO();
@@ -188,8 +190,13 @@ public class ArenaService {
             dto.setLatitude(((Number) row[4]).doubleValue());
             dto.setLongitude(((Number) row[5]).doubleValue());
 
-            double rawDistance = ((Number) row[6]).doubleValue();
-            dto.setDistanceKm(applyTortuosity(rawDistance));
+            if(row[6] != null){
+                double rawDistance = ((Number) row[6]).doubleValue();
+                dto.setDistanceKm(applyTortuosity(rawDistance));
+            } else {
+                dto.setDistanceKm(null);
+            }
+
 
             return dto;
         }).toList();
@@ -197,8 +204,8 @@ public class ArenaService {
 
 
     private double applyTortuosity(double km) {
-        if (km < 2) return km * 1.5;
-        if (km < 3) return km * 1;
+        if (km < 2) return km * 1.1;
+        if (km < 5) return km * 1.3;
         return km * 1;
     }
 
