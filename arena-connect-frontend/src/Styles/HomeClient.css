@@ -204,7 +204,15 @@
 }
 
 .arena-address {
-    font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0 0 12px 0;
+    font-size: 0.9rem;
+    color: #ccc;
+    line-height: 1.4;
+    /* Remova restrições de linha se houver (como max-height ou line-clamp) */
+    overflow: visible;
+    display: block;
+    margin-bottom: 10px;
+    /* Permite que o texto quebre em duas linhas para mostrar o estado */
+    word-wrap: break-word;
 }
 
 .arena-footer-row {

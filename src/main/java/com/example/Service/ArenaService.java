@@ -187,17 +187,18 @@ public class ArenaService {
             dto.setName((String) row[1]);
             dto.setEndereco((String) row[2]);
             dto.setCidade((String) row[3]);
-            dto.setLatitude(((Number) row[4]).doubleValue());
-            dto.setLongitude(((Number) row[5]).doubleValue());
+            dto.setEstado((String) row[4]);
+            dto.setLatitude(((Number) row[5]).doubleValue());
+            dto.setLongitude(((Number) row[6]).doubleValue());
 
-            if(row[6] != null){
-                double rawDistance = ((Number) row[6]).doubleValue();
+            if(row[7] != null){
+                double rawDistance = ((Number) row[7]).doubleValue();
                 dto.setDistanceKm(applyTortuosity(rawDistance));
             } else {
                 dto.setDistanceKm(null);
             }
 
-
+            dto.setSchemaName((String) row[8]);
             return dto;
         }).toList();
     }

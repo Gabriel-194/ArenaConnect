@@ -150,7 +150,7 @@ export default function HomeClient() {
                                             <h4>{arena.name || arena.nome}</h4>
                                         </div>
                                         <p className="arena-address">
-                                            {arena.endereco || 'Endereço não informado'} - {arena.estado || ''}
+                                            {arena.endereco || 'Endereço não informado'} - {arena.cidade || ''} - {arena.estado || ''}
                                         </p>
 
                                         <div className="arena-footer-row">
