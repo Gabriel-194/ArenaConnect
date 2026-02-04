@@ -1,6 +1,7 @@
 package com.example.Service;
 
 import com.example.DTOs.ArenaConfigDTO;
+import com.example.DTOs.ArenaDistanceDTO;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.Models.Arena;
 import com.example.Repository.ArenaRepository;
@@ -168,4 +169,40 @@ public class ArenaService {
         }
         arenaRepository.save(arena);
     }
+
+    public List<ArenaDistanceDTO> buscarArenasInteligente(Double lat, Double lon, String search) {
+        if (lat == null || lon == null) {
+            return arenaRepository.findRecent(search);
+        }
+
+        List<Object[]> rows =
+                arenaRepository.findNearestWithDistance(lat, lon, search);
+
+        return rows.stream().map(row -> {
+            ArenaDistanceDTO dto = new ArenaDistanceDTO();
+
+            dto.setId(((Number) row[0]).longValue());
+            dto.setName((String) row[1]);
+            dto.setEndereco((String) row[2]);
+            dto.setCidade((String) row[3]);
+            dto.setLatitude(((Number) row[4]).doubleValue());
+            dto.setLongitude(((Number) row[5]).doubleValue());
+
+            double rawDistance = ((Number) row[6]).doubleValue();
+            dto.setDistanceKm(applyTortuosity(rawDistance));
+
+            return dto;
+        }).toList();
+    }
+
+
+    private double applyTortuosity(double km) {
+        if (km < 2) return km * 1.5;
+        if (km < 3) return km * 1;
+        return km * 1;
+    }
+
+
+
+
 }

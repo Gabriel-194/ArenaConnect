@@ -1,6 +1,7 @@
 package com.example.Controller;
 
 import com.example.DTOs.ArenaConfigDTO;
+import com.example.DTOs.ArenaDistanceDTO;
 import com.example.Models.Arena;
 import com.example.Service.ArenaService;
 import com.example.Service.JwtService;
@@ -23,11 +24,16 @@ public class ArenaController {
     private JwtService jwtService;
 
     @GetMapping
-    public ResponseEntity<List<Arena>> getArenaAtivo() {
-        List<Arena> arenas = arenaService.getArenaAtivo();
-        return ResponseEntity.ok(arenas);
-
+    public ResponseEntity<List<ArenaDistanceDTO>> listarArenas(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lon,
+            @RequestParam(required = false) String search
+    ) {
+        return ResponseEntity.ok(
+                arenaService.buscarArenasInteligente(lat, lon, search)
+        );
     }
+
 
     @GetMapping("/config")
     @PreAuthorize("hasRole('ADMIN')")

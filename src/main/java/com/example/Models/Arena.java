@@ -50,4 +50,7 @@ public class Arena {
     @Column(name = "longitude")
     private Double longitude;
 
+    @Transient
+    private Double distanceKm;
+
 }

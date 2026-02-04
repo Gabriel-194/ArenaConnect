@@ -4,7 +4,7 @@ import axios from "axios";
 import ModalBooking from "../Components/ModalBooking.jsx";
 import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
-
+/*
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
@@ -14,13 +14,20 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
         Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c;
-    return d;
+
+
+    const rawDist = R * c;
+    let factor = 1;
+
+    if (rawDist <= 2.0) {
+        factor = 1.7;
+    }
+    return rawDist * factor;
 }
 function deg2rad(deg) {
     return deg * (Math.PI / 180);
 }
-
+*/
 export default function HomeClient() {
     const [loading, setLoading] = useState(true);
     const [arenas,setArenas] = useState([]);
@@ -29,51 +36,58 @@ export default function HomeClient() {
     const [userLocation, setUserLocation] = useState(null);
 
     const lastUpdateRef = useRef(0);
-    const UPDATE_INTERVAL = 50000;
+    const UPDATE_INTERVAL = 500000;
 
-    useEffect(()=>{
+    useEffect(() => {
         let watchId = null;
-
-        if("geolocation" in navigator) {
+        if ("geolocation" in navigator) {
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const now = Date.now();
-
                     if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
-                        setUserLocation({
+                        const newLocation = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude
-                        });
-
+                        };
+                        setUserLocation(newLocation);
                         lastUpdateRef.current = now;
-                        console.log("📍 Localização atualizada:", position.coords);
+                        console.log("📍 Localização atualizada:", newLocation);
                     }
                 },
-                (error) => {
-                    console.error("Erro ao obter localização:", error);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 20000,
-                    maximumAge: 0,
-                    distanceFilter: 200
-                }
+                (error) => console.error("Erro GPS:", error),
+                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0, distanceFilter: 200 }
             );
         }
-        return () => {
-            if(watchId !== null) {
-                navigator.geolocation.clearWatch(watchId);
-            }
-        }
-    },[]);
+        return () => { if (watchId !== null) navigator.geolocation.clearWatch(watchId); }
+    }, []);
 
-    const findArenas = async () =>{
-        try{
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchArenasFromBackend();
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchItem, userLocation]);
+
+    const fetchArenasFromBackend = async () => {
+        setLoading(true);
+        try {
+            const params = {};
+            if (userLocation) {
+                params.lat = userLocation.lat;
+                params.lon = userLocation.lng;
+            }
+            if (searchItem) {
+                params.search = searchItem;
+            }
+
             const response = await axios.get('http://localhost:8080/api/arena', {
-                withCredentials:true
-            })
-            console.log("Arenas recebidas:", response.data); // Debug
-            setArenas(response.data)
+                params: params,
+                withCredentials: true
+            });
+
+            setArenas(response.data);
         } catch (error) {
             console.error("Erro ao buscar arenas:", error);
         } finally {
@@ -81,52 +95,21 @@ export default function HomeClient() {
         }
     }
 
-    useEffect(() => {
-        findArenas();
-    },[]);
+    const processedArenas = arenas.map(arena => {
+        let formattedDist = "Nova";
 
-    // Função que retorna a lista processada (filtrada e ordenada)
-    const getSortedArenas = () => {
-        // 1. Filtra pela busca
-        let filtered = arenas.filter(arena => {
-            const name = arena.name || arena.nome || "";
-            const city = arena.cidade || "";
-            return name.toLowerCase().includes(searchItem.toLowerCase()) ||
-                city.toLowerCase().includes(searchItem.toLowerCase());
-        });
+        if (arena.distanceKm !== null && arena.distanceKm !== undefined) {
+            const dist = arena.distanceKm;
 
-        // 2. Se não tem localização, ordena por ID (Fallback)
-        if (!userLocation) {
-            return filtered
-                .sort((a, b) => (b.id || 0) - (a.id || 0))
-                .slice(0, 10)
-                .map(arena => ({
-                    ...arena,
-                    formattedDistance: "Nova"
-                }));
+            formattedDist =
+                dist < 1
+                    ? `${Math.round(dist * 1000)}m`
+                    : `${dist.toFixed(1)}km`;
         }
 
-        // 3. Se tem localização, calcula distância
-        const arenasWithDist = filtered.map(arena => {
-            if (!arena.latitude || !arena.longitude) {
-                return { ...arena, formattedDistance: null, rawDistance: Infinity };
-            }
-            const dist = getDistanceFromLatLonInKm(
-                userLocation.lat, userLocation.lng, arena.latitude, arena.longitude
-            );
+        return { ...arena, formattedDistance: formattedDist };
+    });
 
-            let formattedString = dist < 1
-                ? `${(dist * 1000).toFixed(0)}m`
-                : `${dist.toFixed(1)}km`;
-
-            return { ...arena, formattedDistance: formattedString, rawDistance: dist };
-        });
-
-        return arenasWithDist.sort((a, b) => a.rawDistance - b.rawDistance);
-    };
-
-    // --- CORREÇÃO: Invoca a função aqui ---
-    const sortedList = getSortedArenas();
 
     return (
         <div className="client-body">
@@ -144,13 +127,17 @@ export default function HomeClient() {
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <input type="text"
-                               value={searchItem} onChange={(e) => setSearchItem(e.target.value)} placeholder="Buscar arenas, quadras..."/>
+                        <input
+                            type="text"
+                            value={searchItem}
+                            onChange={(e) => setSearchItem(e.target.value)}
+                            placeholder="Buscar arenas, quadras..."
+                        />
                     </div>
                 </div>
 
                 <h3 className="section-title">
-                    {userLocation ? "Arenas Próximas" : "Todas as Arenas"}
+                    {userLocation ? "Arenas Próximas " : "Últimas Adicionadas"}
                 </h3>
 
                 <div className="arenas-list">
@@ -159,16 +146,15 @@ export default function HomeClient() {
                             Carregando arenas...
                         </p>
                     ) : (
-                        // --- CORREÇÃO: Usa a lista sortedList calculada ---
-                        sortedList.length > 0 ? (
-                            sortedList.map((arena) => (
-                                <div key={arena.schemaName || arena.id} className="arena-card glass-panel">
+                        processedArenas.length > 0 ? (
+                            processedArenas.map((arena) => (
+                                <div key={arena.id} className="arena-card glass-panel">
                                     <div className="liquid-glow"></div>
 
                                     <div className="arena-image-container">
                                         <div className="img-placeholder-gradient" />
                                         <div className="arena-badge">
-                                            {arena.formattedDistance || '...'}
+                                            {arena.formattedDistance}
                                         </div>
                                     </div>
 

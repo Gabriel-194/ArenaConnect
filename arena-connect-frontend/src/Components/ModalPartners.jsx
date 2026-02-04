@@ -50,62 +50,117 @@ export default function ModalPartners({onClose}) {
     const [enderecoArena, setEnderecoArena] = useState('');
     const [cidadeArena, setCidadeArena] = useState('');
     const [estadoArena, setEstadoArena] = useState('');
+    const [numeroArena, setNumeroArena] = useState(''); // <--- NOVO
     const [error, setErro] = useState('');
     const [latitude, setLatitude] = useState(null);
     const [longitude, setLongitude] = useState(null);
 
-    const fetchCoordinates = async (logradouro, cidade, estado) =>{
-        try{
-            const query = `${logradouro}, ${cidade}, ${estado}, Brasil`;
-            const response = await axios.get(`https://nominatim.openstreetmap.org/search`,{
-                params: {
-                    q: query,
-                    format: 'json',
-                    limit: 1
-                }
-            });
+    const navigate = useNavigate();
 
-            if (response.data && response.data.length > 0) {
-                const {lat, lon} = response.data[0];
+    const fetchCoordinates = async (logradouro, numero, cidade, estado) => {
+        try {
+            const query = `${logradouro}, ${numero}, ${cidade} - ${estado}, Brasil`;
+
+            const response = await axios.get(
+                "https://nominatim.openstreetmap.org/search",
+                {
+                    params: {
+                        q: query,
+                        format: "json",
+                        limit: 1
+                    },
+                    headers: {
+                        "User-Agent": "ArenaConnect/1.0 (gabrielkuchma.gk@gmail.com)"
+                    }
+                }
+            );
+
+            if (response.data?.length > 0) {
+                const { lat, lon } = response.data[0];
                 setLatitude(parseFloat(lat));
                 setLongitude(parseFloat(lon));
-                console.log("📍 Coordenadas:", lat, lon);
+                console.log("📍 Coordenadas corretas:", lat, lon);
+                return true;
             }
+
+            return false;
         } catch (error) {
             console.error("Erro ao buscar coordenadas:", error);
+            return false;
         }
     };
 
-    const checkCEP =async (e) => {
+    const checkCEP = async (e) => {
         const cep = e.target.value.replace(/\D/g, '');
 
         if (cep.length !== 8) return;
 
-        try{
+        try {
             document.getElementById('cep-status').style.display = 'block';
 
+            // 1️⃣ ViaCEP
             const res = await axios.get(`https://viacep.com.br/ws/${cep}/json/`);
 
-            if (!res.data.erro) {
-                setEnderecoArena(res.data.logradouro + (res.data.bairro ? `, ${res.data.bairro}` : ''));
-                setCidadeArena(res.data.localidade);
-                setEstadoArena(res.data.uf);
-
-                fetchCoordinates(res.data.logradouro, res.data.localidade, res.data.uf);
-            } else {
+            if (res.data.erro) {
                 alert('CEP não encontrado!');
+                return;
             }
+
+            const { logradouro, localidade, uf } = res.data;
+
+            setEnderecoArena(logradouro || '');
+            setCidadeArena(localidade);
+            setEstadoArena(uf);
+
+            // 2️⃣ Geocodificação PELO CEP (forma mais estável)
+            const geoRes = await axios.get(
+                'https://nominatim.openstreetmap.org/search',
+                {
+                    params: {
+                        q: `${cep}, ${localidade}, ${uf}, Brasil`,
+                        format: 'json',
+                        limit: 1
+                    }
+                }
+            );
+
+            if (geoRes.data && geoRes.data.length > 0) {
+                const { lat, lon } = geoRes.data[0];
+                setLatitude(parseFloat(lat));
+                setLongitude(parseFloat(lon));
+
+                console.log("📍 Coordenadas (CEP):", lat, lon);
+            } else {
+                console.warn("⚠️ Não foi possível geocodificar o CEP");
+            }
+
+            document.getElementById('input-numero').focus();
+
         } catch (err) {
             console.error("Erro ao buscar CEP", err);
         } finally {
             document.getElementById('cep-status').style.display = 'none';
         }
-    }
+    };
+
 
     const handlePartnerRegister = async (e) =>{
         e.preventDefault();
         setErro('');
 
+        const ok = await fetchCoordinates(
+            enderecoArena,
+            numeroArena,
+            cidadeArena,
+            estadoArena
+        );
+
+        if (!ok) {
+            setErro("Não foi possível localizar o endereço no mapa.");
+            return;
+        }
+
+        const enderecoCompleto = `${enderecoArena}, ${numeroArena}`;
         try{
             const response = await axios.post("http://localhost:8080/api/users/register-partner",{
                 nomeUser: nomeUser,
@@ -118,18 +173,18 @@ export default function ModalPartners({onClose}) {
                 nomeArena: nameArena,
                 cnpjArena: cnpjArena.replace(/\D/g, ""),
                 cepArena: cepArena.replace(/\D/g, ""),
-                enderecoArena: enderecoArena,
+                enderecoArena: enderecoCompleto,
                 cidadeArena: cidadeArena,
                 estadoArena:estadoArena,
                 latitude: latitude,
                 longitude: longitude
             });
 
-            if (response.data.success) {
-                setErro(null);
-                alert(response.data.message);
+            if (response.status === 200 && response.data.success) {
+                setErro('');
+                alert(response.data.message || 'Admin cadastrado com sucesso!');
+                onClose();
                 navigate("/login");
-                return;
             } else {
                 setErro("dados invalidos");
             }
@@ -219,9 +274,39 @@ export default function ModalPartners({onClose}) {
                         <input type="text"  placeholder="Cidade" readOnly className="input-readonly" value={cidadeArena} onChange={(e)=>setCidadeArena(e.target.value)}/>
                     </div>
 
-                    <div className="form-group">
-                        <label>Estado</label>
-                        <input type="text" placeholder="UF" readOnly className="input-readonly" maxLength="2" value={estadoArena} onChange={(e)=>setEstadoArena(e.target.value)}/>
+                    <div style={{ display: 'flex', gap: '15px' }}>
+
+
+                        <div className="form-group" style={{ width: '100px' }}>
+                            <label>UF</label>
+                            <input
+                                type="text"
+                                placeholder="UF"
+                                readOnly
+                                className="input-readonly"
+                                maxLength="2"
+                                value={estadoArena}
+                                onChange={(e) => setEstadoArena(e.target.value)}
+                                style={{ textAlign: 'center' }}
+                            />
+                        </div>
+
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label>Número *</label>
+                            <input
+                                id="input-numero"
+                                type="text"
+                                placeholder="Nº"
+                                required
+                                value={numeroArena}
+                                onChange={(e) => setNumeroArena(e.target.value)}
+                                onBlur={() => {
+                                    if (enderecoArena && cidadeArena && numeroArena) {
+                                        fetchCoordinates(enderecoArena, numeroArena, cidadeArena, estadoArena);
+                                    }
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <div className="modal-actions col-span-2" style={{marginTop: "1rem"}}>
