@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
 import '../Styles/components.css';
+import ModalPix from './ModalPix';
 
 export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess }) {
     const [quadras, setQuadras] = useState([]);
@@ -13,6 +14,9 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
     const [selectedHour, setSelectedHour] = useState(null);
 
     const isEditing = !!bookingToEdit;
+
+    const [showPixModal, setShowPixModal] = useState(false);
+    const [pixData, setPixData] = useState(null);
 
     const getTodayLocal = () => {
         const date = new Date();
@@ -160,22 +164,44 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                 id_agendamento: isEditing ? bookingToEdit.id_agendamento : null
             };
 
-            await axios.post('http://localhost:8080/api/agendamentos/reservar', payload, {
-                withCredentials: true,
-                headers: getHeaders()
-            });
+            const response = await axios.post(
+                'http://localhost:8080/api/agendamentos/reservar',
+                payload,
+                {
+                    withCredentials: true,
+                    headers: getHeaders()
+                }
+            );
 
-            alert(isEditing ? "Agendamento atualizado!" : "Reserva realizada com sucesso!");
+            if (response.data.pix && !isEditing) {
+                setPixData({
+                    qrCode: response.data.pix.qrCode,
+                    copyPaste: response.data.pix.copyPaste,
+                    invoiceUrl: response.data.pix.invoiceUrl,
+                    value: selectedQuadra.valor_hora
+                });
 
-            if (onSuccess) onSuccess();
-            onClose();
+                setShowPixModal(true);
+            } else {
+                alert(isEditing ? "Agendamento atualizado!" : "Reserva realizada com sucesso!");
+
+                if (onSuccess) onSuccess();
+                onClose();
+            }
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
             const msg = error.response?.data?.message || "Erro ao processar agendamento.";
             alert(msg);
         }
-    }
+    };
+
+    const handleClosePixModal = () => {
+        setShowPixModal(false);
+
+        if (onSuccess) onSuccess();
+        onClose();
+    };
 
     return (
         <div className="modal" onClick={onClose}>
@@ -289,6 +315,13 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                     </div>
                 </div>
             </StyledWrapper>
+
+            {showPixModal && pixData && (
+                <ModalPix
+                    pixData={pixData}
+                    onClose={handleClosePixModal}
+                />
+            )}
         </div>
     );
 }
@@ -537,8 +570,7 @@ const StyledWrapper = styled.div`
         background: rgba(74, 222, 128, 0.1);
         border-color: #4ade80;
     }
-
-    /* ESTILO QUANDO SELECIONADO */
+    
     .hour-card.selected {
         background: #4ade80;
         color: #121212;
