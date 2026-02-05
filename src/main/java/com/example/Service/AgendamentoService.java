@@ -1,5 +1,9 @@
 package com.example.Service;
 
+import com.example.DTOs.Asaas.AsaasCustumerDTO;
+import com.example.DTOs.Asaas.AsaasPaymentDTO;
+import com.example.DTOs.Asaas.AsaasResponseDTO;
+import com.example.DTOs.Asaas.AsaasSplitDTO;
 import com.example.Domain.RoleEnum;
 import com.example.Models.*;
 import com.example.Multitenancy.TenantContext;
@@ -14,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +39,9 @@ public class AgendamentoService {
 
     @Autowired
     private HistoricoRepository historicoRepository;
+
+    @Autowired
+    private AsaasService asaasService;
 
     private String configurarSchema() {
         String currentTenant = TenantContext.getCurrentTenant();
@@ -79,33 +87,52 @@ public class AgendamentoService {
     @Transactional
     public Agendamentos createBooking(Agendamentos newBooking) {
 
-        String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
+        // 🔐 Usuário logado
+        String emailUsuarioLogado = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
         Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
                 .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado."));
 
+        // 🏷️ Schema atual (tenant)
         String currentSchema = configurarSchema();
 
+        // ✏️ EDIÇÃO de agendamento existente
         if (newBooking.getId_agendamento() != null) {
-            Agendamentos agendamentoOriginal = agendamentoRepository.buscarPorIdComSchema(newBooking.getId_agendamento(), currentSchema)
-                    .orElseThrow(() -> new RuntimeException("Agendamento não encontrado para edição."));
 
-            boolean isOwner = agendamentoOriginal.getId_user().equals(currentUser.getIdUser());
-            boolean isAdmin = currentUser.getRole() == RoleEnum.ADMIN;
+            Agendamentos agendamentoOriginal =
+                    agendamentoRepository.buscarPorIdComSchema(
+                            newBooking.getId_agendamento(),
+                            currentSchema
+                    ).orElseThrow(() ->
+                            new RuntimeException("Agendamento não encontrado para edição.")
+                    );
+
+            boolean isOwner =
+                    agendamentoOriginal.getId_user().equals(currentUser.getIdUser());
+            boolean isAdmin =
+                    currentUser.getRole() == RoleEnum.ADMIN;
 
             if (!isOwner && !isAdmin) {
-                throw new SecurityException("Você não tem permissão para editar este agendamento.");
+                throw new SecurityException(
+                        "Você não tem permissão para editar este agendamento."
+                );
             }
 
+            // mantém o dono original
             newBooking.setId_user(agendamentoOriginal.getId_user());
 
             if (newBooking.getStatus() == null) {
                 newBooking.setStatus(agendamentoOriginal.getStatus());
             }
+
         } else {
+            // 🆕 NOVO agendamento
             newBooking.setId_user(currentUser.getIdUser());
         }
 
-
+        // ✅ Validações básicas
         if (newBooking.getId_quadra() == null) {
             throw new IllegalArgumentException("ID da quadra não pode ser nulo");
         }
@@ -117,28 +144,123 @@ public class AgendamentoService {
         LocalDate data = newBooking.getData_inicio().toLocalDate();
         LocalTime horario = newBooking.getData_inicio().toLocalTime();
 
-        List<LocalTime> horariosDisponiveis = getHorariosDisponiveis(newBooking.getId_quadra(), data);
+        List<LocalTime> horariosDisponiveis =
+                getHorariosDisponiveis(newBooking.getId_quadra(), data);
 
         if (!horariosDisponiveis.contains(horario)) {
-            throw new IllegalArgumentException("Horário não está disponível para agendamento");
+            throw new IllegalArgumentException(
+                    "Horário não está disponível para agendamento"
+            );
         }
 
-        if (newBooking.getData_inicio() != null) {
-            newBooking.setData_fim(newBooking.getData_inicio().plusHours(1));
-        }
+
+        newBooking.setData_fim(newBooking.getData_inicio().plusHours(1));
 
         if (newBooking.getId_agendamento() == null) {
-            newBooking.setStatus("PENDENTE");
+
+            Arena arena = arenaRepository.findBySchemaName(currentSchema)
+                    .orElseThrow(() ->
+                            new RuntimeException("Arena não encontrada")
+                    );
+
+            if (arena.getAsaasWalletId() == null) {
+                throw new RuntimeException(
+                        "Arena não possui carteira Asaas configurada"
+                );
+            }
+
+            // 1️⃣ Criar / buscar customer no Asaas
+            String asaasCustomerId =
+                    getOrCreateAsaasCustomer(currentUser);
+
+            // 2️⃣ Cálculo do split
+            Double valorTotal = newBooking.getValor();
+            Double percentualArenaConnect = 20.0;
+            Double percentualArena = 80.0;
+
+            // 3️⃣ Montar cobrança
+            AsaasPaymentDTO paymentDTO = new AsaasPaymentDTO();
+            paymentDTO.setCustomer(asaasCustomerId);
+            paymentDTO.setBillingType("PIX");
+            paymentDTO.setValue(valorTotal);
+            paymentDTO.setDueDate(
+                    newBooking.getData_inicio()
+                            .toLocalDate()
+                            .toString()
+            );
+            paymentDTO.setDescription(
+                    "Reserva de quadra - " + arena.getName()
+            );
+            paymentDTO.setExternalReference(
+                    currentSchema + ":" + currentUser.getIdUser()
+            );
+
+            // 4️⃣ Split arena
+            AsaasSplitDTO splitArena = new AsaasSplitDTO();
+            splitArena.setWalletId(arena.getAsaasWalletId());
+            splitArena.setPercentualValue(percentualArena);
+            splitArena.setDescription("Pagamento para arena");
+
+            // 5️⃣ Split ArenaConnect
+            AsaasSplitDTO splitMaster = new AsaasSplitDTO();
+            splitMaster.setWalletId(arena.getAsaasWalletId());
+            splitMaster.setPercentualValue(percentualArenaConnect);
+            splitMaster.setDescription("Taxa ArenaConnect");
+
+            paymentDTO.setSplit(
+                    Arrays.asList(splitArena, splitMaster)
+            );
+
+            // 6️⃣ Criar cobrança no Asaas
+            AsaasResponseDTO asaasResponse =
+                    asaasService.criarCobrancaComSplit(paymentDTO);
+
+            // 7️⃣ Persistir dados de pagamento
+            newBooking.setAsaasPaymentId(asaasResponse.getId());
+            newBooking.setAsaasInvoiceUrl(
+                    asaasResponse.getInvoiceUrl()
+            );
+
+            if (asaasResponse.getPix() != null) {
+                newBooking.setPixQrCode(
+                        asaasResponse.getPix().getEncodedImage()
+                );
+                newBooking.setPixCopyPaste(
+                        asaasResponse.getPix().getPayload()
+                );
+            }
+
+            newBooking.setStatus("PENDENTE_PAGAMENTO");
+
         } else if (newBooking.getStatus() == null) {
             newBooking.setStatus("PENDENTE");
         }
 
-        Agendamentos savedBooking = agendamentoRepository.salvarComSchema(newBooking, currentSchema);
+        // 💾 Salvar no schema correto
+        Agendamentos savedBooking =
+                agendamentoRepository.salvarComSchema(
+                        newBooking,
+                        currentSchema
+                );
 
         salvarHistorico(savedBooking, currentSchema);
 
         return savedBooking;
     }
+    private String getOrCreateAsaasCustomer(Users user) {
+
+        AsaasCustumerDTO customerDTO = new AsaasCustumerDTO();
+        customerDTO.setName(user.getNome());
+        customerDTO.setCpfCnpj(user.getCpf());
+        customerDTO.setEmail(user.getEmail());
+        customerDTO.setPhone(user.getTelefone());
+        customerDTO.setMobilePhone(user.getTelefone());
+        customerDTO.setExternalReference("USER_" + user.getIdUser());
+
+        return asaasService.criarCliente(customerDTO);
+    }
+
+
 
     private void salvarHistorico(Agendamentos original, String schema) {
         try {

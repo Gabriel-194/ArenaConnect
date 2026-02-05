@@ -23,19 +23,21 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
 
     @Query(value = """
     SELECT 
-        a.id,           -- row[0]
-        a.name,         -- row[1]
-        a.endereco,     -- row[2]
-        a.cidade,       -- row[3]
-        a.estado,       -- row[4]
-        a.latitude,     -- row[5]
-        a.longitude,    -- row[6]
+        a.id,           -- 0
+        a.name,         -- 1
+        a.endereco,     -- 2
+        a.cidade,       -- 3
+        a.estado,       -- 4
+        a.latitude,     -- 5
+        a.longitude,    -- 6
         (6371 * acos(
             cos(radians(:lat)) * cos(radians(a.latitude)) *
             cos(radians(a.longitude) - radians(:lon)) +
             sin(radians(:lat)) * sin(radians(a.latitude)))
-        ) AS distance,  -- row[7]
-        a.schema_name   -- row[8]
+        ) AS distance,  -- 7
+        a.schema_name,  -- 8 
+        a.hora_inicio,  -- 9
+        a.hora_fim      -- 10
     FROM public.arenas a 
     WHERE a.latitude IS NOT NULL 
     AND a.longitude IS NOT NULL 
@@ -53,15 +55,17 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
 
     @Query(value = """
     SELECT 
-        a.id,           -- row[0]
-        a.name,         -- row[1]
-        a.endereco,     -- row[2]
-        a.cidade,       -- row[3]
-        a.estado,       -- row[4]
-        a.latitude,     -- row[5]
-        a.longitude,    -- row[6]
-        NULL as distance, -- row[7]
-        a.schema_name   -- row[8]
+        a.id,           -- 0
+        a.name,         -- 1
+        a.endereco,     -- 2
+        a.cidade,       -- 3
+        a.estado,       -- 4
+        a.latitude,     -- 5
+        a.longitude,    -- 6
+        NULL as distance, -- 7
+        a.schema_name,  
+        a.hora_inicio,
+        a.hora_fim      -- 10
     FROM public.arenas a 
     WHERE (:search IS NULL 
            OR LOWER(a.name) LIKE LOWER(CONCAT('%', :search, '%')) 

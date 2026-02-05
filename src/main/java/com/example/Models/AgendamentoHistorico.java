@@ -39,8 +39,6 @@ public class AgendamentoHistorico {
     @Column(name = "valor_total")
     private Double valor;
 
-
-
     private String schemaName;
 
     private String arenaName;
@@ -48,4 +46,7 @@ public class AgendamentoHistorico {
     private String quadraNome;
 
     private String enderecoArena;
+
+    @Column(name = "asaas_payment_id")
+    private String asaasPaymentId;
 }

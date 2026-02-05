@@ -45,4 +45,16 @@ public class Agendamentos {
     @Transient
     private String enderecoArena;
 
+    @Column(name = "asaas_payment_id")
+    private String asaasPaymentId;
+
+    @Column(name = "asaas_invoice_url")
+    private String asaasInvoiceUrl;
+
+    @Column(name = "pix_qr_code")
+    private String pixQrCode;
+
+    @Column(name = "pix_copy_paste")
+    private String pixCopyPaste;
+
 }

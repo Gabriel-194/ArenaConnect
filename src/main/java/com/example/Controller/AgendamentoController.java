@@ -49,6 +49,14 @@ public class AgendamentoController {
             response.put("message", "Agendamento criado com sucesso");
             response.put("agendamento", novoAgendamento);
 
+            if (novoAgendamento.getPixQrCode() != null) {
+                Map<String, String> pixData = new HashMap<>();
+                pixData.put("qrCode", novoAgendamento.getPixQrCode());
+                pixData.put("copyPaste", novoAgendamento.getPixCopyPaste());
+                pixData.put("invoiceUrl", novoAgendamento.getAsaasInvoiceUrl());
+                response.put("pix", pixData);
+            }
+
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             Map<String, Object> error = new HashMap<>();

@@ -188,8 +188,8 @@ public class ArenaService {
             dto.setEndereco((String) row[2]);
             dto.setCidade((String) row[3]);
             dto.setEstado((String) row[4]);
-            dto.setLatitude(((Number) row[5]).doubleValue());
-            dto.setLongitude(((Number) row[6]).doubleValue());
+            dto.setLatitude(row[5] != null ? ((Number) row[5]).doubleValue() : 0.0);
+            dto.setLongitude(row[6] != null ? ((Number) row[6]).doubleValue() : 0.0);
 
             if(row[7] != null){
                 double rawDistance = ((Number) row[7]).doubleValue();
@@ -199,6 +199,13 @@ public class ArenaService {
             }
 
             dto.setSchemaName((String) row[8]);
+
+            if (row[9] != null) {
+                dto.setHoraInicio(row[9].toString().substring(0, 5));
+            }
+            if (row[10] != null) {
+                dto.setHoraFim(row[10].toString().substring(0, 5));
+            }
             return dto;
         }).toList();
     }

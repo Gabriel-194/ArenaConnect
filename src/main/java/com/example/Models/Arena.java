@@ -53,4 +53,10 @@ public class Arena {
     @Transient
     private Double distanceKm;
 
+    @Column(name = "asaas_wallet_id")
+    private String asaasWalletId;
+
+    @Column(name = "asaas_customer_id")
+    private String asaasCustomerId;
+
 }
