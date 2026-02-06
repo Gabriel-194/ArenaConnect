@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/home.css';
 import axios from "axios";
 import ModalCheckout from "../Components/ModalCheckout.jsx";
 
 export default function Home(){
     const navigate = useNavigate();
-    const location = useLocation();
 
     const [showCheckout, setShowCheckout] = useState(false);
     const [paymentUrl, setPaymentUrl] = useState('');
@@ -57,7 +56,21 @@ export default function Home(){
 
         validateSession();
 
-    }, [navigate]);
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if(error.response && error.response.status === 402) {
+                    setShowCheckout(true);
+                }
+                return Promise.reject(error);
+            }
+        )
+
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        }
+
+    }, [navigate,paymentUrl]);
 
     return (
         <div className="home-body" style={{ minHeight: '100vh', width: '100%' }}>

@@ -31,8 +31,6 @@ public class AsaasService {
     public String createCustomer(Users user) {
         String url = asaasUrl + "/customers";
 
-        HttpHeaders headers = getHeaders();
-
         AsaasCustumerDTO dto = new AsaasCustumerDTO();
         dto.setName(user.getNome());
         dto.setCpfCnpj(user.getCpf());
@@ -106,8 +104,6 @@ public class AsaasService {
 
     public String createSubscription(String customerId) {
         String url = asaasUrl + "/subscriptions";
-
-        HttpHeaders headers = getHeaders();
 
         AsaasPaymentDTO dto = new AsaasPaymentDTO();
         dto.setCustomer(customerId);
