@@ -24,6 +24,9 @@ import java.util.Optional;
 public class UserService {
 
     @Autowired
+    private AsaasService asaasService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -83,7 +86,7 @@ public class UserService {
         arena.setEndereco(dto.getEnderecoArena());
         arena.setCidade(dto.getCidadeArena());
         arena.setEstado(dto.getEstadoArena());
-        arena.setAtivo(true);
+        arena.setAtivo(false);
         String schemaName = (dto.getNomeArena());
         arena.setSchemaName(schemaName);
         arena.setLatitude(dto.getLatitude());
@@ -104,7 +107,36 @@ public class UserService {
         admin.setIdArena(arena.getId());
         admin.setAtivo(true);
 
-        return userRepository.save(admin);
+        Users savedAdmin = userRepository.save(admin);
+
+        String asaasCustomerId = null;
+
+        try {
+            asaasCustomerId = asaasService.createCustomer(savedAdmin);
+            savedAdmin.setAsaasCustomerId(asaasCustomerId);
+
+            String walletId = asaasService.createWallet(dto);
+            arena.setAsaasWalletId(walletId);
+
+            String subscriptionId = asaasService.createSubscription(asaasCustomerId);
+            arena.setAssasSubscriptionId(subscriptionId);
+
+            arenaRepository.save(arena);
+            userRepository.save(savedAdmin);
+
+            logger.info("✅ Integração Asaas Completa: Cust={} Wallet={}", asaasCustomerId, walletId);
+
+        } catch (Exception e) {
+            logger.error("❌ Erro no Asaas. Iniciando rollback manual...", e);
+
+            if (asaasCustomerId != null) {
+                asaasService.deleteCustomer(asaasCustomerId);
+            }
+
+            throw new RuntimeException("Falha na integração com Asaas: " + e.getMessage(), e);
+        }
+
+        return savedAdmin;
     }
 
     //validations

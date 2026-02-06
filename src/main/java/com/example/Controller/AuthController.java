@@ -3,6 +3,8 @@ package com.example.Controller;
 import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
 import com.example.Models.Users;
+import com.example.Repository.ArenaRepository;
+import com.example.Service.AsaasService;
 import com.example.Service.AuthService;
 import com.example.Service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,8 +24,7 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
-    @Autowired
-    private JwtService jwtService;
+
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse response) {
@@ -42,6 +43,8 @@ public class AuthController {
                     false,
                     "erro interno ao processar login",
                     null,
+                    null,
+                    false,
                     null
             );
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(loginResponseDTO);
@@ -62,11 +65,14 @@ public class AuthController {
 
             String correctPage = authService.determineRedirectUrl(user.getRole());
 
+            Map<String, Object> arenaStatus = authService.verifyArenaStatus(user);
 
             Map<String, Object> response = new HashMap<>();
             response.put("valid", true);
             response.put("redirectUrl", correctPage);
             response.put("nome", user.getNome());
+
+            response.putAll(arenaStatus);
 
             return ResponseEntity.ok(response);
         } catch (Exception e){
@@ -116,18 +122,6 @@ public class AuthController {
        return null;
     }
 
-    private String getUrlByRole(String role) {
-        if (role == null){
-            return "/login";
-        }
-
-        switch (role) {
-            case "superadmin": return "/homeSuperAdmin";
-            case  "ADMIN": return "/home";
-            case "CLIENTE": return "/homeClient";
-            default:return "/login";
-        }
-    }
 
 
 }

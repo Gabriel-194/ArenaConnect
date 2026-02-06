@@ -3,152 +3,143 @@ package com.example.Service;
 import com.example.DTOs.Asaas.AsaasCustumerDTO;
 import com.example.DTOs.Asaas.AsaasPaymentDTO;
 import com.example.DTOs.Asaas.AsaasResponseDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.DTOs.Asaas.AsaasWalletDTO;
+import com.example.DTOs.PartnerRegistrationDTO;
+import com.example.Models.Users;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import tools.jackson.databind.ObjectMapper;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class AsaasService {
-    private static final Logger logger = LoggerFactory.getLogger(AsaasService.class.getName());
 
     @Value("${asaas.api.url}")
-    private String asaasApiUrl;
+    private String asaasUrl;
 
     @Value("${asaas.api.key}")
-    private String asaasApiKey;
-
-    @Value("${asaas.master.wallet.id}")
-    private String masterWalletId;
+    private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String criarCliente(AsaasCustumerDTO custumerDto) {
-        try{
-            String url = asaasApiUrl + "/custumers";
+    public String createCustomer(Users user) {
+        String url = asaasUrl + "/customers";
 
-            HttpHeaders headers = createHeaders();
-            HttpEntity<AsaasCustumerDTO> request = new HttpEntity<>(custumerDto, headers);
+        HttpHeaders headers = getHeaders();
 
-            ResponseEntity<AsaasResponseDTO> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    AsaasResponseDTO.class
-            );
+        AsaasCustumerDTO dto = new AsaasCustumerDTO();
+        dto.setName(user.getNome());
+        dto.setCpfCnpj(user.getCpf());
+        dto.setEmail(user.getEmail());
+        dto.setMobilePhone(user.getTelefone());
+        dto.setExternalReference(user.getIdUser().toString());
+        dto.setNotificationDisabled(true);
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                String customerId = response.getBody().getId();
-                logger.info("✅ Cliente criado no Asaas: {}", customerId);
-                return customerId;
-            }
+        HttpEntity<AsaasCustumerDTO> request = new HttpEntity<>(dto, getHeaders());
 
-            throw new RuntimeException("Falha ao criar cliente no Asaas");
+        ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url, request, AsaasResponseDTO.class);
 
-        }catch (Exception e) {
-            logger.error("❌ Erro ao criar cliente no Asaas: {}", e.getMessage());
-            throw new RuntimeException("Erro na integração com Asaas: " + e.getMessage());
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            return response.getBody().getId();
         }
+
+        throw new RuntimeException("Falha ao criar cliente no Asaas: Resposta inesperada");
     }
 
-    public String criarSubconta(String nomeArena, String cnpj, String email) {
-        try {
-            String url = asaasApiUrl + "/accounts";
+    public String createWallet(PartnerRegistrationDTO dto) {
+        String url = asaasUrl + "/accounts";
 
-            String jsonBody = String.format("""
-                {
-                    "name": "%s",
-                    "email": "%s",
-                    "cpfCnpj": "%s",
-                    "companyType": "MEI",
-                    "phone": "4734421234",
-                    "mobilePhone": "47998765432",
-                    "address": "Av. Paulista",
-                    "addressNumber": "1000",
-                    "province": "Centro",
-                    "postalCode": "01310100"
-                }
-                """, nomeArena, email, cnpj);
+        HttpHeaders headers = getHeaders();
 
-            HttpHeaders headers = createHeaders();
-            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
+        AsaasWalletDTO walletDto = new AsaasWalletDTO();
+        walletDto.setName(dto.getNomeArena());
+        walletDto.setEmail(dto.getEmailAdmin());
+        walletDto.setLoginEmail(dto.getEmailAdmin());
+        walletDto.setCpfCnpj(dto.getCnpjArena().replaceAll("\\D", ""));
+        walletDto.setCompanyType("LIMITED");
+        walletDto.setIncomeValue(5000.0);
+        walletDto.setMobilePhone(dto.getTelefoneUser().replaceAll("\\D", ""));
 
-            ResponseEntity<AsaasResponseDTO> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    AsaasResponseDTO.class
-            );
+        walletDto.setAddress(dto.getEnderecoArena());
+        walletDto.setAddressNumber("0");
+        walletDto.setProvince(dto.getCidadeArena());
+        walletDto.setPostalCode(dto.getCepArena().replaceAll("\\D", ""));
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                String walletId = response.getBody().getId();
-                logger.info("✅ Subconta criada: {}", walletId);
-                return walletId;
+        HttpEntity<AsaasWalletDTO> request = new HttpEntity<>(walletDto, headers);
+
+        ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url, request, AsaasResponseDTO.class);
+
+        if (response.getBody() != null) {
+            if (response.getBody().getWalletId() != null) {
+                return response.getBody().getWalletId();
             }
+            return response.getBody().getId();
+        }
 
-            throw new RuntimeException("Falha ao criar subconta");
+        throw new RuntimeException("Erro ao criar Subconta Asaas");
+    }
 
+    public void deleteCustomer(String customerId) {
+        try {
+            String url = asaasUrl + "/customers/" + customerId;
+            HttpEntity<String> request = new HttpEntity<>(getHeaders());
+            restTemplate.delete(url);
+            System.out.println("⚠️ Rollback Asaas: Cliente " + customerId + " removido.");
         } catch (Exception e) {
-            logger.error("❌ Erro ao criar subconta: {}", e.getMessage());
-            throw new RuntimeException("Erro ao criar subconta: " + e.getMessage());
+            System.err.println("❌ Falha ao desfazer cliente no Asaas: " + e.getMessage());
         }
     }
 
-    public AsaasResponseDTO criarCobrancaComSplit(AsaasPaymentDTO paymentDTO) {
-        try {
-            String url = asaasApiUrl + "/payments";
-
-            HttpHeaders headers = createHeaders();
-            HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(paymentDTO, headers);
-
-            ResponseEntity<AsaasResponseDTO> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    request,
-                    AsaasResponseDTO.class
-            );
-
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                logger.info("✅ Cobrança criada: {}", response.getBody().getId());
-                return response.getBody();
-            }
-
-            throw new RuntimeException("Falha ao criar cobrança");
-        }catch (Exception e) {
-            logger.error("❌ Erro ao criar cobrança: {}", e.getMessage());
-            throw new RuntimeException("Erro ao criar cobrança: " + e.getMessage());
-        }
-    }
-
-    private HttpHeaders createHeaders() {
+    private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
+        headers.set("access_token", apiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("acces_token", asaasApiKey);
+        headers.set("User-Agent", "ArenaConnect-System");
         return headers;
     }
 
-    public AsaasResponseDTO buscarPagamento(String paymentId) {
-        try {
-            String url = asaasApiUrl + "/payments/" + paymentId;
+    public String createSubscription(String customerId) {
+        String url = asaasUrl + "/subscriptions";
 
-            HttpHeaders headers = createHeaders();
-            HttpEntity<Void> request = new HttpEntity<>(headers);
+        HttpHeaders headers = getHeaders();
 
-            ResponseEntity<AsaasResponseDTO> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    request,
-                    AsaasResponseDTO.class
-            );
+        AsaasPaymentDTO dto = new AsaasPaymentDTO();
+        dto.setCustomer(customerId);
+        dto.setBillingType("UNDEFINED");
+        dto.setValue(100.00);
+        dto.setNextDueDate(java.time.LocalDate.now().toString());
+        dto.setCycle("MONTHLY");
+        dto.setDescription("Assinatura ArenaConnect SaaS");
 
-            return response.getBody();
-        }catch (Exception e) {
-            logger.error("❌ Erro ao buscar pagamento: {}", e.getMessage());
-            return null;
+        HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(dto, getHeaders());
+
+        ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url, request, AsaasResponseDTO.class);
+
+        if (response.getBody() != null) {
+            return response.getBody().getId();
         }
+        throw new RuntimeException("Erro ao criar assinatura");
     }
+
+    public String getPaymentLink(String subscriptionId) {
+        String url = asaasUrl + "/subscriptions/" + subscriptionId + "/payments";
+        HttpEntity<String> request = new HttpEntity<>(getHeaders());
+
+        ResponseEntity<Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, Map.class);
+
+        if (response.getBody() != null && response.getBody().containsKey("data")) {
+            java.util.List<Map> data = (java.util.List<Map>) response.getBody().get("data");
+            if (!data.isEmpty()) {
+                return (String) data.get(0).get("invoiceUrl");
+            }
+        }
+        return null;
+    }
+
 }

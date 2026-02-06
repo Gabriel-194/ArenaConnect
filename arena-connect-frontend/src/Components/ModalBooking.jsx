@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled, { keyframes } from 'styled-components';
 import '../Styles/components.css';
-import ModalPix from './ModalPix';
 
 export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess }) {
     const [quadras, setQuadras] = useState([]);
@@ -14,9 +13,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
     const [selectedHour, setSelectedHour] = useState(null);
 
     const isEditing = !!bookingToEdit;
-
-    const [showPixModal, setShowPixModal] = useState(false);
-    const [pixData, setPixData] = useState(null);
 
     const getTodayLocal = () => {
         const date = new Date();
@@ -315,13 +311,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                     </div>
                 </div>
             </StyledWrapper>
-
-            {showPixModal && pixData && (
-                <ModalPix
-                    pixData={pixData}
-                    onClose={handleClosePixModal}
-                />
-            )}
         </div>
     );
 }

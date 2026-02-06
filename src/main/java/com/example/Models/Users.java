@@ -49,6 +49,9 @@ public class Users {
 
     private String telefone;
 
+    @Column(name = "asaas_customer_id")
+    private String asaasCustomerId;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_arena", insertable = false, updatable = false)

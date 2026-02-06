@@ -1,5 +1,8 @@
 package com.example.Multitenancy;
 
+import com.example.Models.Arena;
+import com.example.Repository.ArenaRepository;
+import com.example.Service.ArenaService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +14,8 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
+import java.util.Optional;
+
 import com.example.Service.JwtService;
 
 
@@ -23,6 +28,8 @@ public class TenantFilter implements Filter {
 
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private ArenaRepository arenaRepository;
 
 
     private boolean isPublicEndpoint(String uri) {
@@ -54,37 +61,54 @@ public class TenantFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-        String requestURI = req.getRequestURI();
-        if (isPublicEndpoint(requestURI)) {
+        if (isPublicEndpoint(req.getRequestURI())) {
             chain.doFilter(request, response);
             return;
         }
 
-        String token = null;
-        if (req.getCookies() != null) {
-            for (Cookie cookie : req.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
-                    token = cookie.getValue();
-                    break;
-                }
+        String tenantSchema = resolveTenant(req);
+
+        if (tenantSchema != null && !"public".equals(tenantSchema)) {
+
+            Optional<Arena> arenaOpt = arenaRepository.findBySchemaName(tenantSchema);
+
+            if (arenaOpt.isPresent() && !arenaOpt.get().isAtivo()) {
+                logger.warn("🚫 BLOQUEIO: Arena inativa: {}", arenaOpt.get().getName());
+
+                res.setStatus(402);
+                res.setContentType("application/json");
+                res.setCharacterEncoding("UTF-8");
+                res.getWriter().write(
+                        "{\"message\":\"Arena bloqueada. Pagamento pendente.\",\"forceModal\":true}"
+                );
+                return;
             }
+
+            TenantContext.setCurrentTenant(tenantSchema);
         }
 
-        String tenantHeader = req.getHeader("X-Tenant-ID");
-
-        if (tenantHeader != null && !tenantHeader.isEmpty()) {
-
-            TenantContext.setCurrentTenant(tenantHeader);
-        } else if (token != null) {
-            String tenantSchema = jwtService.getArenaSchemaFromToken(token);
-            if (tenantSchema != null) {
-                TenantContext.setCurrentTenant(tenantSchema);
-            }
-        }
         try {
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+    }
+
+    private String resolveTenant(HttpServletRequest req) {
+
+        String tenantHeader = req.getHeader("X-Tenant-ID");
+        if (tenantHeader != null && !tenantHeader.isBlank()) {
+            return tenantHeader;
+        }
+
+        if (req.getCookies() != null) {
+            for (Cookie cookie : req.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    return jwtService.getArenaSchemaFromToken(cookie.getValue());
+                }
+            }
+        }
+
+        return null;
     }
 }

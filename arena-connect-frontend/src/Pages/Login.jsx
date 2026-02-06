@@ -31,8 +31,20 @@ export default function Login(){
             localStorage.setItem('userName', nomeDoUsuario);
 
             const destination = response.data.redirectUrl || '/home';
+
             console.log("Redirecting to:", destination);
-            navigate(destination);
+
+            if (destination === '/home') {
+                navigate('/home', {
+                    state: {
+
+                        arenaAtiva: response.data.arenaAtiva,
+                        paymentUrl: response.data.paymentUrl
+                    }
+                });
+            } else {
+                navigate(destination);
+            }
 
         } catch (error) {
             console.error("Erro no login:", error);

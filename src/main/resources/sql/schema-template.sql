@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS "{SCHEMA_NAME}".agendamentos (
     asaas_payment_id VARCHAR(50),
     asaas_invoice_url TEXT,
     pix_qr_code TEXT,
-     pix_copy_paste TEXT;
+     pix_copy_paste TEXT,
     CONSTRAINT fk_agendamento_quadra FOREIGN KEY (id_quadra)
     REFERENCES "{SCHEMA_NAME}".quadras(id_quadra) ON DELETE CASCADE
     );

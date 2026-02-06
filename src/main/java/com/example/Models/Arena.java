@@ -56,7 +56,7 @@ public class Arena {
     @Column(name = "asaas_wallet_id")
     private String asaasWalletId;
 
-    @Column(name = "asaas_customer_id")
-    private String asaasCustomerId;
+    @Column(name = "asaas_subscription_id")
+    private String assasSubscriptionId;
 
 }

@@ -11,6 +11,8 @@ public class AsaasPaymentDTO {
     private String billingType;
     private Double value;
     private String dueDate;
+    private String nextDueDate;
+    private String cycle;
     private String description;
     private String externalReference;
     private List<AsaasSplitDTO> split;

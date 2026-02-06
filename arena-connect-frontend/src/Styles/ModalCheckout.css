@@ -1,0 +1,234 @@
+/* Styles/ModalCheckout.css */
+
+/* Overlay Fundo Escuro */
+.modal-overlay-glass {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 5, 5, 0.9); /* Fundo ainda mais escuro para destaque */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+/* --- BLOBS (Fundo Liquid) --- */
+.checkout-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px); /* Blur maior para suavizar */
+    opacity: 0.25; /* MUITO MAIS SUAVE (Era 0.6) */
+    z-index: 0;
+    animation: floatBlob 10s infinite alternate ease-in-out;
+}
+
+.checkout-blob-1 {
+    width: 350px;
+    height: 350px;
+    background: #00ff7f; /* Verde Neon */
+    top: 5%;
+    left: 15%;
+}
+
+.checkout-blob-2 {
+    width: 300px;
+    height: 300px;
+    background: #008f4c; /* Verde mais escuro (Substituindo o azul) */
+    bottom: 10%;
+    right: 15%;
+    animation-delay: -3s;
+}
+
+@keyframes floatBlob {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, -30px) scale(1.1); }
+}
+
+/* --- CARTÃO DE CONTEÚDO (Glass) --- */
+.modal-content-glass {
+    position: relative;
+    z-index: 1;
+
+    /* Fundo Glass Escuro */
+    background: rgba(20, 20, 20, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    /* Borda transparente para dar espaço ao glow */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
+
+    padding: 40px;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    color: #fff;
+    overflow: hidden; /* Importante para a borda não vazar */
+}
+
+/* --- A BORDA QUE SE MEXE (Animation) --- */
+.border-glow {
+    position: absolute;
+    inset: 0; /* Ocupa todo o card */
+    border-radius: 24px;
+    padding: 2px; /* Espessura da borda */
+
+    /* Máscara para deixar apenas a borda visível e o centro transparente */
+    -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    pointer-events: none; /* Deixa clicar no conteúdo através dela */
+    z-index: 2;
+}
+
+.border-glow::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%; /* Maior que o card para cobrir ao girar */
+    height: 200%;
+
+    /* O degradê que gira (Verde Neon + Transparente) */
+    background: conic-gradient(
+            transparent 0deg,
+            transparent 90deg,
+            #00ff7f 180deg,
+            transparent 270deg,
+            transparent 360deg
+    );
+
+    /* Centraliza e Anima */
+    transform: translate(-50%, -50%);
+    animation: spinBorder 4s linear infinite;
+}
+
+@keyframes spinBorder {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* --- CONTEÚDO --- */
+
+/* Header */
+.glass-header h2 {
+    color: #fff;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 3;
+}
+
+.glass-header p {
+    color: #ccc;
+    font-size: 0.95rem;
+    position: relative;
+    z-index: 3;
+}
+
+/* Card do Plano */
+.plan-card {
+    position: relative;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    padding: 25px;
+    margin: 25px 0;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.plan-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #00ff7f;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.price {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 10px 0 20px 0;
+}
+
+.price span {
+    font-size: 0.9rem;
+    color: #aaa;
+    font-weight: 400;
+}
+
+.benefits {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 25px;
+    text-align: left;
+    display: inline-block;
+}
+
+.benefits li {
+    margin: 8px 0;
+    font-size: 0.9rem;
+    color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Botão Padrão */
+.btn-checkout-standard {
+    display: block;
+    width: 100%;
+    padding: 14px 0;
+    background: #00ff7f;
+    color: #000;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 255, 127, 0.2);
+}
+
+.btn-checkout-standard:hover {
+    background: #00e673;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 255, 127, 0.3);
+}
+
+/* Notas de Rodapé */
+.note, .refresh-note {
+    position: relative;
+    z-index: 3;
+}
+
+.note {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 15px;
+}
+
+.refresh-note {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 5px;
+}
+
+.refresh-note a {
+    color: #00ff7f;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.refresh-note a:hover {
+    text-decoration: underline;
+}

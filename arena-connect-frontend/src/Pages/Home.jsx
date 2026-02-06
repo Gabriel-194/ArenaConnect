@@ -1,10 +1,15 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/home.css';
 import axios from "axios";
+import ModalCheckout from "../Components/ModalCheckout.jsx";
 
 export default function Home(){
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const [showCheckout, setShowCheckout] = useState(false);
+    const [paymentUrl, setPaymentUrl] = useState('');
 
     const handleLogout = async (e) => {
         e.preventDefault();
@@ -24,6 +29,35 @@ export default function Home(){
             navigate('/login');
         }
     }
+
+    useEffect(() => {
+
+        const validateSession = async () => {
+            try {
+                const response = await axios.post(
+                    'http://localhost:8080/api/auth/validate',
+                    {},
+                    { withCredentials: true }
+                );
+
+                if (response.data.valid) {
+                    if (response.data.arenaAtiva === false) {
+                        setPaymentUrl(response.data.paymentUrl);
+                        setShowCheckout(true);
+                    } else {
+                        setShowCheckout(false);
+                    }
+                }
+            } catch (error) {
+                if (error.response?.status === 401) {
+                    navigate('/login');
+                }
+            }
+        };
+
+        validateSession();
+
+    }, [navigate]);
 
     return (
         <div className="home-body" style={{ minHeight: '100vh', width: '100%' }}>
@@ -122,6 +156,7 @@ export default function Home(){
                     <p>© 2025 Arena Connect. Todos os direitos reservados.</p>
                 </footer>
             </div>
+            {showCheckout && <ModalCheckout paymentUrl={paymentUrl} />}
         </div>
     );
 };

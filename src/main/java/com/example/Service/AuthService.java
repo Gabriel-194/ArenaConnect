@@ -2,7 +2,9 @@ package com.example.Service;
 
 import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
+import com.example.Models.Arena;
 import com.example.Models.Users;
+import com.example.Repository.ArenaRepository;
 import com.example.Repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -13,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.Domain.RoleEnum;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -27,25 +31,30 @@ public class AuthService {
 
     @Autowired
     JwtService jwtService;
+    @Autowired
+    private AsaasService asaasService;
 
-    public LoginResponseDTO login( LoginRequestDTO dto, HttpServletResponse response) {
+    @Autowired
+    private ArenaRepository arenaRepository;
+
+    public LoginResponseDTO login(LoginRequestDTO dto, HttpServletResponse response) {
         logger.info("🔐 Tentativa de login: {}", dto.getEmail());
 
         Optional<Users> userOpt = userRepository.findByEmail(dto.getEmail());
 
         if (userOpt.isEmpty()) {
-            return new LoginResponseDTO(false, "Email ou senha incorretos", null,null);
+            return new LoginResponseDTO(false, "Email ou senha incorretos", null, null, false, null);
         }
 
         Users user = userOpt.get();
 
         if (!user.getAtivo()) {
             logger.warn("❌ Usuário inativo: {}", dto.getEmail());
-            return new LoginResponseDTO(false, "Usuário desativado", null,null);
+            return new LoginResponseDTO(false, "Usuário desativado", null, null, false, null);
         }
 
         if (!passwordEncoder.matches(dto.getSenha(), user.getSenhaHash())) {
-            return new LoginResponseDTO(false, "Email ou senha incorretos", null,null);
+            return new LoginResponseDTO(false, "Email ou senha incorretos", null, null, false, null);
         }
 
         Integer arenaId = (user.getArena() != null) ? user.getArena().getId() : null;
@@ -66,7 +75,19 @@ public class AuthService {
         jakarta.servlet.http.Cookie jwtCookie = jwtService.createJwtCookie(token);
         response.addCookie(jwtCookie);
 
-        return new LoginResponseDTO(true, "Login realizado com sucesso", user.getNome() , user.getEmail());
+
+        Map<String, Object> status = verifyArenaStatus(user);
+        boolean arenaAtiva = (boolean) status.get("arenaAtiva");
+        String paymentUrl = (String) status.get("paymentUrl");
+
+        return new LoginResponseDTO(
+                true,
+                "Login realizado com sucesso",
+                user.getNome(),
+                user.getEmail(),
+                arenaAtiva,
+                paymentUrl
+        );
     }
 
     public boolean validateToken(String token) {
@@ -88,7 +109,7 @@ public class AuthService {
         }
 
         Users user = userOpt.get();
-        if(!token.equals(user.getToken())) {
+        if (!token.equals(user.getToken())) {
             return false;
         }
 
@@ -134,4 +155,46 @@ public class AuthService {
                 return "/";
         }
     }
+
+    public Map<String, Object> verifyArenaStatus(Users user) {
+
+        Boolean arenaAtiva = true;
+        String paymentUrl = null;
+
+        if (user.getRole() == RoleEnum.ADMIN || user.getIdArena() != null) {
+            Arena arena = null;
+
+            if (user.getArena() != null) {
+                arena = user.getArena();
+            } else if (user.getIdArena() != null) {
+                arena = arenaRepository.findById(user.getIdArena().longValue())
+                        .orElse(null);
+            }
+
+            if (arena != null) {
+                arenaAtiva = arena.isAtivo();
+
+                if (Boolean.FALSE.equals(arenaAtiva)) {
+                    String subId = arena.getAssasSubscriptionId();
+
+                    if (subId != null) {
+                        try {
+                            paymentUrl = asaasService.getPaymentLink(subId);
+                        } catch (Exception e) {
+                            logger.error(
+                                    "Erro ao buscar link Asaas para o user {}: {}",
+                                    user.getEmail(),
+                                    e.getMessage()
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        Map<String, Object> status = new HashMap<>();
+        status.put("arenaAtiva", arenaAtiva);
+        status.put("paymentUrl", paymentUrl);
+        return status;
+    }
 }
+
