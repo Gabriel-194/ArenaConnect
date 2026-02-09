@@ -181,7 +181,7 @@ export default function ClientAgendamentos(){
                                                 </button>
                                             )}
 
-                                            {(booking.status !== 'CANCELADO' && booking.status !== 'FINALIZADO' && filterType === 'upcoming') && (
+                                            {(booking.status !== 'CANCELADO' && booking.status !== 'CONFIRMADO'&& booking.status !== 'FINALIZADO' && filterType === 'upcoming') && (
                                                 <button className="btn-cancel" onClick={() => handleCancelBooking(booking.id_agendamento, booking.schemaName)}
                                                 >Cancelar</button>
                                             )}

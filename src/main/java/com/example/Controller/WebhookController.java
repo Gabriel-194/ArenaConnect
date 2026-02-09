@@ -4,6 +4,7 @@ import com.example.Models.Arena;
 import com.example.Models.Users;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.UserRepository;
+import com.example.Service.AgendamentoService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -29,6 +29,8 @@ public class WebhookController {
 
     @Value("${asaas.api.key}")
     private String asaasApiKey;
+    @Autowired
+    private AgendamentoService agendamentoService;
 
     @PostMapping("/asaas")
     @Transactional
@@ -48,12 +50,18 @@ public class WebhookController {
             if ("PAYMENT_RECEIVED".equals(event) || "PAYMENT_CONFIRMED".equals(event)) {
 
                 String asaasCustomerId = root.path("payment").path("customer").asText();
+                String paymentId = root.path("payment").path("id").asText();
+
+                boolean isAgendamento = confirmPaymentifExist(paymentId);
+
+                if(!isAgendamento){
+                    if (asaasCustomerId != null && !asaasCustomerId.isEmpty()) {
+                        ativarArenaPeloIdAsaas(asaasCustomerId);
+                    }
+                }
 
                 logger.info("💰 Pagamento identificado. Cliente Asaas: {}", asaasCustomerId);
 
-                if (asaasCustomerId != null && !asaasCustomerId.isEmpty()) {
-                    ativarArenaPeloIdAsaas(asaasCustomerId);
-                }
             }
             return ResponseEntity.ok("Webhook processado com sucesso");
 
@@ -82,5 +90,17 @@ public class WebhookController {
         }, () -> {
             logger.error("❌ ERRO CRÍTICO: Nenhum usuário encontrado com o asaas_customer_id: {}", asaasCustomerId);
         });
+    }
+
+    public Boolean confirmPaymentifExist(String paymentId){
+        if (paymentId == null || paymentId.isEmpty()) return false;
+
+        boolean confirmado = agendamentoService.confirmPaymentWebhook(paymentId);
+
+        if (confirmado) {
+            logger.info("✅ PAGAMENTO DE RESERVA: Agendamento confirmado com sucesso! (ID Asaas: {})", paymentId);
+        }
+
+        return confirmado;
     }
 }

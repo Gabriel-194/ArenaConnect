@@ -120,7 +120,6 @@ public class AgendamentoService {
             userRepository.save(currentUser);
         }
 
-
         try {
             AsaasResponseDTO cobranca = asaasService.createPaymentWithSplit(
                     currentUser.getAsaasCustomerId(),
@@ -255,15 +254,57 @@ public class AgendamentoService {
 
         }
 
+        if (statusAlvo.equals("CANCELADO")) {
+            if (agendamento.getAsaasPaymentId() != null) {
+                try {
+                    asaasService.cancelarCobranca(agendamento.getAsaasPaymentId());
+
+                    agendamento.setAsaasInvoiceUrl(null);
+                } catch (Exception e) {
+                    System.err.println("Erro ao remover cobrança Asaas: " + e.getMessage());
+                }
+            }
+        }
+
         agendamento.setStatus(statusAlvo);
         agendamentoRepository.salvarComSchema(agendamento, schema);
 
         historicoRepository.buscarPorOrigem(idAgendamento, schema).ifPresent(hist -> {
             hist.setStatus(statusAlvo);
+            if (statusAlvo.equals("CANCELADO")) {
+                hist.setAsaasInvoiceUrl(null);
+            }
             historicoRepository.save(hist);
         });
     }
 
+    public boolean confirmPaymentWebhook(String paymentId){
+        var historicoOpt = historicoRepository.findByAsaasPaymentId(paymentId);
 
+        if(historicoOpt.isPresent()){
+            AgendamentoHistorico historico = historicoOpt.get();
+            String targetSchema = historico.getSchemaName();
+
+            TenantContext.setCurrentTenant(targetSchema);
+
+            try{
+                agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
+                    agendamento.setStatus("CONFIRMADO");
+                    agendamentoRepository.save(agendamento);
+                });
+
+                historico.setStatus("CONFIRMADO");
+                historicoRepository.save(historico);
+
+                return true;
+            }finally {
+                TenantContext.clear();
+            }
+        }
+        return false;
+    }
 }
+
+
+
 

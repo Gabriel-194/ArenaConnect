@@ -182,4 +182,18 @@ public class AsaasService {
         return null;
     }
 
+    public void cancelarCobranca(String paymentId){
+        if(paymentId == null || paymentId.isEmpty()) return;
+
+        try{
+            String url = asaasUrl + "/payments/" + paymentId;
+            HttpEntity<String> request = new HttpEntity<>(getHeaders());
+
+            restTemplate.exchange(url,org.springframework.http.HttpMethod.DELETE, request, String.class);
+        }catch (Exception e) {
+            System.err.println("Erro ao cancelar cobrança no Asaas (" + paymentId + "): " + e.getMessage());
+
+        }
+    }
+
 }
