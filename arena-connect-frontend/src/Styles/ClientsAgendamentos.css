@@ -262,6 +262,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
+
 }
 
 /* Estilo do Botão de Ícone (Igual ao Admin) */
@@ -286,4 +287,41 @@
     color: #00c8ff;
     transform: translateY(-2px);
     box-shadow: 0 0 10px rgba(0, 200, 255, 0.2);
+}
+
+
+@keyframes liquidShimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.btn-pay-liquid {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    margin: 0;
+    height: 30px;
+    padding: 0 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 12px;
+    text-decoration: none;
+    line-height: 1;
+
+    color: #ffffff;
+    background: linear-gradient(90deg, #062904, #22c55e, #4ade80, #062904);
+    background-size: 300% 100%;
+    animation: liquidShimmer 4s ease infinite;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-pay-liquid:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    border-color: #4ade80;
+    color: #fff;
 }

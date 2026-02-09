@@ -1,9 +1,6 @@
 package com.example.Service;
 
-import com.example.DTOs.Asaas.AsaasCustumerDTO;
-import com.example.DTOs.Asaas.AsaasPaymentDTO;
-import com.example.DTOs.Asaas.AsaasResponseDTO;
-import com.example.DTOs.Asaas.AsaasWalletDTO;
+import com.example.DTOs.Asaas.*;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.Models.Users;
 import org.springframework.beans.factory.annotation.Value;
@@ -134,6 +131,53 @@ public class AsaasService {
             if (!data.isEmpty()) {
                 return (String) data.get(0).get("invoiceUrl");
             }
+        }
+        return null;
+    }
+
+    public AsaasResponseDTO createPaymentWithSplit(String customerId, double valor, String walletIdArena) {
+        String url =asaasUrl + "/payments";
+
+        AsaasPaymentDTO dto = new AsaasPaymentDTO();
+        dto.setCustomer(customerId);
+        dto.setBillingType("UNDEFINED");
+        dto.setValue(valor);
+        dto.setDueDate(java.time.LocalDate.now().toString());
+        dto.setDescription("Reserva de quadra - ArenaConnect");
+
+        AsaasSplitDTO splitArena = new AsaasSplitDTO();
+        splitArena.setWalletId(walletIdArena);
+        splitArena.setPercentualValue(90.0);
+
+        dto.setSplit(java.util.List.of(splitArena));
+
+        HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(dto, getHeaders());
+        ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url,request, AsaasResponseDTO.class);
+
+        if(response.getBody() != null) {
+            return response.getBody();
+        }
+
+        throw new RuntimeException("Erro ao criar cobrança com split no Asaas");
+    }
+
+    public String getPaymentUrlById(String paymentId) {
+        try {
+            String url = asaasUrl + "/payments/" + paymentId;
+            HttpEntity<String> request = new HttpEntity<>(getHeaders());
+
+            ResponseEntity<AsaasResponseDTO> response = restTemplate.exchange(
+                    url,
+                    org.springframework.http.HttpMethod.GET,
+                    request,
+                    AsaasResponseDTO.class
+            );
+
+            if (response.getBody() != null) {
+                return response.getBody().getInvoiceUrl();
+            }
+        } catch (Exception e) {
+            System.err.println("Erro ao buscar link do Asaas: " + e.getMessage());
         }
         return null;
     }

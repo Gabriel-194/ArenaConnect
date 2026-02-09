@@ -138,6 +138,16 @@ export default function ClientAgendamentos(){
                                         <span className={`status-badge ${getStatusClass(booking.status)}`}>
                                             {booking.status || 'Agendado'}
                                         </span>
+                                        {(booking.status === 'PENDENTE') && booking.asaasInvoiceUrl && (
+                                            <a
+                                                href={booking.asaasInvoiceUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn-pay-liquid"
+                                            >
+                                                <span>Pagar </span>
+                                            </a>
+                                        )}
                                     </div>
 
                                     <div className="booking-body">

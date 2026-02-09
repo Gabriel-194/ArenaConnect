@@ -76,9 +76,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
         init();
     }, [bookingToEdit, arena]);
 
-    const handleModalClick = (e) => {
-        e.stopPropagation();
-    }
 
     const handleBack = () => {
         setSelectedQuadra(null);
@@ -156,7 +153,7 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                 id_quadra: selectedQuadra.id,
                 data_inicio: dataInicioISO,
                 valor: selectedQuadra.valor_hora,
-                status: isEditing ? bookingToEdit.status : "CONFIRMADO",
+                status: isEditing ? bookingToEdit.status : "PENDENTE",
                 id_agendamento: isEditing ? bookingToEdit.id_agendamento : null
             };
 
@@ -169,21 +166,10 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                 }
             );
 
-            if (response.data.pix && !isEditing) {
-                setPixData({
-                    qrCode: response.data.pix.qrCode,
-                    copyPaste: response.data.pix.copyPaste,
-                    invoiceUrl: response.data.pix.invoiceUrl,
-                    value: selectedQuadra.valor_hora
-                });
+            alert("Reserva criada com sucesso! Acesse 'Meus Agendamentos' para realizar o pagamento.");
 
-                setShowPixModal(true);
-            } else {
-                alert(isEditing ? "Agendamento atualizado!" : "Reserva realizada com sucesso!");
-
-                if (onSuccess) onSuccess();
-                onClose();
-            }
+            if (onSuccess) onSuccess();
+            onClose();
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
@@ -192,12 +178,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
         }
     };
 
-    const handleClosePixModal = () => {
-        setShowPixModal(false);
-
-        if (onSuccess) onSuccess();
-        onClose();
-    };
 
     return (
         <div className="modal" onClick={onClose}>

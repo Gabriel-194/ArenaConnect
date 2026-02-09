@@ -49,4 +49,7 @@ public class AgendamentoHistorico {
 
     @Column(name = "asaas_payment_id")
     private String asaasPaymentId;
+
+    @Column(name = "asaas_invoice_url")
+    private String asaasInvoiceUrl;
 }
