@@ -266,10 +266,15 @@ public class AgendamentoService {
 
         if(historicoOpt.isPresent()){
             AgendamentoHistorico historico = historicoOpt.get();
+
+            if ("CONFIRMADO".equalsIgnoreCase(historico.getStatus()) ||
+                    "FINALIZADO".equalsIgnoreCase(historico.getStatus())) {
+                System.out.println("Webhook ignorado: Pagamento " + paymentId + " já processado anteriormente.");
+                return true;
+            }
+
             String targetSchema = historico.getSchemaName();
-
             TenantContext.setCurrentTenant(targetSchema);
-
             try{
                 agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
                     agendamento.setStatus("CONFIRMADO");
@@ -280,10 +285,14 @@ public class AgendamentoService {
                 historicoRepository.save(historico);
 
                 return true;
-            }finally {
+            }catch (Exception e) {
+                System.err.println("Erro ao processar webhook: " + e.getMessage());
+                return false;
+            } finally {
                 TenantContext.clear();
             }
         }
+        System.out.println("Webhook ignorado: Pagamento " + paymentId + " não encontrado no sistema.");
         return false;
     }
 

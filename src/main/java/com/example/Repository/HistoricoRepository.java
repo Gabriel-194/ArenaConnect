@@ -23,6 +23,9 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
 
     Optional<AgendamentoHistorico> findByAsaasPaymentId(String asaasPaymentId);
 
+    List<AgendamentoHistorico> findByStatus(String status);
+
+
     @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status = 'CONFIRMADO' AND h.data_fim < :agora")
     List<AgendamentoHistorico> findJogosVencidosGlobalmente(@Param("agora") LocalDateTime agora);
 

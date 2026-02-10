@@ -179,7 +179,6 @@ public class ArenaService {
             rows = arenaRepository.findNearestWithDistance(lat, lon, search);
         }
 
-
         return rows.stream().map(row -> {
             ArenaDistanceDTO dto = new ArenaDistanceDTO();
 
@@ -216,8 +215,6 @@ public class ArenaService {
         if (km < 5) return km * 1.3;
         return km * 1;
     }
-
-
 
 
 }

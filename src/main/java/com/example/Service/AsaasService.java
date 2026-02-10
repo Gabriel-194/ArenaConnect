@@ -4,10 +4,7 @@ import com.example.DTOs.Asaas.*;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.Models.Users;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -194,6 +191,27 @@ public class AsaasService {
             System.err.println("Erro ao cancelar cobrança no Asaas (" + paymentId + "): " + e.getMessage());
 
         }
+    }
+
+    public String checkPaymentStatus(String paymentId){
+        try{
+            String url = asaasUrl + "/payments" + paymentId;
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("access_token", apiKey);
+            headers.set("User-Agent", "ArenaConnect-System");
+
+            HttpEntity<String> request = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET,request,Map.class);
+
+            if (response.getBody() != null) {
+                return (String) response.getBody().get("status");
+            }
+        }catch (Exception e) {
+            System.err.println("Erro ao consultar Asaas: " + e.getMessage());
+        }
+        return null;
     }
 
 }
