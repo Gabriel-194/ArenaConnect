@@ -127,7 +127,7 @@ export default function HomeClient() {
                     {userLocation ? "Arenas Próximas " : "Últimas Adicionadas"}
                 </h3>
 
-                <div className="arenas-list">
+                <div className="home-arenas-list">
                     {loading ? (
                         <p style={{color: '#aaa', textAlign: 'center', marginTop: '20px'}}>
                             Carregando arenas...

@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -82,6 +83,33 @@ public class AgendamentoController {
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/reagendar")
+    public ResponseEntity<?> reagendar(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
+        try {
+            String novaDataStr = payload.get("data_inicio");
+
+            if (novaDataStr == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Data de início é obrigatória."));
+            }
+
+            LocalDateTime novaData = LocalDateTime.parse(novaDataStr);
+
+            Agendamentos atualizado = agendamentoService.updateBookingDate(id, novaData);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Reagendamento realizado com sucesso!",
+                    "agendamento", atualizado
+            ));
+
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(Map.of("message", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao processar: " + e.getMessage()));
         }
     }
 

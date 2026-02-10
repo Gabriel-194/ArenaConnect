@@ -83,67 +83,50 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public Agendamentos createBooking(Agendamentos newBooking) {
-        String emailUsuarioLogado = SecurityContextHolder.getContext().getAuthentication().getName();
-        Users currentUser = userRepository.findByEmail(emailUsuarioLogado)
-                .orElseThrow(() -> new RuntimeException("Usuário logado não encontrado."));
+    public Agendamentos createBooking(Agendamentos booking) {
+        String schema = configurarSchema();
+        Users user = getUsuarioLogado();
+        Arena arena = getArenaAtual(schema);
 
-        String currentSchema = configurarSchema();
+        booking.setId_user(user.getIdUser());
+        booking.setStatus("PENDENTE");
+        booking.setData_fim(booking.getData_inicio().plusHours(1));
 
-        if (newBooking.getId_agendamento() == null) {
-            newBooking.setId_user(currentUser.getIdUser());
-            newBooking.setStatus("PENDENTE");
+        validarDisponibilidade(booking.getId_quadra(), booking.getData_inicio(), booking.getData_fim(), schema, null);
+
+        processarPagamentoAsaas(user, arena, booking);
+
+        Agendamentos salvo = agendamentoRepository.salvarComSchema(booking, schema);
+        salvarHistorico(salvo, schema, arena);
+
+        return salvo;
+    }
+
+    @Transactional
+    public Agendamentos updateBookingDate(Integer idAgendamento, LocalDateTime novaDataInicio) {
+        String schema = configurarSchema();
+        Users user = getUsuarioLogado();
+
+        Agendamentos booking = agendamentoRepository.buscarPorIdComSchema(idAgendamento, schema)
+                .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
+
+        validarPermissaoEdicao(user, booking);
+
+        if ("CANCELADO".equals(booking.getStatus()) || "FINALIZADO".equals(booking.getStatus())) {
+            throw new IllegalArgumentException("Status inválido para edição.");
         }
 
-        if (newBooking.getId_quadra() == null || newBooking.getData_inicio() == null) {
-            throw new IllegalArgumentException("Quadra e Data de início são obrigatórias");
-        }
+        LocalDateTime novaDataFim = novaDataInicio.plusHours(1);
 
-        newBooking.setData_fim(newBooking.getData_inicio().plusHours(1));
+        validarDisponibilidade(booking.getId_quadra(), novaDataInicio, novaDataFim, schema, idAgendamento);
 
-        List<LocalTime> disponiveis = getHorariosDisponiveis(newBooking.getId_quadra(), newBooking.getData_inicio().toLocalDate());
-        if (!disponiveis.contains(newBooking.getData_inicio().toLocalTime())) {
-            throw new IllegalArgumentException("Horário indisponível!");
-        }
+        booking.setData_inicio(novaDataInicio);
+        booking.setData_fim(novaDataFim);
 
-        Arena arena = arenaRepository.findBySchemaName(currentSchema)
-                .orElseThrow(() -> new RuntimeException("Arena não encontrada"));
+        Agendamentos atualizado = agendamentoRepository.salvarComSchema(booking, schema);
+        atualizarHistoricoData(idAgendamento, schema, novaDataInicio, novaDataFim);
 
-        if (arena.getAsaasWalletId() == null) {
-            throw new RuntimeException("Esta Arena ainda não está configurada para receber pagamentos.");
-        }
-
-
-        if (currentUser.getAsaasCustomerId() == null) {
-            String newCustomerId = asaasService.createCustomer(currentUser);
-            currentUser.setAsaasCustomerId(newCustomerId);
-            userRepository.save(currentUser);
-        }
-
-        try {
-            AsaasResponseDTO cobranca = asaasService.createPaymentWithSplit(
-                    currentUser.getAsaasCustomerId(),
-                    newBooking.getValor(),
-                    arena.getAsaasWalletId()
-            );
-
-            newBooking.setAsaasPaymentId(cobranca.getId());
-            newBooking.setAsaasInvoiceUrl(cobranca.getInvoiceUrl());
-
-            if (cobranca.getPix() != null) {
-                newBooking.setPixQrCode(cobranca.getPix().getEncodedImage());
-                newBooking.setPixCopyPaste(cobranca.getPix().getPayload());
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Falha ao gerar pagamento: " + e.getMessage());
-        }
-
-        Agendamentos savedBooking = agendamentoRepository.salvarComSchema(newBooking, currentSchema);
-
-        salvarHistorico(savedBooking, currentSchema, arena);
-
-        return savedBooking;
+        return atualizado;
     }
 
     private void salvarHistorico(Agendamentos original, String schema, Arena arena) {
@@ -302,6 +285,73 @@ public class AgendamentoService {
             }
         }
         return false;
+    }
+
+    private void atualizarHistoricoData(Integer id, String schema, LocalDateTime inicio, LocalDateTime fim) {
+        historicoRepository.buscarPorOrigem(id, schema).ifPresent(hist -> {
+            hist.setDataInicio(inicio);
+            hist.setData_fim(fim);
+            historicoRepository.save(hist);
+        });
+    }
+
+    private Users getUsuarioLogado() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Usuário não logado."));
+    }
+
+    private Arena getArenaAtual(String schema) {
+        return arenaRepository.findBySchemaName(schema).orElseThrow(() -> new RuntimeException("Arena não encontrada."));
+    }
+
+    private void validarPermissaoEdicao(Users user, Agendamentos booking) {
+        boolean isAdmin = user.getRole() == RoleEnum.ADMIN || user.getRole() == RoleEnum.SUPERADMIN;
+        if (!isAdmin && !booking.getId_user().equals(user.getIdUser())) {
+            throw new SecurityException("Sem permissão para editar este agendamento.");
+        }
+    }
+
+    private void validarDisponibilidade(Integer quadraId, LocalDateTime inicio, LocalDateTime fim, String schema, Integer idIgnorar) {
+        List<Agendamentos> conflitos = agendamentoRepository.findAgendamentosDoDiaComSchema(quadraId, inicio, fim, schema);
+
+        boolean ocupado = conflitos.stream().anyMatch(a ->
+                !a.getId_agendamento().equals(idIgnorar) &&
+                        a.getData_inicio().equals(inicio) &&
+                        !"CANCELADO".equals(a.getStatus())
+        );
+
+        if (ocupado) {
+            throw new IllegalArgumentException("Horário indisponível!");
+        }
+    }
+
+    private void processarPagamentoAsaas(Users user, Arena arena, Agendamentos booking) {
+        if (arena.getAsaasWalletId() == null) {
+            throw new RuntimeException("Arena não configurada para receber pagamentos.");
+        }
+
+        if (user.getAsaasCustomerId() == null) {
+            String customerId = asaasService.createCustomer(user);
+            user.setAsaasCustomerId(customerId);
+            userRepository.save(user);
+        }
+
+        try {
+            AsaasResponseDTO cobranca = asaasService.createPaymentWithSplit(
+                    user.getAsaasCustomerId(),
+                    booking.getValor(),
+                    arena.getAsaasWalletId()
+            );
+            booking.setAsaasPaymentId(cobranca.getId());
+            booking.setAsaasInvoiceUrl(cobranca.getInvoiceUrl());
+
+            if (cobranca.getPix() != null) {
+                booking.setPixQrCode(cobranca.getPix().getEncodedImage());
+                booking.setPixCopyPaste(cobranca.getPix().getPayload());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Erro no Asaas: " + e.getMessage());
+        }
     }
 }
 

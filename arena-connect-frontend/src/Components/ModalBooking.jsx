@@ -139,41 +139,49 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
 
 
     const handleConfirm = async () => {
-        if(!selectedHour) return;
-
+        if(!selectedHour) {
+            alert("Por favor, selecione um horário.");
+            return;
+        }
         const hourString = String(selectedHour);
         const timeFormatted = hourString.length === 5 ? hourString + ':00' : hourString;
         const dataInicioISO = `${selectedDate}T${timeFormatted}`;
 
-        const actionText = isEditing ? "Atualizar reserva" : "Confirmar reserva";
+        const actionText = isEditing ? "Confirmar novo horário" : "Confirmar reserva";
         if(!window.confirm(`${actionText} para ${selectedDate} às ${hourString}?`)) return;
 
         try {
-            const payload = {
-                id_quadra: selectedQuadra.id,
-                data_inicio: dataInicioISO,
-                valor: selectedQuadra.valor_hora,
-                status: isEditing ? bookingToEdit.status : "PENDENTE",
-                id_agendamento: isEditing ? bookingToEdit.id_agendamento : null
-            };
+            if (isEditing) {
+                await axios.put(
+                    `http://localhost:8080/api/agendamentos/${bookingToEdit.id_agendamento}/reagendar`,
+                    { data_inicio: dataInicioISO },
+                    { withCredentials: true, headers: getHeaders() }
+                );
+                alert("Horário atualizado com sucesso!");
+            }
 
-            const response = await axios.post(
-                'http://localhost:8080/api/agendamentos/reservar',
-                payload,
-                {
-                    withCredentials: true,
-                    headers: getHeaders()
-                }
-            );
+            else {
+                const payload = {
+                    id_quadra: selectedQuadra.id,
+                    data_inicio: dataInicioISO,
+                    valor: selectedQuadra.valor_hora,
+                    status: "PENDENTE"
+                };
 
-            alert("Reserva criada com sucesso! Acesse 'Meus Agendamentos' para realizar o pagamento.");
+                await axios.post(
+                    'http://localhost:8080/api/agendamentos/reservar',
+                    payload,
+                    { withCredentials: true, headers: getHeaders() }
+                );
+                alert("Reserva criada! Acesse 'Meus Agendamentos' para pagar.");
+            }
 
             if (onSuccess) onSuccess();
             onClose();
 
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            const msg = error.response?.data?.message || "Erro ao processar agendamento.";
+            const msg = error.response?.data?.message || "Erro ao processar solicitação.";
             alert(msg);
         }
     };
@@ -186,7 +194,7 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
 
                     <div className="form-header">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            {selectedQuadra && (
+                            {selectedQuadra && !isEditing && (
                                 <button className="back-btn" onClick={handleBack} title="Trocar Quadra">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                                 </button>
@@ -228,9 +236,12 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                                         <div className="court-display-label">Quadra Selecionada:</div>
                                         <div className="court-display-row">
                                             <span className="court-display-name">{selectedQuadra.nome}</span>
-                                            <button className="change-court-btn" onClick={handleBack}>
-                                                Trocar
-                                            </button>
+                                            {selectedQuadra && !isEditing && (
+                                                <button className="change-court-btn" onClick={handleBack}>
+                                                    Trocar
+                                                </button>
+                                            )}
+
                                         </div>
                                     </div>
 

@@ -318,9 +318,9 @@ export default function Agendamentos() {
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                         </div>
                                         <div>
-                    <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                        Finalização Automática
-                    </span>
+                                            <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
+                                                Finalização Automática
+                                            </span>
                                             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
                                                 Jogos <b>Confirmados</b> mudam para Finalizado assim que o horário termina.
                                             </p>
@@ -339,9 +339,9 @@ export default function Agendamentos() {
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                         </div>
                                         <div>
-                    <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
-                        Cancelamento automatico
-                    </span>
+                                            <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
+                                                Cancelamento automatico
+                                            </span>
                                             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
                                                 Reservas <b>Pendentes</b> são canceladas se não pagas até 30min antes do jogo.
                                             </p>
