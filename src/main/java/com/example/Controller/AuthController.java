@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.DTOs.GoogleRequestDto;
 import com.example.DTOs.LoginRequestDTO;
 import com.example.DTOs.LoginResponseDTO;
 import com.example.Models.Users;
@@ -120,6 +121,19 @@ public class AuthController {
             }
        }
        return null;
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> loginWithGoogle(@RequestBody GoogleRequestDto request, HttpServletResponse response){
+        try{
+            Object resultado = authService.processarLoginGoogle(request.getToken(),response);
+
+            return ResponseEntity.ok(resultado);
+        }catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body("{\"message\": \"Token do Google inválido.\"}");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("{\"message\": \"Erro interno ao processar login com Google.\"}");
+        }
     }
 
 

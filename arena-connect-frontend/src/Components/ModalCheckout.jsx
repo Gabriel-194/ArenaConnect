@@ -19,7 +19,7 @@ const ModalCheckout = ({ paymentUrl }) => {
 
                 <div className="payment-container">
                     <div className="plan-card">
-                        <h3>Plano Pro</h3>
+                        <h3>Plano</h3>
                         <div className="price">R$ 100,00<span>/mês</span></div>
 
                         <ul className="benefits">
@@ -29,7 +29,7 @@ const ModalCheckout = ({ paymentUrl }) => {
                         </ul>
 
                         <a href={paymentUrl} target="_blank" rel="noopener noreferrer" className="btn-checkout-standard">
-                            Pagar Agora 💳
+                            Pagar Agora
                         </a>
                     </div>
 

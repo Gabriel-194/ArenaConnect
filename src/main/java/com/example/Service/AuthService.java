@@ -6,15 +6,23 @@ import com.example.Models.Arena;
 import com.example.Models.Users;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.UserRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.Domain.RoleEnum;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +45,9 @@ public class AuthService {
     @Autowired
     private ArenaRepository arenaRepository;
 
+    @Value("${google.client.id}")
+    private String googleClientId;
+
     public LoginResponseDTO login(LoginRequestDTO dto, HttpServletResponse response) {
         logger.info("🔐 Tentativa de login: {}", dto.getEmail());
 
@@ -57,6 +68,11 @@ public class AuthService {
             return new LoginResponseDTO(false, "Email ou senha incorretos", null, null, false, null);
         }
 
+        return efetivarSessao(user,response);
+    }
+
+    private LoginResponseDTO efetivarSessao(Users user, HttpServletResponse response ){
+
         Integer arenaId = (user.getArena() != null) ? user.getArena().getId() : null;
         String arenaSchema = (user.getArena() != null) ? user.getArena().getSchemaName() : null;
 
@@ -74,7 +90,6 @@ public class AuthService {
 
         jakarta.servlet.http.Cookie jwtCookie = jwtService.createJwtCookie(token);
         response.addCookie(jwtCookie);
-
 
         Map<String, Object> status = verifyArenaStatus(user);
         boolean arenaAtiva = (boolean) status.get("arenaAtiva");
@@ -195,6 +210,51 @@ public class AuthService {
         status.put("arenaAtiva", arenaAtiva);
         status.put("paymentUrl", paymentUrl);
         return status;
+    }
+
+    public Map<String, Object> processarLoginGoogle(String tokenString, HttpServletResponse response) throws Exception {
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                .setAudience(Collections.singletonList(googleClientId))
+                .build();
+
+        GoogleIdToken idToken = verifier.verify(tokenString);
+
+        if (idToken == null) {
+            throw new IllegalArgumentException("Token do Google inválido ou forjado.");
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+
+        Optional<Users> userOpt = userRepository.findByEmail(email);
+
+        Map<String, Object> resultado = new HashMap<>();
+
+        if(userOpt.isPresent()){
+            Users user = userOpt.get();
+
+            if (!user.getAtivo()) {
+                throw new RuntimeException("Usuário desativado");
+            }
+
+            LoginResponseDTO loginFeito = efetivarSessao(user,response);
+
+            resultado.put("isNewUser", false);
+            resultado.put("username", loginFeito.getUsername());
+            resultado.put("arenaAtiva", loginFeito.getArenaAtiva());
+            resultado.put("paymentUrl", loginFeito.getPaymentUrl());
+
+        } else{
+            resultado.put("isNewUser", true);
+
+            Map<String, String> googleData = new HashMap<>();
+            googleData.put("name", name);
+            googleData.put("email", email);
+
+            resultado.put("googleData", googleData);
+        }
+        return resultado;
     }
 }
 

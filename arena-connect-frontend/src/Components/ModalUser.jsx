@@ -91,7 +91,6 @@ export default function ModalUser({ onClose, googleData }){
                                 maxLength="14"
                                 value={cpf}
                                 onChange={(e) => setCpf(maskCPF(e.target.value))}
-                                disabled={!!googleData} // Bloqueia!
                             />
                         </div>
 
@@ -104,7 +103,8 @@ export default function ModalUser({ onClose, googleData }){
                         <div className="form-group col-span-2">
                             <label>E-mail *</label>
                             <input type="email" placeholder="seu@email.com" required value={email}
-                                   onChange={(e) => setEmail(e.target.value)}/>
+                                   onChange={(e) => setEmail(e.target.value)}
+                                   disabled={!!googleData} />
                         </div>
 
                         {!googleData && (
