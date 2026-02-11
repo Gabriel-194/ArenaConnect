@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom'
 import axios from "axios";
+import GoogleAuthButton from '../Components/GoogleAuthButton';
 
 import '../styles/login.css';
-
 
 export default function Login(){
     const [email,setEmail] = useState('');
@@ -59,6 +59,10 @@ export default function Login(){
         }
     }
 
+    const handleRequireExtraData = (googleData) => {
+        navigate('/Register', { state: { googleData: googleData } });
+    };
+
     return (
         <div className="login-container">
             <div className="login-card">
@@ -104,6 +108,22 @@ export default function Login(){
                     <a href="#" className="forgot-password">Esqueci minha senha</a>
 
                     <button type="submit" className="btn-primary">Entrar</button>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#aaa',
+                        fontSize: '14px'
+                    }}>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
+                        <span style={{ margin: '0 10px' }}>ou</span>
+                        <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
+                    </div>
+
+                    <GoogleAuthButton
+                        onRequireExtraData={handleRequireExtraData}
+                        setErro={setErro}
+                    />
 
                     <div className="form-footer">
                         <span className="footer-text">Não tem uma conta?</span>

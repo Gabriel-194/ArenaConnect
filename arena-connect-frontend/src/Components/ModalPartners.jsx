@@ -57,9 +57,9 @@ const maskCEP = (value) => {
         .replace(/(-\d{3})\d+?$/, "$1");
 };
 
-export default function ModalPartners({onClose}) {
-    const [nomeUser, setNomeUser] = useState('');
-    const [emailAdmin, setEmailAdmin] = useState('');
+export default function ModalPartners({onClose, googleData}) {
+    const [nomeUser, setNomeUser] = useState(googleData ? googleData.name : '');
+    const [emailAdmin, setEmailAdmin] = useState(googleData ? googleData.email : '');
     const [cpfUser, setCpf] = useState('');
     const [telefoneUser, setTelefone] = useState('');
     const [senhaAdmin, setSenha] = useState('');
@@ -136,7 +136,6 @@ export default function ModalPartners({onClose}) {
             setCidadeArena(localidade);
             setEstadoArena(uf);
 
-            // Busca inicial de coordenadas pelo CEP
             await fetchCoordinates(logradouro, "", localidade, uf);
 
             document.getElementById('input-numero').focus();
@@ -195,7 +194,7 @@ export default function ModalPartners({onClose}) {
 
                     <div className="form-group col-span-2">
                         <label>Nome Completo *</label>
-                        <input type="text" required value={nomeUser} onChange={(e) => setNomeUser(e.target.value)}/>
+                        <input type="text" required value={nomeUser} onChange={(e) => setNomeUser(e.target.value)} disabled={!!googleData}/>
                     </div>
 
                     <div className="form-group">
@@ -210,18 +209,25 @@ export default function ModalPartners({onClose}) {
 
                     <div className="form-group col-span-2">
                         <label>E-mail de Login *</label>
-                        <input type="email" required value={emailAdmin} onChange={(e) => setEmailAdmin(e.target.value)}/>
+                        <input type="email" required value={emailAdmin} onChange={(e) => setEmailAdmin(e.target.value)} disabled={!!googleData}/>
                     </div>
 
-                    <div className="form-group">
-                        <label>Senha *</label>
-                        <input type="password" required minLength="6" value={senhaAdmin} onChange={(e) => setSenha(e.target.value)}/>
-                    </div>
+                    {!googleData && (
+                        <>
+                            <div className="form-group">
+                                <label>Senha *</label>
+                                <input type="password" placeholder="••••••••" required minLength="6" value={senha}
+                                       onChange={(e) => setSenha(e.target.value)}/>
+                            </div>
+                            <div className="form-group">
+                                <label>Confirmar Senha *</label>
+                                <input type="password" name="confirmPassword" placeholder="••••••••" required minLength="6"
+                                       value={confirmarSenha}
+                                       onChange={(e) => setConfirmarSenha(e.target.value)}/>
+                            </div>
+                        </>
 
-                    <div className="form-group">
-                        <label>Confirmar Senha *</label>
-                        <input type="password" required value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)}/>
-                    </div>
+                    )}
 
                     <hr className="col-span-2 separator"/>
                     <h3 className="col-span-2 section-title">Dados do Complexo e Localização</h3>
@@ -259,7 +265,6 @@ export default function ModalPartners({onClose}) {
                         </div>
                     </div>
 
-                    {/* Mapa Interativo com Drag Marker */}
                     <h3 className="col-span-2 section-title">Confirme a localização no mapa para evitar erros.</h3>
                     <div className="col-span-2" style={{ height: '250px', margin: '10px 0', borderRadius: '8px', overflow: 'hidden', border: '1px solid #ddd' }}>
                         <MapContainer center={[latitude, longitude]} zoom={13} style={{ height: '100%', width: '100%' }}>

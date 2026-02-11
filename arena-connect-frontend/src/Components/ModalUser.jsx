@@ -19,10 +19,10 @@ const maskPhone = (value) => {
         .replace(/(-\d{4})\d+?$/, "$1");
 };
 
-export default function ModalUser({ onClose }){
+export default function ModalUser({ onClose, googleData }){
     const navigate = useNavigate();
-    const [nome, setNome] = useState('');
-    const [email,setEmail] = useState('');
+    const [nome, setNome] = useState(googleData ? googleData.name : '');
+    const [email, setEmail] = useState(googleData ? googleData.email : '');
     const [cpf,setCpf] = useState('');
     const [telefone,setTelefone] = useState('');
     const [senha, setSenha] = useState('');
@@ -78,6 +78,7 @@ export default function ModalUser({ onClose }){
                                 required
                                 value={nome}
                                 onChange={(e) => setNome(e.target.value)}
+                                disabled={!!googleData}
                             />
                         </div>
 
@@ -90,6 +91,7 @@ export default function ModalUser({ onClose }){
                                 maxLength="14"
                                 value={cpf}
                                 onChange={(e) => setCpf(maskCPF(e.target.value))}
+                                disabled={!!googleData} // Bloqueia!
                             />
                         </div>
 
@@ -105,18 +107,25 @@ export default function ModalUser({ onClose }){
                                    onChange={(e) => setEmail(e.target.value)}/>
                         </div>
 
-                        <div className="form-group">
-                            <label>Senha *</label>
-                            <input type="password" placeholder="••••••••" required minLength="6" value={senha}
-                                   onChange={(e) => setSenha(e.target.value)}/>
-                        </div>
+                        {!googleData && (
+                            <>
+                                <div className="form-group">
+                                    <label>Senha *</label>
+                                    <input type="password" placeholder="••••••••" required minLength="6" value={senha}
+                                           onChange={(e) => setSenha(e.target.value)}/>
+                                </div>
+                                <div className="form-group">
+                                    <label>Confirmar Senha *</label>
+                                    <input type="password" name="confirmPassword" placeholder="••••••••" required minLength="6"
+                                           value={confirmarSenha}
+                                           onChange={(e) => setConfirmarSenha(e.target.value)}/>
+                                </div>
+                            </>
 
-                        <div className="form-group">
-                            <label>Confirmar Senha *</label>
-                            <input type="password" name="confirmPassword" placeholder="••••••••" required minLength="6"
-                                   value={confirmarSenha}
-                                   onChange={(e) => setConfirmarSenha(e.target.value)}/>
-                        </div>
+                        )}
+
+
+
 
 
                         <div className="modal-actions col-span-2">

@@ -1,5 +1,5 @@
 import {useState, useEffect} from 'react'
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import ModalUser from "../Components/ModalUser.jsx";
 import ModalPartners from "../Components/ModalPartners.jsx";
 
@@ -9,6 +9,9 @@ export default function Register (){
 
     const [showModalCliente, setShowModalCliente] = useState(false);
     const [showModalParceiro, setShowModalParceiro] = useState(false);
+
+    const location = useLocation();
+    const googleData = location.state?.googleData || null;
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -33,7 +36,9 @@ export default function Register (){
                         <img src="/Assets/3-removebg-preview.png" alt="logo" style={{width: "80px"}}/>
                         <h1 style={{ fontFamily: "'Racing Sans One', cursive" }}>Arena Connect</h1>
                     </div>
-                    <p className="subtitle">Escolha o tipo de cadastro</p>
+                    <p className="subtitle">
+                        {googleData ? `Falta pouco, ${googleData.name}! Escolha o tipo de cadastro` : "Escolha o tipo de cadastro"}
+                    </p>
                 </Link>
 
                 <div className="register-type-container">
@@ -46,7 +51,7 @@ export default function Register (){
                     </button>
 
                     {showModalCliente && (
-                        <ModalUser  onClose={() => setShowModalCliente(false)} />
+                        <ModalUser  onClose={() => setShowModalCliente(false)}  googleData={googleData}/>
                     )}
 
                     <button type="button" className="register-type-btn" onClick={() => setShowModalParceiro(true)}>
@@ -58,7 +63,7 @@ export default function Register (){
                     </button>
 
                     {showModalParceiro && (
-                        <ModalPartners  onClose={() => setShowModalParceiro(false)} />
+                        <ModalPartners  onClose={() => setShowModalParceiro(false)} googleData={googleData} />
                     )}
                 </div>
 
