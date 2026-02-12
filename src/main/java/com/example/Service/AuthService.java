@@ -20,8 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.example.Domain.RoleEnum;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -187,7 +187,17 @@ public class AuthService {
             }
 
             if (arena != null) {
-                arenaAtiva = arena.isAtivo();
+                if(arena.getDataExpiracao() != null) {
+                    if(LocalDate.now().isAfter(arena.getDataExpiracao())) {
+                        arena.setAtivo(false);
+                        arenaRepository.save(arena);
+                        arenaAtiva = false;
+                    }else {
+                        arenaAtiva = true;
+                    }
+                } else {
+                    arenaAtiva = arena.isAtivo();
+                }
 
                 if (Boolean.FALSE.equals(arenaAtiva)) {
                     String subId = arena.getAssasSubscriptionId();

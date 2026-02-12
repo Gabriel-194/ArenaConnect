@@ -216,7 +216,7 @@ export default function ModalPartners({onClose, googleData}) {
                         <>
                             <div className="form-group">
                                 <label>Senha *</label>
-                                <input type="password" placeholder="••••••••" required minLength="6" value={senha}
+                                <input type="password" placeholder="••••••••" required minLength="6" value={senhaAdmin}
                                        onChange={(e) => setSenha(e.target.value)}/>
                             </div>
                             <div className="form-group">

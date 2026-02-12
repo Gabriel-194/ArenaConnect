@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/webhook")
 public class WebhookController {
@@ -49,18 +52,16 @@ public class WebhookController {
 
             if ("PAYMENT_RECEIVED".equals(event) || "PAYMENT_CONFIRMED".equals(event)) {
 
-                String asaasCustomerId = root.path("payment").path("customer").asText();
+
                 String paymentId = root.path("payment").path("id").asText();
+                String subscriptionId = root.path("payment").path("subscription").asText();
 
                 boolean isAgendamento = confirmPaymentifExist(paymentId);
 
-                if(!isAgendamento){
-                    if (asaasCustomerId != null && !asaasCustomerId.isEmpty()) {
-                        ativarArenaPeloIdAsaas(asaasCustomerId);
-                    }
+                if (!isAgendamento && subscriptionId != null && !subscriptionId.isEmpty()) {
+                    LocalDate novaDataExpiracao = LocalDate.now().plusMonths(1);
+                    ativarArenaPorSubscription(subscriptionId, novaDataExpiracao);
                 }
-
-                logger.info("💰 Pagamento identificado. Cliente Asaas: {}", asaasCustomerId);
 
             }
             return ResponseEntity.ok("Webhook processado com sucesso");
@@ -71,25 +72,32 @@ public class WebhookController {
         }
     }
 
-    private void ativarArenaPeloIdAsaas(String asaasCustomerId) {
-        userRepository.findByAsaasCustomerId(asaasCustomerId).ifPresentOrElse(user -> {
+    private void ativarArenaPorSubscription(String subscriptionId, LocalDate dataExpiracao) {
 
-            if (user.getArena() != null) {
-                Arena arena = user.getArena();
+        Optional<Arena> arenaOpt = arenaRepository
+                .findByAssasSubscriptionId(subscriptionId);
 
-                if (!arena.isAtivo()) {
-                    arena.setAtivo(true);
-                    arenaRepository.save(arena);
-                    logger.info("✅ SUCESSO! A Arena '{}' (ID: {}) foi desbloqueada!", arena.getName(), arena.getId());
-                } else {
-                    logger.info("ℹ️ A Arena '{}' já estava ativa. Nenhuma alteração feita.", arena.getName());
-                }
-            } else {
-                logger.warn("⚠️ Usuário encontrado (ID: {}), mas não possui Arena vinculada.", user.getIdUser());
-            }
-        }, () -> {
-            logger.error("❌ ERRO CRÍTICO: Nenhum usuário encontrado com o asaas_customer_id: {}", asaasCustomerId);
-        });
+        if (arenaOpt.isPresent()) {
+
+            Arena arena = arenaOpt.get();
+
+            arena.setAtivo(true);
+            arena.setDataExpiracao(dataExpiracao);
+
+            arenaRepository.save(arena);
+
+            logger.info(
+                    "✅ Arena '{}' ativada até {}",
+                    arena.getName(),
+                    dataExpiracao
+            );
+
+        } else {
+            logger.error(
+                    "❌ Nenhuma arena encontrada para subscription: {}",
+                    subscriptionId
+            );
+        }
     }
 
     public Boolean confirmPaymentifExist(String paymentId){

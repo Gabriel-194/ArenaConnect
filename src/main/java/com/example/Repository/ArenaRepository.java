@@ -74,4 +74,7 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
     LIMIT 9
 """, nativeQuery = true)
     List<Object[]> findRecent(@Param("search") String search);
+
+    Optional<Arena> findByAssasSubscriptionId(String assasSubscriptionId);
+
 }

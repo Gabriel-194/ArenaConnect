@@ -34,7 +34,7 @@ public class AgendamentoScheduler {
     @Autowired
     private AsaasService asaasService;
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 600000)
     public void finishedBookings() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -75,7 +75,7 @@ public class AgendamentoScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 600000)
     public void cancelarReservasNaoPagas(){
         LocalDateTime limite = LocalDateTime.now().plusMinutes(30);
 

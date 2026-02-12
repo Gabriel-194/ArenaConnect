@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.br.CNPJ;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
@@ -58,5 +59,8 @@ public class Arena {
 
     @Column(name = "asaas_subscription_id")
     private String assasSubscriptionId;
+
+    @Column(name = "data_expiracao")
+    private LocalDate dataExpiracao;
 
 }
