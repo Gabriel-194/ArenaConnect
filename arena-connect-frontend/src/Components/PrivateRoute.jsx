@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import Loader from './Loader';
 
-const PrivateRoute = ({ children, adminOnly = false, clientOnly = false }) => {
+const PrivateRoute = ({ children, adminOnly = false, clientOnly = false, superAdminOnly = false }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
     const [userHomeUrl, setUserHomeUrl] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -34,15 +34,16 @@ const PrivateRoute = ({ children, adminOnly = false, clientOnly = false }) => {
 
     if (!isAuthenticated) return <Navigate to="/login" />;
 
-
-
-    if (adminOnly && userHomeUrl === '/homeClient') {
-        return <Navigate to="/homeClient" replace />;
+    if (adminOnly && userHomeUrl !== '/home') {
+        return <Navigate to={userHomeUrl} replace />;
     }
 
+    if (clientOnly && userHomeUrl !== '/homeClient') {
+        return <Navigate to={userHomeUrl} replace />;
+    }
 
-    if (clientOnly && userHomeUrl === '/home') {
-        return <Navigate to="/home" replace />;
+    if (superAdminOnly && userHomeUrl !== '/homeSuperAdmin') {
+        return <Navigate to={userHomeUrl} replace />;
     }
 
     return children;

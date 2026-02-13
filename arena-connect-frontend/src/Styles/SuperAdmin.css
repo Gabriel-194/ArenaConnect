@@ -1,0 +1,310 @@
+/* --- LAYOUT GLOBAL --- */
+.superadmin-body {
+    background-color: #050505;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Fundo Animado */
+.liquid-background-fixed {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+}
+.neon-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.25;
+    animation: floatBlob 10s infinite alternate;
+}
+.blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: #00ff7f; }
+.blob-2 { bottom: -10%; right: -10%; width: 400px; height: 400px; background: #008f4c; }
+.blob-3 { top: 40%; left: 30%; width: 300px; height: 300px; background: #00ff7f; opacity: 0.15; }
+
+@keyframes floatBlob {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(30px, 30px); }
+}
+
+/* Container Principal */
+.superadmin-container {
+    position: relative;
+    z-index: 1;
+    width: 95%;
+    max-width: 1600px;
+    height: 95vh;
+    margin: 2.5vh auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- HEADER COMPACTO --- */
+.glass-header-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px; /* Borda mais suave */
+
+    /* Padding e Altura reduzidos para ficar compacto */
+    padding: 8px 25px;
+    height: 60px; /* Altura fixa para não esticar */
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px; /* Espaço entre logo, texto e badge */
+}
+
+/* Logo (Imagem) */
+.logo-compact {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+.logo-compact img {
+    /* Força o tamanho pequeno ignorando o width="60" do HTML se necessário */
+    height: 40px;
+    width: auto;
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+/* Texto Arena Connect */
+.brand-text {
+    font-family: 'Racing Sans One', cursive; /* Fonte do seu snippet */
+    font-size: 20px; /* Levemente menor para alinhar */
+    color: #fff;
+    white-space: nowrap;
+    line-height: 1;
+    padding-top: 4px; /* Ajuste fino vertical */
+}
+
+/* Badge (Ajustado para o novo header) */
+.badge-superadmin {
+    background: rgba(0, 255, 127, 0.1);
+    color: #00ff7f;
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-left: 5px; /* Cola no texto */
+    align-self: center;
+}
+
+.btn-neon-outlined {
+    background: transparent;
+    color: #00ff7f;
+    border: 1px solid #00ff7f;
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+.btn-neon-outlined:hover { background: #00ff7f; color: #000; box-shadow: 0 0 15px rgba(0, 255, 127, 0.4); }
+
+/* --- NAVEGAÇÃO CENTRAL (ABAS) --- */
+.header-nav {
+    display: flex;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.nav-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+
+.nav-btn.active {
+    background: rgba(0, 255, 127, 0.15);
+    color: #00ff7f;
+    border: 1px solid rgba(0, 255, 127, 0.2);
+    box-shadow: 0 0 15px rgba(0, 255, 127, 0.1);
+}
+
+/* --- ÁREA DE CONTEÚDO --- */
+.admin-content-area {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* --- PAINÉIS DE VIDRO --- */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 25px;
+    overflow: hidden;
+}
+
+.glass-panel.full-width { flex: 1; }
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-header h2 { font-size: 1.4rem; color: #eee; margin: 0; }
+.counter-badge { background: #333; padding: 4px 10px; border-radius: 10px; font-size: 0.9rem; border: 1px solid #444; }
+
+/* Scroll Customizado */
+.custom-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.custom-scroll-area::-webkit-scrollbar { width: 6px; }
+.custom-scroll-area::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+.custom-scroll-area::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* --- LISTAS (ARENAS E USERS) --- */
+.list-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 15px;
+    display: grid;
+    grid-template-columns: 50px 1.5fr 1fr 80px;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+.list-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(0, 255, 127, 0.3);
+    transform: translateX(5px);
+}
+
+.col-status, .col-avatar { display: flex; justify-content: center; }
+.status-indicator { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+.status-indicator.online { background: #00ff7f; color: #00ff7f; }
+.status-indicator.offline { background: #ff4444; color: #ff4444; }
+
+.user-avatar-mini {
+    width: 35px; height: 35px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00ff7f, #008f4c);
+    color: #000; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.col-info-main { display: flex; flex-direction: column; gap: 4px; }
+.col-info-main h3 { margin: 0; font-size: 1rem; color: #fff; }
+.sub-text { font-size: 0.8rem; color: #888; }
+.role-tag.client { background: rgba(255, 255, 255, 0.1); color: #ccc; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; width: fit-content; }
+
+.col-info-secondary { display: flex; flex-direction: column; gap: 4px; }
+.info-text { font-size: 0.9rem; color: #ddd; }
+
+.col-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.mini-action-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    color: #fff;
+}
+.mini-action-btn.edit:hover { border-color: #00bfff; background: rgba(0, 191, 255, 0.15); }
+.mini-action-btn.delete:hover { border-color: #ff4444; background: rgba(255, 68, 68, 0.15); }
+
+/* --- FINANCEIRO --- */
+.finance-layout { display: flex; flex-direction: column; gap: 20px; height: 100%; }
+
+.finance-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+.summary-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.summary-card.highlight {
+    background: linear-gradient(145deg, rgba(0, 255, 127, 0.05), rgba(0,0,0,0));
+    border-color: rgba(0, 255, 127, 0.3);
+}
+.summary-label { font-size: 0.85rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+.summary-value { font-size: 1.8rem; margin: 0; color: #fff; font-weight: 700; }
+.text-green { color: #00ff7f; }
+
+.list-header {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr;
+    padding: 0 15px 10px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
+    color: #888; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+}
+
+.transaction-row {
+    grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr; /* Mesma grid do header */
+    font-size: 0.9rem;
+}
+
+.status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; width: fit-content; }
+.status-badge.paid { background: rgba(0, 255, 127, 0.15); color: #00ff7f; }
+.status-badge.pending { background: rgba(255, 200, 0, 0.15); color: #ffc800; }
+
+.btn-neon-sm {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.btn-neon-sm:hover { border-color: #00ff7f; color: #00ff7f; }
