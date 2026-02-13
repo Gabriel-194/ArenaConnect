@@ -3,6 +3,7 @@ package com.example.Service;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.UserRegistrationDTO;
 import com.example.Domain.RoleEnum;
+import com.example.Exceptions.AsaasIntegrationException;
 import com.example.Models.Users;
 import com.example.Models.Arena;
 import com.example.Repository.UserRepository;
@@ -49,7 +50,13 @@ public class UserService {
 
     @Transactional
     public Users registrarCliente(UserRegistrationDTO dto){
-            validarDados(dto);
+            validarDados(
+                    dto.getEmail(),
+                    dto.getSenha(),
+                    dto.getConfirmarSenha(),
+                    dto.getCpfLimpo(),
+                    dto.getNome()
+            );
 
             String senhaHash = passwordEncoder.encode(dto.getSenha());
 
@@ -75,7 +82,13 @@ public class UserService {
 
     @Transactional
     public Users registerPartner(PartnerRegistrationDTO dto) {
-        validarAdmin(dto);
+        validarDados(
+                dto.getEmailAdmin(),
+                dto.getSenhaAdmin(),
+                dto.getConfirmarSenha(),
+                dto.getCpfLimpo(),
+                dto.getNomeUser()
+        );
         arenaService.validarArena(dto);
 
         //Arena create
@@ -132,51 +145,52 @@ public class UserService {
             if (asaasCustomerId != null) {
                 asaasService.deleteCustomer(asaasCustomerId);
             }
+            String errorMessage = e.getMessage();
 
-            throw new RuntimeException("Falha na integração com Asaas: " + e.getMessage(), e);
+            if (errorMessage != null && errorMessage.contains("email")) {
+                throw new AsaasIntegrationException("Email já cadastrado no Asaas");
+            }
+
+            if (errorMessage != null && errorMessage.contains("número")) {
+                throw new AsaasIntegrationException("Telefone inválido");
+            }
+
+            throw new AsaasIntegrationException("Erro ao integrar com sistema de pagamento");
+
         }
 
         return savedAdmin;
     }
 
     //validations
-    private void validarDados(UserRegistrationDTO dto) {
+    private void validarDados(String email, String senha, String confirmarSenha, String cpfLimpo,String nome) {
 
-        if (dto == null) {
-            throw new IllegalArgumentException("Dados não informados");
-        }
-
-        if (dto.getNome() == null || dto.getNome().isBlank()) {
+        if (nome == null || nome.isBlank()) {
             throw new IllegalArgumentException("Nome é obrigatório");
         }
 
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email é obrigatório");
         }
 
-        if (!dto.getSenha().equals(dto.getConfirmarSenha())) {
-            throw new IllegalArgumentException("Senhas não conferem");
-        }
-
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            throw new IllegalArgumentException("Email é obrigatório");
-        }
-
-        if (!UserRegistrationDTO.isEmailValid(dto.getEmail())) {
+        if (!UserRegistrationDTO.isEmailValid(email)) {
             throw new IllegalArgumentException("Email inválido");
         }
 
-        if (userRepository.existsByEmail(dto.getEmail())) {
+        if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email já cadastrado");
         }
 
-        String cpfLimpo = dto.getCpfLimpo();
-        if (cpfLimpo == null || cpfLimpo.length() != 11) {
-            throw new IllegalArgumentException("CPF inválido");
+        if (!senha.equals(confirmarSenha)) {
+            throw new IllegalArgumentException("Senhas não conferem");
         }
 
         if (cpfLimpo == null || cpfLimpo.isBlank()) {
             throw new IllegalArgumentException("CPF é obrigatório");
+        }
+
+        if (cpfLimpo.length() != 11) {
+            throw new IllegalArgumentException("CPF inválido");
         }
 
         if (userRepository.existsByCpf(cpfLimpo)) {
@@ -184,43 +198,5 @@ public class UserService {
         }
     }
 
-    public void validarAdmin(PartnerRegistrationDTO dto) {
-        if (dto == null) {
-            throw new IllegalArgumentException("Dados não informados");
-        }
-
-        if (dto.getNomeUser() == null || dto.getNomeUser().isBlank()) {
-            throw new IllegalArgumentException("Nome é obrigatório");
-        }
-
-        if (dto.getEmailAdmin() == null || dto.getEmailAdmin().isBlank()) {
-            throw new IllegalArgumentException("Email é obrigatório");
-        }
-
-        if (!UserRegistrationDTO.isEmailValid(dto.getEmailAdmin())) {
-            throw new IllegalArgumentException("Email inválido");
-        }
-
-        if (userRepository.existsByEmail(dto.getEmailAdmin())) {
-            throw new IllegalArgumentException("Email já cadastrado");
-        }
-
-        if (!dto.getSenhaAdmin().equals(dto.getConfirmarSenha())) {
-            throw new IllegalArgumentException("Senhas não conferem");
-        }
-
-        String cpfLimpo = dto.getCpfLimpo();
-        if (cpfLimpo == null || cpfLimpo.length() != 11) {
-            throw new IllegalArgumentException("CPF inválido");
-        }
-
-        if (cpfLimpo == null || cpfLimpo.isBlank()) {
-            throw new IllegalArgumentException("CPF é obrigatório");
-        }
-
-        if (userRepository.existsByCpf(cpfLimpo)) {
-            throw new IllegalArgumentException("CPF já cadastrado");
-        }
-    }
 
 }

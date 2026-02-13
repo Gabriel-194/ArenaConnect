@@ -34,6 +34,9 @@ public class Agendamentos {
     private String nomeCliente;
 
     @Transient
+    private String numeroCliente;
+
+    @Transient
     private String quadraNome;
 
     @Transient

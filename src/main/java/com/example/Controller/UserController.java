@@ -2,6 +2,7 @@ package com.example.Controller;
 
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.UserRegistrationDTO;
+import com.example.Exceptions.AsaasIntegrationException;
 import com.example.Models.Users;
 import com.example.Service.UserService;
 import com.example.Service.ArenaService;
@@ -84,25 +85,35 @@ public class UserController {
 
           return ResponseEntity.ok(response);
       } catch (IllegalArgumentException e) {
-              logger.warn("❌ Erro de validação no registro: {}", e.getMessage());
 
-              return ResponseEntity
-                      .status(HttpStatus.BAD_REQUEST)
-                      .body(Map.of(
-                              "success", false,
-                              "message", e.getMessage()
-                      ));
+          logger.warn("❌ Erro de validação no registro: {}", e.getMessage());
 
-          } catch (Exception e) {
-              logger.error("❌ Erro inesperado no registro", e);
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                  .body(Map.of(
+                          "success", false,
+                          "message", e.getMessage()
+                  ));
 
-              return ResponseEntity
-                      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                      .body(Map.of(
-                              "success", false,
-                              "message", "Erro interno ao processar registro"
-                      ));
-          }
+      } catch (AsaasIntegrationException e) {
+
+          logger.warn("❌ Erro de integração com pagamento: {}", e.getMessage());
+
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                  .body(Map.of(
+                          "success", false,
+                          "message", e.getMessage()
+                  ));
+
+      } catch (Exception e) {
+
+          logger.error("❌ Erro inesperado no registro", e);
+
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                  .body(Map.of(
+                          "success", false,
+                          "message", "Erro interno ao processar registro"
+                  ));
       }
+    }
 
 }

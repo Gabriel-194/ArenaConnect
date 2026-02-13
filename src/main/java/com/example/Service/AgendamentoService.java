@@ -178,6 +178,21 @@ public class AgendamentoService {
 
             a.setQuadraNome(nomeQuadra);
 
+            String numeroCliente = userRepository.findById(a.getId_user())
+
+                    .map(user -> user.getTelefone())
+                    .orElse("usuario nao encontrado");
+
+            numeroCliente = numeroCliente.replaceAll("\\D", "");
+            if (numeroCliente.length() == 11) {
+                numeroCliente = numeroCliente.replaceFirst(
+                        "(\\d{2})(\\d{5})(\\d{4})",
+                        "($1) $2-$3"
+                );
+            }
+
+            a.setNumeroCliente(numeroCliente);
+
         }
 
         return new ArrayList<>(agendamento);

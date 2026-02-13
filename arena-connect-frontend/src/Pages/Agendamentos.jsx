@@ -183,18 +183,15 @@ export default function Agendamentos() {
                                 </div>
                             </header>
 
-                            {/* card for bookings */}
                             <div className="bookings-scroll-area">
                                 {agendamentos.length > 0 ? (
                                     agendamentos.map((agendamento) => (
                                         <div key={agendamento.id_agendamento} className="booking-card-mini">
 
-                                            {/* 1. Coluna de Tempo + Data */}
                                             <div className="card-time-column">
                                                 <span className="mini-time">
                                                 {new Date(agendamento.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
-                                                {/* Adicionando a DATA aqui */}
                                                 <span className="mini-date">
                                                 {new Date(agendamento.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
                                                 </span>
@@ -202,7 +199,10 @@ export default function Agendamentos() {
 
                                             <div className="card-info-column">
                                                 <span className="mini-client">
-                                                   {agendamento.nomeCliente || "Cliente"}
+                                                  {agendamento.nomeCliente || "Cliente"}{" "}
+                                                    <span style={{fontSize: "0.8rem", color: "#777", fontWeight: "400"}}>
+                                                    - {agendamento.numeroCliente}
+                                                  </span>
                                                 </span>
                                                 <span className="mini-details">
                                                     {agendamento.quadraNome}
@@ -261,7 +261,7 @@ export default function Agendamentos() {
 
                         <aside className="config-sidebar-panel glass-effect">
                             <div className="sidebar-section">
-                                <h3 className="sidebar-title">Configurar Arena ⚙️</h3>
+                                <h3 className="sidebar-title">Configurar Arena </h3>
 
                                 <div className="config-card">
                                     <h5>Horários de Hoje</h5>

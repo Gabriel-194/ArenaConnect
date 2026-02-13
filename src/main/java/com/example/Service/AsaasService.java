@@ -81,7 +81,12 @@ public class AsaasService {
         try {
             String url = asaasUrl + "/customers/" + customerId;
             HttpEntity<String> request = new HttpEntity<>(getHeaders());
-            restTemplate.delete(url);
+            restTemplate.exchange(
+                    url,
+                    HttpMethod.DELETE,
+                    request,
+                    Void.class
+            );
             System.out.println("⚠️ Rollback Asaas: Cliente " + customerId + " removido.");
         } catch (Exception e) {
             System.err.println("❌ Falha ao desfazer cliente no Asaas: " + e.getMessage());

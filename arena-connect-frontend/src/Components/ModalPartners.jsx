@@ -69,6 +69,7 @@ export default function ModalPartners({onClose, googleData}) {
     const [cnpjArena, setCnpjArena] = useState('');
     const [cepArena, setCepArena] = useState('');
     const [enderecoArena, setEnderecoArena] = useState('');
+    const [bairroArena, setBairroArena] = useState('');
     const [cidadeArena, setCidadeArena] = useState('');
     const [estadoArena, setEstadoArena] = useState('');
     const [numeroArena, setNumeroArena] = useState('');
@@ -94,14 +95,14 @@ export default function ModalPartners({onClose, googleData}) {
         [],
     );
 
-    const fetchCoordinates = async (logradouro, numero, cidade, estado) => {
+    const fetchCoordinates = async (logradouro, numero,bairro, cidade, estado) => {
         try {
-            const query = `${logradouro}, ${numero}, ${cidade} - ${estado}, Brasil`;
+            const query = `${logradouro}, ${numero}, ${bairro}, ${cidade} - ${estado}, Brasil`;
             const response = await axios.get(
                 "https://nominatim.openstreetmap.org/search",
                 {
                     params: { q: query, format: "json", limit: 1 },
-                    headers: { "User-Agent": "ArenaConnect/1.0" }
+//                     headers: { "User-Agent": "ArenaConnect/1.0" }
                 }
             );
 
@@ -131,10 +132,11 @@ export default function ModalPartners({onClose, googleData}) {
                 return;
             }
 
-            const { logradouro, localidade, uf } = res.data;
+            const { logradouro, localidade, uf,bairro } = res.data;
             setEnderecoArena(logradouro || '');
             setCidadeArena(localidade);
             setEstadoArena(uf);
+            setBairroArena(bairro || '');
 
             await fetchCoordinates(logradouro, "", localidade, uf);
 
@@ -150,7 +152,7 @@ export default function ModalPartners({onClose, googleData}) {
         e.preventDefault();
         setErro('');
 
-        const enderecoCompleto = `${enderecoArena}, ${numeroArena}`;
+        const enderecoCompleto = `${enderecoArena}, ${numeroArena}, ${bairroArena}`;
         try {
             const response = await axios.post("http://localhost:8080/api/users/register-partner", {
                 nomeUser,
@@ -261,7 +263,7 @@ export default function ModalPartners({onClose, googleData}) {
                         <div className="form-group" style={{ flex: 1 }}>
                             <label>Número *</label>
                             <input id="input-numero" type="text" required value={numeroArena} onChange={(e) => setNumeroArena(e.target.value)}
-                                   onBlur={() => fetchCoordinates(enderecoArena, numeroArena, cidadeArena, estadoArena)}/>
+                                   onBlur={() => fetchCoordinates(enderecoArena, numeroArena, cidadeArena, estadoArena,bairroArena)}/>
                         </div>
                     </div>
 
