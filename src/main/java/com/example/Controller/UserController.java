@@ -2,6 +2,7 @@ package com.example.Controller;
 
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.UserRegistrationDTO;
+import com.example.DTOs.UserResponseDTO;
 import com.example.Exceptions.AsaasIntegrationException;
 import com.example.Models.Users;
 import com.example.Service.UserService;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -114,6 +116,13 @@ public class UserController {
                           "message", "Erro interno ao processar registro"
                   ));
       }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllUsers() {
+        List<UserResponseDTO> users = userService.findAll();
+
+        return ResponseEntity.ok(users);
     }
 
 }

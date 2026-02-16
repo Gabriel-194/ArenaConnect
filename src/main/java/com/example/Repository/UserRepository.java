@@ -10,19 +10,9 @@ public interface UserRepository extends JpaRepository<Users, Integer> {
 
     Optional<Users> findByEmail(String email);
 
-    Optional<Users> findByCpf(String cpf);
-
     boolean existsByEmail(String email);
 
     boolean existsByCpf(String cpf);
 
-    List<Users> findByIdArena(Integer idArena);
-
-    List<Users> findByRole(String role);
-
-    List<Users> findByRoleAndAtivoTrue(String role);
-
-    Optional<Users> findByEmailAndAtivoTrue(String email);
-
-    Optional<Users> findByAsaasCustomerId(String asaasCustomerId);
+    Optional<Users> findFirstByIdArena(Integer idArena);
 }

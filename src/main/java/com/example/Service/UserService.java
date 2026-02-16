@@ -2,6 +2,7 @@ package com.example.Service;
 
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.UserRegistrationDTO;
+import com.example.DTOs.UserResponseDTO;
 import com.example.Domain.RoleEnum;
 import com.example.Exceptions.AsaasIntegrationException;
 import com.example.Models.Users;
@@ -14,12 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -198,5 +196,18 @@ public class UserService {
         }
     }
 
+    public List<UserResponseDTO> findAll(){
+        return userRepository.findAll().stream()
+                .filter(user -> !RoleEnum.SUPERADMIN.equals(user.getRole()))
+                .map(user -> new UserResponseDTO(
+                        user.getIdUser(),
+                        user.getNome(),
+                        user.getEmail(),
+                        user.getCpf(),
+                        user.getTelefone(),
+                        user.getRole()
+                ))
+                .collect(Collectors.toList());
+    }
 
 }

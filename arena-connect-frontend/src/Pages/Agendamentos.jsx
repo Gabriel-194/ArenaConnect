@@ -329,7 +329,6 @@ export default function Agendamentos() {
 
                                     <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
 
-                                    {/* Regra 2: Cancelamento */}
                                     <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                                         <div style={{
                                             minWidth: '24px', height: '24px', borderRadius: '50%',

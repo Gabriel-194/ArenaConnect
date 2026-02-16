@@ -9,7 +9,7 @@
     position: relative;
 }
 
-/* Fundo Animado */
+/* --- FUNDO ANIMADO --- */
 .liquid-background-fixed {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -31,17 +31,17 @@
     100% { transform: translate(30px, 30px); }
 }
 
-/* Container Principal */
+/* --- CONTAINER PRINCIPAL --- */
 .superadmin-container {
     position: relative;
     z-index: 1;
-    width: 95%;
-    max-width: 1600px;
-    height: 95vh;
-    margin: 2.5vh auto;
+    width: 96%;
+    max-width: 1700px;
+    height: 94vh;
+    margin: 3vh auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
 
 /* --- HEADER COMPACTO --- */
@@ -49,12 +49,9 @@
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px; /* Borda mais suave */
-
-    /* Padding e Altura reduzidos para ficar compacto */
+    border-radius: 16px;
     padding: 8px 25px;
-    height: 60px; /* Altura fixa para não esticar */
-
+    height: 60px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -63,10 +60,9 @@
 .header-left {
     display: flex;
     align-items: center;
-    gap: 12px; /* Espaço entre logo, texto e badge */
+    gap: 12px;
 }
 
-/* Logo (Imagem) */
 .logo-compact {
     display: flex;
     align-items: center;
@@ -77,25 +73,20 @@
 }
 
 .logo-compact img {
-    /* Força o tamanho pequeno ignorando o width="60" do HTML se necessário */
     height: 40px;
     width: auto;
     display: block;
-    margin: 0;
-    padding: 0;
 }
 
-/* Texto Arena Connect */
 .brand-text {
-    font-family: 'Racing Sans One', cursive; /* Fonte do seu snippet */
-    font-size: 20px; /* Levemente menor para alinhar */
+    font-family: 'Racing Sans One', cursive;
+    font-size: 20px;
     color: #fff;
     white-space: nowrap;
     line-height: 1;
-    padding-top: 4px; /* Ajuste fino vertical */
+    padding-top: 4px;
 }
 
-/* Badge (Ajustado para o novo header) */
 .badge-superadmin {
     background: rgba(0, 255, 127, 0.1);
     color: #00ff7f;
@@ -105,8 +96,6 @@
     font-size: 0.65rem;
     font-weight: bold;
     letter-spacing: 1px;
-    margin-left: 5px; /* Cola no texto */
-    align-self: center;
 }
 
 .btn-neon-outlined {
@@ -152,7 +141,7 @@
     box-shadow: 0 0 15px rgba(0, 255, 127, 0.1);
 }
 
-/* --- ÁREA DE CONTEÚDO --- */
+/* --- ÁREA DE CONTEÚDO E GRID (50/50) --- */
 .admin-content-area {
     flex: 1;
     overflow: hidden;
@@ -160,111 +149,150 @@
     flex-direction: column;
 }
 
-.admin-panels-grid {
+.admin-panels-grid-equal, .admin-panels-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr; /* DIVISÃO 50/50 DA TELA */
     gap: 20px;
     flex: 1;
     overflow: hidden;
 }
 
-/* --- PAINÉIS DE VIDRO --- */
-.glass-panel {
-    background: rgba(255, 255, 255, 0.03);
+/* --- PAINÉIS DE VIDRO (ARENAS E USERS) --- */
+.admin-glass-panel, .glass-panel {
+    background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 20px;
     display: flex;
     flex-direction: column;
-    padding: 25px;
+    padding: 20px;
     overflow: hidden;
 }
 
-.glass-panel.full-width { flex: 1; }
+.admin-glass-panel.full-width { flex: 1; }
 
 .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.panel-header h2 { font-size: 1.4rem; color: #eee; margin: 0; }
-.counter-badge { background: #333; padding: 4px 10px; border-radius: 10px; font-size: 0.9rem; border: 1px solid #444; }
+.panel-header h2 { font-size: 1.2rem; color: #eee; margin: 0; }
+.counter-badge { background: #333; padding: 4px 10px; border-radius: 10px; font-size: 0.8rem; border: 1px solid #444; color: #00ff7f;}
 
 /* Scroll Customizado */
 .custom-scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding-right: 10px;
+    padding-right: 5px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
-.custom-scroll-area::-webkit-scrollbar { width: 6px; }
+.custom-scroll-area::-webkit-scrollbar { width: 4px; }
 .custom-scroll-area::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-.custom-scroll-area::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
-/* --- LISTAS (ARENAS E USERS) --- */
+/* --- LISTAS DE USUÁRIOS (LINHA ÚNICA AJUSTADA) --- */
+.list-header-row {
+    display: grid;
+    /* Ajuste milimétrico para 50% da tela: Avatar | Nome | Email(Expansível) | CPF | Telefone | Botões */
+    grid-template-columns: 35px 120px 1fr 115px 115px 70px;
+    gap: 10px;
+    padding: 0 10px 10px;
+    color: #666;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 10px;
+}
+
 .list-item {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 12px 15px;
+    border-radius: 10px;
+    padding: 8px 12px;
     display: grid;
-    grid-template-columns: 50px 1.5fr 1fr 80px;
+    /* Idêntico ao cabeçalho para alinhar perfeito */
+    grid-template-columns: 35px 120px 1fr 115px 115px 70px;
     align-items: center;
+    gap: 10px;
     transition: all 0.2s ease;
 }
+
 .list-item:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(0, 255, 127, 0.3);
-    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(0, 255, 127, 0.2);
+    transform: translateX(3px);
 }
 
-.col-status, .col-avatar { display: flex; justify-content: center; }
-.status-indicator { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
-.status-indicator.online { background: #00ff7f; color: #00ff7f; }
-.status-indicator.offline { background: #ff4444; color: #ff4444; }
-
+.col-avatar { display: flex; justify-content: center; }
 .user-avatar-mini {
-    width: 35px; height: 35px;
+    width: 30px; height: 30px;
     border-radius: 50%;
     background: linear-gradient(135deg, #00ff7f, #008f4c);
-    color: #000; font-weight: bold;
+    color: #000; font-weight: bold; font-size: 0.8rem;
     display: flex; align-items: center; justify-content: center;
 }
 
-.col-info-main { display: flex; flex-direction: column; gap: 4px; }
-.col-info-main h3 { margin: 0; font-size: 1rem; color: #fff; }
-.sub-text { font-size: 0.8rem; color: #888; }
-.role-tag.client { background: rgba(255, 255, 255, 0.1); color: #ccc; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; width: fit-content; }
+.col-info-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.col-info-main h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Evita quebra de linha em nomes gigantes */
+}
 
-.col-info-secondary { display: flex; flex-direction: column; gap: 4px; }
-.info-text { font-size: 0.9rem; color: #ddd; }
+/* Tags de Role */
+.role-tag {
+    display: inline-flex;
+    width: fit-content;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+.admin-tag { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border-color: rgba(0, 255, 127, 0.2); }
+.client-tag { background: rgba(255, 255, 255, 0.05); color: #888; border-color: rgba(255, 255, 255, 0.1); }
 
-.col-actions { display: flex; gap: 8px; justify-content: flex-end; }
+/* Colunas de Dados (Email, CPF, Tel) */
+.email-col, .mini-data, .sub-text {
+    font-size: 0.75rem;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adiciona "..." se faltar espaço */
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.col-actions { display: flex; gap: 6px; justify-content: flex-end; }
 .mini-action-btn {
-    width: 32px; height: 32px;
-    border-radius: 8px;
+    width: 28px; height: 28px;
+    border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: transparent;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
     color: #fff;
+    font-size: 0.85rem;
 }
 .mini-action-btn.edit:hover { border-color: #00bfff; background: rgba(0, 191, 255, 0.15); }
 .mini-action-btn.delete:hover { border-color: #ff4444; background: rgba(255, 68, 68, 0.15); }
 
 /* --- FINANCEIRO --- */
 .finance-layout { display: flex; flex-direction: column; gap: 20px; height: 100%; }
-
 .finance-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-
 .summary-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -272,39 +300,52 @@
     padding: 20px;
     display: flex; flex-direction: column; gap: 10px;
 }
-.summary-card.highlight {
-    background: linear-gradient(145deg, rgba(0, 255, 127, 0.05), rgba(0,0,0,0));
-    border-color: rgba(0, 255, 127, 0.3);
-}
+.summary-card.highlight { background: linear-gradient(145deg, rgba(0, 255, 127, 0.05), rgba(0,0,0,0)); border-color: rgba(0, 255, 127, 0.3); }
 .summary-label { font-size: 0.85rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
 .summary-value { font-size: 1.8rem; margin: 0; color: #fff; font-weight: 700; }
 .text-green { color: #00ff7f; }
-
 .list-header {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr;
-    padding: 0 15px 10px 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 10px;
-    color: #888; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+    display: grid; grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr;
+    padding: 0 15px 10px 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px; color: #888; font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
 }
-
-.transaction-row {
-    grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr; /* Mesma grid do header */
-    font-size: 0.9rem;
-}
-
+.transaction-row { grid-template-columns: 1fr 1.5fr 2fr 1fr 1fr; font-size: 0.9rem; }
 .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; width: fit-content; }
 .status-badge.paid { background: rgba(0, 255, 127, 0.15); color: #00ff7f; }
 .status-badge.pending { background: rgba(255, 200, 0, 0.15); color: #ffc800; }
 
-.btn-neon-sm {
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    padding: 5px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.8rem;
+
+.list-header-row.arena-header,
+.list-item.arena-item {
+
+    grid-template-columns: 30px 1.2fr 1fr 1fr 70px;
+    padding-left: 15px;
+    padding-right: 10px;
 }
-.btn-neon-sm:hover { border-color: #00ff7f; color: #00ff7f; }
+
+.col-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-indicator.online {
+    background-color: #00ff7f;
+    box-shadow: 0 0 8px rgba(0, 255, 127, 0.6);
+}
+
+.status-indicator.offline {
+    background-color: #ff4444;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+}
+
+.list-item.arena-item .col-actions {
+    justify-content: flex-end;
+}

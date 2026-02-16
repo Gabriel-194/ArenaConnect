@@ -63,4 +63,9 @@ public class ArenaController {
             return ResponseEntity.badRequest().body("Erro: " + e.getMessage());
         }
     }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> listarArenas() {
+        return ResponseEntity.ok(arenaService.findAllAdmin());
+    }
 }

@@ -2,9 +2,12 @@ package com.example.Service;
 
 import com.example.DTOs.ArenaConfigDTO;
 import com.example.DTOs.ArenaDistanceDTO;
+import com.example.DTOs.ArenaResponseDTO;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.Models.Arena;
+import com.example.Models.Users;
 import com.example.Repository.ArenaRepository;
+import com.example.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +37,9 @@ public class ArenaService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Transactional
     public Arena cadastrarArena(Arena arena){
@@ -216,5 +221,28 @@ public class ArenaService {
         return km * 1;
     }
 
+    public List<ArenaResponseDTO> findAllAdmin() {
+        List<Arena> arenas = arenaRepository.findAll();
 
+        return arenas.stream().map(arena -> {
+
+            Users admin = userRepository.findFirstByIdArena(arena.getId()).orElse(null);
+
+            String adminNome = (admin != null) ? admin.getNome() : "Sem Admin";
+            String adminEmail = (admin != null) ? admin.getEmail() : "N/A";
+
+            return new ArenaResponseDTO(
+                    arena.getId(),
+                    arena.getName(),
+                    arena.getCnpj(),
+                    arena.getCep(),
+                    arena.getEndereco(),
+                    arena.getCidade(),
+                    arena.getEstado(),
+                    arena.isAtivo(),
+                    adminNome,
+                    adminEmail
+            );
+        }).collect(Collectors.toList());
+    }
 }
