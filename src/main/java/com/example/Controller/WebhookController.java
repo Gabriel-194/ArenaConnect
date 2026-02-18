@@ -52,9 +52,13 @@ public class WebhookController {
 
             if ("PAYMENT_RECEIVED".equals(event) || "PAYMENT_CONFIRMED".equals(event)) {
 
+                JsonNode paymentNode = root.path("payment");
+                String paymentId = paymentNode.path("id").asText();
 
-                String paymentId = root.path("payment").path("id").asText();
-                String subscriptionId = root.path("payment").path("subscription").asText();
+                String subscriptionId = "";
+                if (paymentNode.hasNonNull("subscription")) {
+                    subscriptionId = paymentNode.path("subscription").asText();
+                }
 
                 boolean isAgendamento = confirmPaymentifExist(paymentId);
 

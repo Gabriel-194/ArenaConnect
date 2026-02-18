@@ -210,4 +210,13 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void deleteUser(Integer idUser) {
+        Users user = userRepository.findById(idUser)
+                .orElseThrow(() -> new AsaasIntegrationException("usuario nao encontrado"));
+
+        user.setAtivo(false);
+        userRepository.save(user);
+    }
+
 }
