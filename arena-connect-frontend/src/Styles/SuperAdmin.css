@@ -1,4 +1,4 @@
-/* --- LAYOUT GLOBAL --- */
+
 .superadmin-body {
     background-color: #050505;
     color: #fff;
@@ -9,7 +9,6 @@
     position: relative;
 }
 
-/* --- FUNDO ANIMADO --- */
 .liquid-background-fixed {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -31,7 +30,6 @@
     100% { transform: translate(30px, 30px); }
 }
 
-/* --- CONTAINER PRINCIPAL --- */
 .superadmin-container {
     position: relative;
     z-index: 1;
@@ -44,7 +42,6 @@
     gap: 15px;
 }
 
-/* --- HEADER COMPACTO --- */
 .glass-header-panel {
     background: rgba(255, 255, 255, 0.03);
     backdrop-filter: blur(16px);
@@ -110,7 +107,6 @@
 }
 .btn-neon-outlined:hover { background: #00ff7f; color: #000; box-shadow: 0 0 15px rgba(0, 255, 127, 0.4); }
 
-/* --- NAVEGAÇÃO CENTRAL (ABAS) --- */
 .header-nav {
     display: flex;
     gap: 10px;
@@ -141,7 +137,6 @@
     box-shadow: 0 0 15px rgba(0, 255, 127, 0.1);
 }
 
-/* --- ÁREA DE CONTEÚDO E GRID (50/50) --- */
 .admin-content-area {
     flex: 1;
     overflow: hidden;
@@ -151,14 +146,13 @@
 
 .admin-panels-grid-equal, .admin-panels-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* DIVISÃO 50/50 DA TELA */
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     flex: 1;
     overflow: hidden;
 }
 
-/* --- PAINÉIS DE VIDRO (ARENAS E USERS) --- */
-.admin-glass-panel, .glass-panel {
+.admin-glass-panel {
     background: rgba(255, 255, 255, 0.02);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.06);
@@ -183,7 +177,7 @@
 .panel-header h2 { font-size: 1.2rem; color: #eee; margin: 0; }
 .counter-badge { background: #333; padding: 4px 10px; border-radius: 10px; font-size: 0.8rem; border: 1px solid #444; color: #00ff7f;}
 
-/* Scroll Customizado */
+
 .custom-scroll-area {
     flex: 1;
     overflow-y: auto;
@@ -196,10 +190,10 @@
 .custom-scroll-area::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
-/* --- LISTAS DE USUÁRIOS (LINHA ÚNICA AJUSTADA) --- */
+
 .list-header-row {
     display: grid;
-    /* Ajuste milimétrico para 50% da tela: Avatar | Nome | Email(Expansível) | CPF | Telefone | Botões */
+
     grid-template-columns: 35px 120px 1fr 115px 115px 70px;
     gap: 10px;
     padding: 0 10px 10px;
@@ -217,7 +211,6 @@
     border-radius: 10px;
     padding: 8px 12px;
     display: grid;
-    /* Idêntico ao cabeçalho para alinhar perfeito */
     grid-template-columns: 35px 120px 1fr 115px 115px 70px;
     align-items: center;
     gap: 10px;
@@ -246,10 +239,10 @@
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Evita quebra de linha em nomes gigantes */
+    text-overflow: ellipsis;
 }
 
-/* Tags de Role */
+
 .role-tag {
     display: inline-flex;
     width: fit-content;
@@ -259,17 +252,18 @@
     font-weight: 800;
     text-transform: uppercase;
     border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.05); color: #888;
+    border-color: rgba(255, 255, 255, 0.1);
 }
-.admin-tag { background: rgba(0, 255, 127, 0.1); color: #00ff7f; border-color: rgba(0, 255, 127, 0.2); }
-.client-tag { background: rgba(255, 255, 255, 0.05); color: #888; border-color: rgba(255, 255, 255, 0.1); }
 
-/* Colunas de Dados (Email, CPF, Tel) */
+
+
 .email-col, .mini-data, .sub-text {
     font-size: 0.75rem;
     color: #aaa;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Adiciona "..." se faltar espaço */
+    text-overflow: ellipsis;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -290,7 +284,6 @@
 .mini-action-btn.edit:hover { border-color: #00bfff; background: rgba(0, 191, 255, 0.15); }
 .mini-action-btn.delete:hover { border-color: #ff4444; background: rgba(255, 68, 68, 0.15); }
 
-/* --- FINANCEIRO --- */
 .finance-layout { display: flex; flex-direction: column; gap: 20px; height: 100%; }
 .finance-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .summary-card {
@@ -348,4 +341,25 @@
 
 .list-item.arena-item .col-actions {
     justify-content: flex-end;
+}
+
+.list-header-row.user-header,
+.list-item.user-item {
+    grid-template-columns: 25px 35px 1.2fr 1.2fr 130px 70px;
+    padding-left: 15px;
+    padding-right: 10px;
+    gap: 10px;
+}
+
+.col-documents {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.mini-data {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

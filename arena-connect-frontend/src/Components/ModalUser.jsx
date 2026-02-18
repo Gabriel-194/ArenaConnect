@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,56 +19,86 @@ const maskPhone = (value) => {
         .replace(/(-\d{4})\d+?$/, "$1");
 };
 
-export default function ModalUser({ onClose, googleData }){
+export default function ModalUser({ onClose, googleData, userToEdit, onSuccess }){
     const navigate = useNavigate();
-    const [nome, setNome] = useState(googleData ? googleData.name : '');
-    const [email, setEmail] = useState(googleData ? googleData.email : '');
+    const [nome, setNome] = useState('');
+    const [email, setEmail] = useState('');
     const [cpf,setCpf] = useState('');
     const [telefone,setTelefone] = useState('');
     const [senha, setSenha] = useState('');
     const [error, setErro] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
 
-    const handleRegisterClient = async (e) => {
+    const handleSaveUser = async (e) => {
         e.preventDefault();
         setErro('');
 
         try{
-            const response = await axios.post('http://localhost:8080/api/users/register-client', {
+            const payload = {
                 nome: nome,
                 email: email,
                 cpf: cpf.replace(/\D/g,""),
-                telefone: telefone.replace(/\D/g, ""),
-                senha: senha,
-                confirmarSenha: confirmarSenha
-            });
-
-            if (response.data.success) {
-                alert(response.data.message);
-                navigate("/login");
-            } else {
-                setErro("dados invalidos");
+                telefone: telefone.replace(/\D/g, "")
+            };
+            if (!userToEdit) {
+                payload.senha = senha;
+                payload.confirmarSenha = confirmarSenha;
             }
+            let response;
+
+            if (userToEdit) {
+                response = await axios.put(`http://localhost:8080/api/users/${userToEdit.idUser || userToEdit.id}`, payload, {
+                    withCredentials: true
+                });
+
+                if (response.status === 200) {
+                    alert("Usuário atualizado com sucesso!");
+                    if (onSuccess) onSuccess();
+                    onClose();
+                }
+            }else {
+                response = await axios.post('http://localhost:8080/api/users/register-client', payload);
+
+                if (response.data.success) {
+                    alert(response.data.message);
+                    navigate("/login");
+                } else {
+                    setErro("Dados inválidos");
+                }
+            }
+
         } catch (err) {
             if (err.response && err.response.data?.message) {
                 setErro(err.response.data.message);
             } else {
-                setErro("Erro inesperado ao registrar usuário");
+                setErro("Erro inesperado ao processar usuário");
             }
         }
     }
+
+    useEffect(() => {
+        if (userToEdit) {
+            setNome(userToEdit.nome || '');
+            setEmail(userToEdit.email || '');
+            setCpf(maskCPF(userToEdit.cpf || ''));
+            setTelefone(maskPhone(userToEdit.telefone || ''));
+        } else if (googleData) {
+            setNome(googleData.name || '');
+            setEmail(googleData.email || '');
+        }
+    }, [userToEdit, googleData]);
 
     return(
         <div className="modal active">
                 <div className="modal-content modal-wide">
                     <div className="modal-header">
-                        <h2>Cadastro de Cliente</h2>
+                        <h2>{userToEdit ? 'Editar Usuário' : 'Cadastro de Cliente'}</h2>
                         <button className="modal-close" type="button" onClick={onClose}>
                             &times;
                         </button>
                     </div>
 
-                    <form onSubmit={handleRegisterClient} className="form form-grid">
+                    <form onSubmit={handleSaveUser} className="form form-grid">
 
                         <div className="form-group col-span-2">
                             <label>Nome Completo *</label>
@@ -107,7 +137,7 @@ export default function ModalUser({ onClose, googleData }){
                                    disabled={!!googleData} />
                         </div>
 
-                        {!googleData && (
+                        {!googleData && !userToEdit && (
                             <>
                                 <div className="form-group">
                                     <label>Senha *</label>
@@ -124,10 +154,6 @@ export default function ModalUser({ onClose, googleData }){
 
                         )}
 
-
-
-
-
                         <div className="modal-actions col-span-2">
                                 {error && (
                                     <p className="error-text" style={{ color: "red" }}>
@@ -135,7 +161,9 @@ export default function ModalUser({ onClose, googleData }){
                                     </p>
                                 )}
                             <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
-                            <button type="submit" className="btn-primary">Criar Conta</button>
+                            <button type="submit" className="btn-primary">
+                                {userToEdit ? 'Salvar Alterações' : 'Criar Conta'}
+                            </button>
                         </div>
                     </form>
                 </div>

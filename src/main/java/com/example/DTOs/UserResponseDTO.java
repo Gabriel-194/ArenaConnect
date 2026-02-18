@@ -17,4 +17,5 @@ public class UserResponseDTO {
     private String cpf;
     private String telefone;
     private RoleEnum role;
+    private Boolean ativo;
 }

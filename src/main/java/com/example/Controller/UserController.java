@@ -132,4 +132,15 @@ public class UserController {
 
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody Users updatedUser) {
+        try {
+            userService.updateUser(id, updatedUser);
+
+            return ResponseEntity.ok().body("{\"message\": \"Usuário atualizado com sucesso!\"}");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("{\"message\": \"" + e.getMessage() + "\"}");
+        }
+    }
+
 }

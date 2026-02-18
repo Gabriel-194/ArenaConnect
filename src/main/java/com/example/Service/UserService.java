@@ -205,7 +205,8 @@ public class UserService {
                         user.getEmail(),
                         user.getCpf(),
                         user.getTelefone(),
-                        user.getRole()
+                        user.getRole(),
+                        user.getAtivo()
                 ))
                 .collect(Collectors.toList());
     }
@@ -217,6 +218,30 @@ public class UserService {
 
         user.setAtivo(false);
         userRepository.save(user);
+    }
+
+    @Transactional
+    public Users updateUser(Integer id, Users updatedData) {
+        Users existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new AsaasIntegrationException("usuario nao encontrado"));
+
+        if (updatedData.getNome() != null && !updatedData.getNome().isEmpty()) {
+            existingUser.setNome(updatedData.getNome());
+        }
+
+        if (updatedData.getEmail() != null && !updatedData.getEmail().isEmpty()) {
+            existingUser.setEmail(updatedData.getEmail());
+        }
+
+        if (updatedData.getCpf() != null && !updatedData.getCpf().isEmpty()) {
+            existingUser.setCpf(updatedData.getCpf());
+        }
+
+        if (updatedData.getTelefone() != null) {
+            existingUser.setTelefone(updatedData.getTelefone());
+        }
+
+        return userRepository.save(existingUser);
     }
 
 }

@@ -1,6 +1,7 @@
 import React, { useState,useEffect } from 'react';
 import '../Styles/SuperAdmin.css';
 import axios from 'axios';
+import ModalUser from "../Components/ModalUser.jsx";
 
 const formatTelefone = (telefone) => {
     if (!telefone) return "---";
@@ -37,6 +38,9 @@ export default function SuperAdmin() {
     const [arenas, setArenas] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [userToEdit, setUserToEdit] = useState(null);
+
 
     const fetchDatas = async () => {
         setLoading(true);
@@ -65,7 +69,7 @@ export default function SuperAdmin() {
                 withCredentials: true
             });
 
-            setUsers(prevUsers => prevUsers.filter(user => (user.idUser || user.id) !== id));
+            fetchDatas();
 
         } catch (error) {
             console.error("Erro ao excluir usuário:", error);
@@ -188,12 +192,12 @@ export default function SuperAdmin() {
                                     <span className="counter-badge">{users.length}</span>
                                 </div>
 
-                                <div className="list-header-row">
+                                <div className="list-header-row user-header">
+                                    <span>St</span>
                                     <span></span>
                                     <span>Nome</span>
                                     <span>E-mail</span>
-                                    <span>CPF</span>
-                                    <span>Telefone</span>
+                                    <span>CPF / Telefone</span>
                                     <span style={{textAlign: 'right'}}>Ações</span>
                                 </div>
 
@@ -202,7 +206,11 @@ export default function SuperAdmin() {
                                         <p style={{textAlign: 'center', color: '#888', marginTop: '20px'}}>Carregando usuários...</p>
                                     ) : users.length > 0 ? (
                                         users.map((user) => (
-                                            <div className="list-item" key={user.idUser || user.id || Math.random()}>
+                                            <div className="list-item user-item" key={user.idUser || user.id || Math.random()}>
+
+                                                <div className="col-status">
+                                                    <span className={`status-indicator ${user.ativo !== false ? 'online' : 'offline'}`} title={user.ativo !== false ? 'Ativo' : 'Inativo'}></span>
+                                                </div>
 
                                                 <div className="col-avatar">
                                                     <div className="user-avatar-mini">
@@ -212,7 +220,7 @@ export default function SuperAdmin() {
 
                                                 <div className="col-info-main">
                                                     <h3 title={user.nome}>{user.nome || "Sem Nome"}</h3>
-                                                    <span className={`role-tag ${user.role === 'ADMIN' || user.role === 'SUPERADMIN' ? 'admin-tag' : 'client-tag'}`}>
+                                                    <span className="role-tag">
                                                         {user.role || 'CLIENTE'}
                                                     </span>
                                                 </div>
@@ -221,16 +229,16 @@ export default function SuperAdmin() {
                                                     {user.email}
                                                 </span>
 
-                                                <span className="mini-data" title="CPF">
-                                                    {formatCpf(user.cpf)}
-                                                </span>
-
-                                                <span className="mini-data" title="Telefone">
-                                                    {formatTelefone(user.telefone)}
-                                                </span>
+                                                <div className="col-documents">
+                                                    <span className="mini-data" title="CPF">{formatCpf(user.cpf)}</span>
+                                                    <span className="mini-data" title="Telefone">{formatTelefone(user.telefone)}</span>
+                                                </div>
 
                                                 <div className="col-actions">
-                                                    <button className="mini-action-btn edit" title="Editar usuario" >
+                                                    <button className="mini-action-btn edit" title="Editar usuario" onClick={() => {
+                                                        setUserToEdit(user);
+                                                        setIsUserModalOpen(true);
+                                                    }}  >
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
@@ -297,6 +305,16 @@ export default function SuperAdmin() {
                     )}
                 </div>
             </div>
+            {isUserModalOpen && (
+                <ModalUser
+                    userToEdit={userToEdit}
+                    onClose={() => {
+                        setIsUserModalOpen(false);
+                        setUserToEdit(null);
+                    }}
+                    onSuccess={fetchDatas}
+                />
+            )}
         </div>
     );
 }
