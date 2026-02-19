@@ -194,7 +194,6 @@ public class AgendamentoService {
             a.setNumeroCliente(numeroCliente);
 
         }
-
         return new ArrayList<>(agendamento);
     }
 
@@ -376,6 +375,16 @@ public class AgendamentoService {
         } catch (Exception e) {
             throw new RuntimeException("Erro no Asaas: " + e.getMessage());
         }
+    }
+
+    public List<Agendamentos> findStatusForDashboard(){
+        String schema = configurarSchema();
+
+        if (schema == null || schema.isEmpty()) {
+            throw new IllegalArgumentException("Arena não identificada.");
+        }
+
+        return agendamentoRepository.findAllDashboard(schema);
     }
 }
 

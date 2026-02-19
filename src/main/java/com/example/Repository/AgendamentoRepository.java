@@ -24,5 +24,7 @@ public interface AgendamentoRepository extends JpaRepository<Agendamentos, Integ
     @Transactional
     @Query("UPDATE Agendamentos a SET a.status = 'CANCELADO' WHERE a.id_agendamento IN :ids")
     void cancelarAgendamentosPorIds(@Param("ids") List<Integer> ids);
+
+
 }
 

@@ -19,7 +19,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/agendamentos")
-@PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
 public class AgendamentoController {
 
     @Autowired
@@ -111,6 +110,13 @@ public class AgendamentoController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Erro ao processar: " + e.getMessage()));
         }
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<List<Agendamentos>> getStatusAgendamentos(){
+        List<Agendamentos> agendamentos = agendamentoService.findStatusForDashboard();
+
+        return ResponseEntity.ok(agendamentos);
     }
 
 }

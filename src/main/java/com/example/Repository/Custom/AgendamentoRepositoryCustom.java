@@ -17,4 +17,6 @@ public interface AgendamentoRepositoryCustom {
 
     Optional<Agendamentos> buscarPorIdComSchema(Integer id, String schema);
 
+    List<Agendamentos> findAllDashboard(String schema);
+
 }

@@ -87,4 +87,12 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
 
         return Optional.ofNullable(agendamento);
     }
+
+    @Override
+    public List<Agendamentos> findAllDashboard(String schema) {
+        String sql = "SELECT id, status FROM " + schema + ".agendamentos";
+
+        Query query = entityManager.createNativeQuery(sql);
+        return query.getResultList();
+    }
 }
