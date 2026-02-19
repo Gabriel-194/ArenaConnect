@@ -125,11 +125,11 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        userService.deleteUser(id);
-        return ResponseEntity.ok("Usuário desativado com sucesso.");
-
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> changeStatus(@PathVariable Integer id,@RequestParam boolean ativo) {
+        userService.changeStatusUser(id,ativo);
+        String mensagem = ativo ? "Usuário ativado com sucesso!" : "Usuário desativado com sucesso!";
+        return ResponseEntity.ok("{\"message\": \"" + mensagem + "\"}");
     }
 
     @PutMapping("/{id}")

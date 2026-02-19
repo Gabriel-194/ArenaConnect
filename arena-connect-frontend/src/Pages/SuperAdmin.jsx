@@ -2,6 +2,7 @@ import React, { useState,useEffect } from 'react';
 import '../Styles/SuperAdmin.css';
 import axios from 'axios';
 import ModalUser from "../Components/ModalUser.jsx";
+import ModalArena from "../Components/ModalArena.jsx";
 
 const formatTelefone = (telefone) => {
     if (!telefone) return "---";
@@ -41,6 +42,9 @@ export default function SuperAdmin() {
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [userToEdit, setUserToEdit] = useState(null);
 
+    const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
+    const [arenaToEdit, setArenaToEdit] = useState(null);
+
 
     const fetchDatas = async () => {
         setLoading(true);
@@ -59,21 +63,50 @@ export default function SuperAdmin() {
         }
     };
 
-    const handleDeleteUser = async (id) => {
-        if (!window.confirm("Tem certeza que deseja excluir (desativar) este usuário?")) {
+    const handleChangeStatus = async (id,currentStatus) => {
+        const newStatus = !currentStatus;
+        const actionText = newStatus ? "recuperar (ativar)" : "excluir (desativar)";
+
+        if (!window.confirm(`Tem certeza que deseja ${actionText} este usuário?`)) {
             return;
         }
 
         try {
-            await axios.delete(`http://localhost:8080/api/users/${id}`, {
+            await axios.put(`http://localhost:8080/api/users/${id}/status`, null, {
+                params: { ativo: newStatus },
                 withCredentials: true
             });
 
-            fetchDatas();
+            setUsers(prevUsers => prevUsers.map(user =>
+                (user.idUser || user.id) === id ? { ...user, ativo: newStatus } : user
+            ));
 
         } catch (error) {
-            console.error("Erro ao excluir usuário:", error);
-            alert("Não foi possível excluir o usuário.");
+            console.error(`Erro ao ${actionText} usuário:`, error);
+            alert(`Não foi possível ${actionText} o usuário.`);
+        }
+    };
+
+    const handleChangeArenaStatus =async (id,currentStatus)=>{
+        const newStatus = !currentStatus;
+        const actionText = newStatus ? "recuperar (ativar)" : "excluir (desativar)";
+
+        if (!window.confirm(`Tem certeza que deseja ${actionText} esta arena?`)) {
+            return;
+        }
+
+        try{
+            await axios.put(`http://localhost:8080/api/arena/${id}/status`,null,{
+                params:{ ativo : newStatus},
+                withCredentials:true
+            })
+
+            setArenas(prevArenas => prevArenas.map(arena =>
+                (arena.idArena || arena.id) === id ? { ...arena, ativo: newStatus } : arena
+            ));
+        }catch (error) {
+            console.error(`Erro ao ${actionText} arena:`, error);
+            alert(`Não foi possível ${actionText} a arena.`);
         }
     };
 
@@ -165,18 +198,28 @@ export default function SuperAdmin() {
                                                 </div>
 
                                                 <div className="col-actions">
-                                                    <button className="mini-action-btn edit" title="Editar Arena">
+                                                    <button className="mini-action-btn edit" title="Editar Arena"
+                                                            onClick={() => {setArenaToEdit(arena);setIsArenaModalOpen(true);}}>
                                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
                                                         </svg>
                                                     </button>
-                                                    <button className="mini-action-btn cancel" title="Excluir Arena">
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                        </svg>
-                                                    </button>
+                                                    {arena.ativo !== false ? (
+                                                        <button className="mini-action-btn cancel" title="Desativar Arena" onClick={() => handleChangeArenaStatus(arena.idArena || arena.id, true)}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                            </svg>
+                                                        </button>
+                                                    ) : (
+                                                        <button className="mini-action-btn recover" title="Recuperar Arena" onClick={() => handleChangeArenaStatus(arena.idArena || arena.id, false)}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <polyline points="1 4 1 10 7 10"></polyline>
+                                                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                                            </svg>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))
@@ -244,12 +287,23 @@ export default function SuperAdmin() {
                                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"></path>
                                                         </svg>
                                                     </button>
-                                                    <button className="mini-action-btn cancel" title="deletar usuario" onClick={() => handleDeleteUser(user.idUser || user.id)}>
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                                        </svg>
-                                                    </button>
+                                                    {user.ativo !== false ? (
+                                                        <button className="mini-action-btn cancel" title="Desativar usuário" onClick={() => handleChangeStatus(user.idUser || user.id, true)}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                            </svg>
+                                                        </button>
+
+                                                    ) : (
+                                                        <button className="mini-action-btn recover" title="Recuperar usuário" onClick={() => handleChangeStatus(user.idUser || user.id, false)}>
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <polyline points="1 4 1 10 7 10"></polyline>
+                                                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                                            </svg>
+                                                        </button>
+
+                                                    )}
                                                 </div>
 
                                             </div>
@@ -311,6 +365,16 @@ export default function SuperAdmin() {
                     onClose={() => {
                         setIsUserModalOpen(false);
                         setUserToEdit(null);
+                    }}
+                    onSuccess={fetchDatas}
+                />
+            )}
+            {isArenaModalOpen && (
+                <ModalArena
+                    arenaToEdit={arenaToEdit}
+                    onClose={() => {
+                        setIsArenaModalOpen(false);
+                        setArenaToEdit(null);
                     }}
                     onSuccess={fetchDatas}
                 />

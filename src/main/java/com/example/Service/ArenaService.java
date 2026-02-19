@@ -245,4 +245,51 @@ public class ArenaService {
             );
         }).collect(Collectors.toList());
     }
+
+    public void changeStatusArena(Long idArena, Boolean ativo) {
+        Arena arena = arenaRepository.findById(idArena)
+                .orElseThrow(() -> new RuntimeException("arena nao encontrada"));
+
+        arena.setAtivo(ativo);
+        arenaRepository.save(arena);
+    }
+
+    public Arena updateArena(Long idArena, Arena updateArena) {
+        Arena arenaExisting = arenaRepository.findById(idArena)
+                .orElseThrow(() -> new RuntimeException("arena nao encontrada"));
+
+        if(updateArena.getName() != null && !updateArena.getName().isEmpty()) {
+            arenaExisting.setName(updateArena.getName());
+        }
+
+        if(updateArena.getCnpj() != null && !updateArena.getCnpj().isEmpty()) {
+            arenaExisting.setCnpj(updateArena.getCnpj());
+        }
+
+        if(updateArena.getCep() != null && !updateArena.getCep().isEmpty()) {
+            arenaExisting.setCep(updateArena.getCep());
+        }
+
+        if(updateArena.getEndereco() != null && !updateArena.getEndereco().isEmpty()) {
+            arenaExisting.setEndereco(updateArena.getEndereco());
+        }
+
+        if(updateArena.getCidade() != null && !updateArena.getCidade().isEmpty()) {
+            arenaExisting.setCidade(updateArena.getCidade());
+        }
+
+        if(updateArena.getEstado() != null && !updateArena.getEstado().isEmpty()) {
+            arenaExisting.setEstado(updateArena.getEstado());
+        }
+
+        if (updateArena.getLatitude() != null) {
+            arenaExisting.setLatitude(updateArena.getLatitude());
+        }
+
+        if (updateArena.getLongitude() != null) {
+            arenaExisting.setLongitude(updateArena.getLongitude());
+        }
+
+        return arenaRepository.save(arenaExisting);
+    }
 }

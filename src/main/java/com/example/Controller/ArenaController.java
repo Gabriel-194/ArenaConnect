@@ -68,4 +68,23 @@ public class ArenaController {
     public ResponseEntity<?> listarArenas() {
         return ResponseEntity.ok(arenaService.findAllAdmin());
     }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> changeStatus(@PathVariable Long id,@RequestParam boolean ativo){
+        arenaService.changeStatusArena(id,ativo);
+
+        String mensagem = ativo ? "arena ativada com sucesso" : "arena desativada com sucesso";
+        return ResponseEntity.ok("{\"message\": \"" + mensagem + "\"}");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateArena(@PathVariable Long id,@RequestBody Arena updateArena) {
+        try{
+            arenaService.updateArena(id, updateArena);
+        return ResponseEntity.ok().body("{\"message\": \"Usuário atualizado com sucesso!\"}");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("{\"message\": \"" + e.getMessage() + "\"}");
+        }
+    }
 }
+

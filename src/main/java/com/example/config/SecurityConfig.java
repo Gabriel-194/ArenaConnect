@@ -60,7 +60,6 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN")
 
-
                         .anyRequest().authenticated()
                 )
 

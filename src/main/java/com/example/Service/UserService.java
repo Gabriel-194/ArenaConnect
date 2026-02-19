@@ -212,11 +212,11 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Integer idUser) {
+    public void changeStatusUser(Integer idUser, Boolean status) {
         Users user = userRepository.findById(idUser)
-                .orElseThrow(() -> new AsaasIntegrationException("usuario nao encontrado"));
+                .orElseThrow(() -> new RuntimeException("usuario nao encontrado"));
 
-        user.setAtivo(false);
+        user.setAtivo(status);
         userRepository.save(user);
     }
 
