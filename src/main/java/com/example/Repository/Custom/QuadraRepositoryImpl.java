@@ -57,5 +57,15 @@ public class QuadraRepositoryImpl implements QuadraRepositoryCustom {
         return query.getResultList();
     }
 
+    @Override
+    public List<Quadra> findByAtivoTrue(String schema) {
+
+        String sql = "SELECT * FROM " + schema + ".quadras WHERE ativo = true";
+
+        Query query = entityManager.createNativeQuery(sql, Quadra.class);
+
+        return query.getResultList();
+    }
+
 }
 

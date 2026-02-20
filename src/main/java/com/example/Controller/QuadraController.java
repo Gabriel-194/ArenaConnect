@@ -28,14 +28,15 @@ public class QuadraController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Quadra>> getAllQuadra() {
-        List<Quadra> quadras = quadraService.getAll();
+    public ResponseEntity<List<Quadra>> getAll(@RequestParam Long arenaId) {
+        List<Quadra> quadras = quadraService.getAll(arenaId);
         return ResponseEntity.ok(quadras);
     }
 
     @GetMapping("/courtAtivas")
-    public ResponseEntity<List<Quadra>> getCourtAtivas() {
-        List<Quadra> quadras = quadraService.getAtivasPorArena();
+    public ResponseEntity<List<Quadra>> getCourtAtivas(@RequestParam Long arenaId) {
+        List<Quadra> quadras = quadraService.getCourtAtiva(arenaId);
+
         return ResponseEntity.ok(quadras);
     }
 

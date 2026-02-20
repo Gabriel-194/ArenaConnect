@@ -97,8 +97,20 @@ public class TenantFilter implements Filter {
     private String resolveTenant(HttpServletRequest req) {
 
         String tenantHeader = req.getHeader("X-Tenant-ID");
+
         if (tenantHeader != null && !tenantHeader.isBlank()) {
-            return tenantHeader;
+            try {
+                Long arenaId = Long.parseLong(tenantHeader);
+                String schema = arenaRepository.findSchemaNameById(arenaId);
+
+                if (schema != null && !schema.isBlank()) {
+                    return schema;
+                }
+
+            } catch (NumberFormatException e) {
+                logger.warn("ID da arena inválido no header: {}", tenantHeader);
+
+            }
         }
 
         if (req.getCookies() != null) {

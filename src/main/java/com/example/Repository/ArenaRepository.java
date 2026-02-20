@@ -35,7 +35,6 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
             cos(radians(a.longitude) - radians(:lon)) +
             sin(radians(:lat)) * sin(radians(a.latitude)))
         ) AS distance,  
-        a.schema_name,  
         a.hora_inicio,  
         a.hora_fim      
     FROM public.arenas a 
@@ -63,7 +62,6 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
         a.latitude,     
         a.longitude,    
         NULL as distance, 
-        a.schema_name,  
         a.hora_inicio,
         a.hora_fim      
     FROM public.arenas a 

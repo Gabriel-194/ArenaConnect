@@ -1,5 +1,6 @@
 package com.example.Service;
 
+import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.Asaas.AsaasResponseDTO;
 import com.example.Domain.RoleEnum;
 import com.example.Models.*;
@@ -52,7 +53,7 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public List<LocalTime> getHorariosDisponiveis(Integer idQuadra, LocalDate data) {
+    public List<LocalTime> getHorariosDisponiveis(Integer idQuadra, LocalDate data,Long arenaId) {
         String schema = configurarSchema();
 
         Arena arena = arenaRepository.findBySchemaName(schema)
@@ -83,8 +84,10 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public Agendamentos createBooking(Agendamentos booking) {
+    public Agendamentos createBooking(Agendamentos booking,Long arenaId) {
+
         String schema = configurarSchema();
+
         Users user = getUsuarioLogado();
         Arena arena = getArenaAtual(schema);
 
@@ -103,7 +106,8 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public Agendamentos updateBookingDate(Integer idAgendamento, LocalDateTime novaDataInicio) {
+    public Agendamentos updateBookingDate(Integer idAgendamento, LocalDateTime novaDataInicio,Long arenaId) {
+
         String schema = configurarSchema();
         Users user = getUsuarioLogado();
 
@@ -377,7 +381,7 @@ public class AgendamentoService {
         }
     }
 
-    public List<Agendamentos> findStatusForDashboard(){
+    public List<AgendamentoDashboardDTO> findStatusForDashboard(){
         String schema = configurarSchema();
 
         if (schema == null || schema.isEmpty()) {

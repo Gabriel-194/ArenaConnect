@@ -2,6 +2,7 @@ package com.example.Service;
 
 import com.example.Models.Quadra;
 import com.example.Multitenancy.TenantContext;
+import com.example.Repository.ArenaRepository;
 import com.example.Repository.QuadraRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -19,6 +20,9 @@ public class QuadraService {
 
     @Autowired
     private QuadraRepository quadraRepository;
+
+    @Autowired
+    private ArenaRepository arenaRepository;
 
 
     private String configurarSchema() {
@@ -60,8 +64,19 @@ public class QuadraService {
     }
 
     @Transactional
-    public List<Quadra> getAll() {
-        return quadraRepository.listarTodasComSchema(configurarSchema());
+    public List<Quadra> getAll(Long arenaId) {
+
+        String schema = configurarSchema();
+
+        return quadraRepository.listarTodasComSchema(schema);
+    }
+
+    @Transactional
+    public List<Quadra> getCourtAtiva(Long arenaId) {
+
+        String schema = configurarSchema();
+
+        return quadraRepository.findByAtivoTrue(schema);
     }
 
     @Transactional
@@ -70,7 +85,6 @@ public class QuadraService {
 
         quadraRepository.alterarStatusComSchema(id, configurarSchema());
     }
-
 
 
     @Transactional

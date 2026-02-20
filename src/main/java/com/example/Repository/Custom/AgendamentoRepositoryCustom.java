@@ -1,5 +1,6 @@
 package com.example.Repository.Custom;
 
+import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.Models.Agendamentos;
 
 import java.time.LocalDate;
@@ -17,6 +18,6 @@ public interface AgendamentoRepositoryCustom {
 
     Optional<Agendamentos> buscarPorIdComSchema(Integer id, String schema);
 
-    List<Agendamentos> findAllDashboard(String schema);
+    List<AgendamentoDashboardDTO> findAllDashboard(String schema);
 
 }

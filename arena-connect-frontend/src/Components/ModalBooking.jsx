@@ -28,12 +28,12 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
     const getHeaders = () => {
         const headers = { 'Content-Type': 'application/json' };
 
-        if (bookingToEdit?.schemaName) {
-            headers['X-Tenant-ID'] = bookingToEdit.schemaName;
+        if (bookingToEdit?.id) {
+            headers['X-Tenant-ID'] = bookingToEdit.id_arena;
         }
 
-        else if (arena?.schemaName) {
-            headers['X-Tenant-ID'] = arena.schemaName;
+        else if (arena?.id) {
+            headers['X-Tenant-ID'] = arena.id;
         }
         return headers;
     };
@@ -159,6 +159,14 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                 );
                 alert("Horário atualizado com sucesso!");
             }
+
+
+
+
+
+
+
+
 
             else {
                 const payload = {
@@ -564,4 +572,3 @@ const StyledWrapper = styled.div`
         to { opacity: 1; transform: translateY(0); }
     }
 `;
-

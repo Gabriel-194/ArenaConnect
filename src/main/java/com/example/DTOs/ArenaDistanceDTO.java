@@ -18,7 +18,6 @@ public class ArenaDistanceDTO {
     private Double latitude;
     private Double longitude;
     private Double distanceKm;
-    private String schemaName;
     private String horaInicio;
     private String horaFim;
 

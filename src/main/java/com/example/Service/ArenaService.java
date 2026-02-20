@@ -202,13 +202,11 @@ public class ArenaService {
                 dto.setDistanceKm(null);
             }
 
-            dto.setSchemaName((String) row[8]);
-
-            if (row[9] != null) {
-                dto.setHoraInicio(row[9].toString().substring(0, 5));
+            if (row[8] != null) {
+                dto.setHoraInicio(row[8].toString().substring(0, 5));
             }
-            if (row[10] != null) {
-                dto.setHoraFim(row[10].toString().substring(0, 5));
+            if (row[9] != null) {
+                dto.setHoraFim(row[9].toString().substring(0, 5));
             }
             return dto;
         }).toList();

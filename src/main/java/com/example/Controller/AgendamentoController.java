@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.Models.AgendamentoHistorico;
 import com.example.Models.Agendamentos;
 import com.example.Repository.AgendamentoRepository;
@@ -26,10 +27,11 @@ public class AgendamentoController {
 
     @GetMapping("/disponibilidade")
     public ResponseEntity <List<LocalTime>> verDisponibilidade(@RequestParam Integer idQuadra,
-    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data){
+    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data, @RequestParam Long arenaId){
 
-        return ResponseEntity.ok(agendamentoService.getHorariosDisponiveis(idQuadra, data));
+        return ResponseEntity.ok(agendamentoService.getHorariosDisponiveis(idQuadra, data,arenaId));
     }
+
 
     @GetMapping("/allAgendamentos")
     public ResponseEntity<List<Agendamentos>> findAllAgendamentos(@RequestParam(required = false) Integer idQuadra,
@@ -40,9 +42,9 @@ public class AgendamentoController {
     }
 
     @PostMapping("/reservar")
-    public ResponseEntity<?> criar(@RequestBody Agendamentos agendamento) {
+    public ResponseEntity<?> criar(@RequestBody Agendamentos agendamento, @RequestParam Long arenaId) {
         try {
-            Agendamentos novoAgendamento = agendamentoService.createBooking(agendamento);
+            Agendamentos novoAgendamento = agendamentoService.createBooking(agendamento, arenaId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -86,7 +88,7 @@ public class AgendamentoController {
     }
 
     @PutMapping("/{id}/reagendar")
-    public ResponseEntity<?> reagendar(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> reagendar(@PathVariable Integer id, @RequestBody Map<String, String> payload, @RequestParam Long  arenaId) {
         try {
             String novaDataStr = payload.get("data_inicio");
 
@@ -96,7 +98,7 @@ public class AgendamentoController {
 
             LocalDateTime novaData = LocalDateTime.parse(novaDataStr);
 
-            Agendamentos atualizado = agendamentoService.updateBookingDate(id, novaData);
+            Agendamentos atualizado = agendamentoService.updateBookingDate(id, novaData,arenaId);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Reagendamento realizado com sucesso!",
@@ -113,8 +115,8 @@ public class AgendamentoController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<List<Agendamentos>> getStatusAgendamentos(){
-        List<Agendamentos> agendamentos = agendamentoService.findStatusForDashboard();
+    public ResponseEntity<List<AgendamentoDashboardDTO>> getStatusAgendamentos(){
+        List<AgendamentoDashboardDTO> agendamentos = agendamentoService.findStatusForDashboard();
 
         return ResponseEntity.ok(agendamentos);
     }

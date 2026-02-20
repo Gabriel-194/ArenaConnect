@@ -1,5 +1,6 @@
 package com.example.Repository.Custom;
 
+import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.Models.Agendamentos;
 import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
@@ -89,10 +90,26 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     }
 
     @Override
-    public List<Agendamentos> findAllDashboard(String schema) {
-        String sql = "SELECT id, status FROM " + schema + ".agendamentos";
+    public List<AgendamentoDashboardDTO> findAllDashboard(String schema) {
+
+        String sql = "SELECT id_agendamento, status FROM " + schema + ".agendamentos";
 
         Query query = entityManager.createNativeQuery(sql);
-        return query.getResultList();
+
+        List<Object[]> results = query.getResultList();
+
+        List<AgendamentoDashboardDTO> lista = new ArrayList<>();
+
+        for (Object[] obj : results) {
+
+            AgendamentoDashboardDTO dto = new AgendamentoDashboardDTO();
+
+            dto.setIdAgendamento((Integer) obj[0]);
+            dto.setStatus((String) obj[1]);
+
+            lista.add(dto);
+        }
+
+        return lista;
     }
 }
