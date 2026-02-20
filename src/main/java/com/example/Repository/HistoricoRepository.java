@@ -14,9 +14,9 @@ import java.util.Optional;
 @Repository
 public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico, Integer> {
 
-    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.idAgendamento = :idOrigem AND h.schemaName = :schemaName")
+    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.idAgendamento = :idOrigem AND h.id_arena = :idArena")
     Optional<AgendamentoHistorico> buscarPorOrigem(@Param("idOrigem") Integer idOrigem,
-                                                   @Param("schemaName") String schemaName);
+                                                   @Param("idArena") Integer idArena);
 
     @Query("SELECT h FROM AgendamentoHistorico h WHERE h.idUser = :idUser ORDER BY h.dataInicio DESC")
     List<AgendamentoHistorico> buscarHistoricoPorUsuario(@Param("idUser") Integer idUser);
@@ -31,9 +31,12 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
 
     @Modifying
     @Transactional
-    @Query("UPDATE AgendamentoHistorico h SET h.status = :novoStatus WHERE h.idAgendamento IN :ids AND h.schemaName = :schema")
-    void atualizarStatusEmLoteManual(@Param("ids") List<Integer> ids, @Param("schema") String schema, @Param("novoStatus") String novoStatus);
-
+    @Query("UPDATE AgendamentoHistorico h SET h.status = :novoStatus WHERE h.idAgendamento IN :ids AND h.id_arena = :idArena")
+    void atualizarStatusEmLoteManual(
+            @Param("ids") List<Integer> ids,
+            @Param("idArena") Integer idArena,
+            @Param("novoStatus") String novoStatus
+    );
     @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status = 'PENDENTE' AND h.dataInicio < :limiteTempo")
     List<AgendamentoHistorico> findPendentesParaCancelar(@Param("limiteTempo") LocalDateTime limiteTempo);
 }

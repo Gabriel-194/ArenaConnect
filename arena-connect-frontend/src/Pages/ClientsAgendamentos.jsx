@@ -28,7 +28,7 @@ export default function ClientAgendamentos(){
         fetchBookings()
     }, []);
 
-    const handleCancelBooking = async (idAgendamento, schemaName) => {
+    const handleCancelBooking = async (idAgendamento, idArena) => {
         if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
         try{
             const response = await axios.put(`http://localhost:8080/api/agendamentos/${idAgendamento}/status`,{
@@ -36,7 +36,8 @@ export default function ClientAgendamentos(){
             },{
                 withCredentials: true,
                 headers: {
-                    'X-TENANT-ID': schemaName
+                    'Content-Type': 'application/json',
+                    'X-Tenant-ID': idArena
                 }
             });
 
@@ -170,7 +171,7 @@ export default function ClientAgendamentos(){
                             ) : (
                                 getAgendamentosFiltrados().length > 0 ? (
                                     getAgendamentosFiltrados().map((booking) => (
-                                        <div key={`${booking.schemaName}-${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
+                                        <div key={`${booking.id_arena}${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
                                             <div className="liquid-glow"></div>
 
                                             <div className="booking-header-row">
@@ -231,7 +232,7 @@ export default function ClientAgendamentos(){
                                                     )}
 
                                                     {(booking.status !== 'CANCELADO' && booking.status !== 'CONFIRMADO'&& booking.status !== 'FINALIZADO' && filterType === 'upcoming') && (
-                                                        <button className="btn-cancel" onClick={() => handleCancelBooking(booking.id_agendamento, booking.schemaName)}
+                                                        <button className="btn-cancel" onClick={() => handleCancelBooking(booking.id_agendamento, booking.id_arena)}
                                                         >Cancelar</button>
                                                     )}
                                                 </div>

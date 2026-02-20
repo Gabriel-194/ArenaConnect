@@ -6,7 +6,7 @@ import com.example.Repository.AgendamentoRepository;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.HistoricoRepository;
 import com.example.Service.AsaasService;
-import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +35,7 @@ public class AgendamentoScheduler {
     private AsaasService asaasService;
 
     @Scheduled(fixedRate = 600000)
+    @Transactional
     public void finishedBookings() {
         LocalDateTime now = LocalDateTime.now();
 
@@ -44,31 +45,33 @@ public class AgendamentoScheduler {
 
         logger.info("⏰ Encontrados {} jogos para finalizar no total.", vencidosGlobal.size());
 
-        Map<String, List<Integer>> gamesSchema = vencidosGlobal.stream()
+        Map<Integer, List<Integer>> gamesSchema = vencidosGlobal.stream()
                 .collect(Collectors.groupingBy(
-                        AgendamentoHistorico::getSchemaName,
+                        AgendamentoHistorico::getId_arena,
                         Collectors.mapping(AgendamentoHistorico::getIdAgendamento,Collectors.toList())
                 ));
 
-        for (Map.Entry<String,List<Integer>> entry : gamesSchema.entrySet()){
-            String schema = entry.getKey();
+        for (Map.Entry<Integer,List<Integer>> entry : gamesSchema.entrySet()){
+            Integer id_Arena = entry.getKey();
             List<Integer> idsParaFinalizar = entry.getValue();
 
-            if(schema == null || schema.equals("public")) continue;
+            if(id_Arena == null || id_Arena.equals(0)) continue;
 
             try{
+
+                String schema = arenaRepository.findSchemaNameById(id_Arena.longValue());
                 TenantContext.setCurrentTenant(schema);
 
-                agendamentoRepository.finalizarAgendamentosPorIds(idsParaFinalizar);
-                logger.info("✅ Arena {}: Finalizados {} jogos (IDs: {})", schema, idsParaFinalizar.size(), idsParaFinalizar);
+                agendamentoRepository.finalizarAgendamentosPorIds(idsParaFinalizar,schema);
+                logger.info("✅ Arena {}: Finalizados {} jogos (IDs: {})", id_Arena, idsParaFinalizar.size(), idsParaFinalizar);
             } catch (Exception e) {
-            logger.error("❌ Erro ao finalizar jogos na arena {}: {}", schema, e.getMessage());
+            logger.error("❌ Erro ao finalizar jogos na arena {}: {}", id_Arena, e.getMessage());
             } finally {
             TenantContext.clear();
             }
 
             try{
-                historicoRepository.atualizarStatusEmLoteManual(idsParaFinalizar,schema,"FINALIZADO");
+                historicoRepository.atualizarStatusEmLoteManual(idsParaFinalizar, id_Arena,"FINALIZADO");
             } catch (Exception e){
                 logger.error("Erro ao atualizar jogos finalizados na tabela do public");
             }
@@ -76,6 +79,7 @@ public class AgendamentoScheduler {
     }
 
     @Scheduled(fixedRate = 600000)
+    @Transactional
     public void cancelarReservasNaoPagas(){
         LocalDateTime limite = LocalDateTime.now().plusMinutes(30);
 
@@ -83,23 +87,25 @@ public class AgendamentoScheduler {
 
         if (pendentes.isEmpty()) return;
 
-        Map<String, List<AgendamentoHistorico>> porSchema = pendentes.stream()
-                .collect(Collectors.groupingBy(AgendamentoHistorico::getSchemaName));
+        Map<Integer, List<AgendamentoHistorico>> porSchema = pendentes.stream()
+                .collect(Collectors.groupingBy(AgendamentoHistorico::getId_arena));
 
-        for (Map.Entry<String, List<AgendamentoHistorico>> entry : porSchema.entrySet()) {
-            String schema = entry.getKey();
+        for (Map.Entry<Integer, List<AgendamentoHistorico>> entry : porSchema.entrySet()) {
+            Integer id_arena = entry.getKey();
             List<AgendamentoHistorico> listaHistorico = entry.getValue();
 
             List<Integer> idsParaCancelar = listaHistorico.stream()
                     .map(AgendamentoHistorico::getIdAgendamento)
                     .collect(Collectors.toList());
 
+            String schema = arenaRepository.findSchemaNameById(id_arena.longValue());
+
             if (schema == null || schema.equals("public")) continue;
 
             try {
                 TenantContext.setCurrentTenant(schema);
 
-                agendamentoRepository.cancelarAgendamentosPorIds(idsParaCancelar);
+                agendamentoRepository.cancelarAgendamentosPorIds(idsParaCancelar,schema);
                 logger.info("❌ Arena {}: Cancelados {} agendamentos por falta de pagamento.", schema, idsParaCancelar.size());
 
             } catch (Exception e) {
@@ -116,7 +122,7 @@ public class AgendamentoScheduler {
 
             try {
 
-                historicoRepository.atualizarStatusEmLoteManual(idsParaCancelar, schema, "CANCELADO");
+                historicoRepository.atualizarStatusEmLoteManual(idsParaCancelar, id_arena, "CANCELADO");
             } catch (Exception e) {
                 logger.error("Erro ao atualizar histórico cancelado", e);
             }

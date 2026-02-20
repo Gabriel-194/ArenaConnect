@@ -64,10 +64,8 @@ public class QuadraService {
     }
 
     @Transactional
-    public List<Quadra> getAll(Long arenaId) {
-
+    public List<Quadra> getAll() {
         String schema = configurarSchema();
-
         return quadraRepository.listarTodasComSchema(schema);
     }
 

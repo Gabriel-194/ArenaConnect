@@ -39,7 +39,7 @@ public class AgendamentoHistorico {
     @Column(name = "valor_total")
     private Double valor;
 
-    private String schemaName;
+    private Integer id_arena;
 
     private String arenaName;
 

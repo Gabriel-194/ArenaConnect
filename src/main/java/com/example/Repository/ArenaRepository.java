@@ -17,6 +17,11 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
     @Query("SELECT a.schemaName FROM Arena a WHERE a.id = :arenaId")
     String findSchemaNameById(@Param("arenaId") Long arenaId);
 
+    @Query("SELECT a.id FROM Arena a WHERE a.schemaName = :schema")
+    Long findIdBySchemaName(@Param("schema") String schema);
+
+
+
     boolean existsByCnpj(String cnpj);
 
     Optional<Arena> findBySchemaName(String schemaName);

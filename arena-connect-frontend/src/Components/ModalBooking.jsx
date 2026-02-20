@@ -159,15 +159,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                 );
                 alert("Horário atualizado com sucesso!");
             }
-
-
-
-
-
-
-
-
-
             else {
                 const payload = {
                     id_quadra: selectedQuadra.id,

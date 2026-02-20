@@ -28,8 +28,8 @@ public class QuadraController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Quadra>> getAll(@RequestParam Long arenaId) {
-        List<Quadra> quadras = quadraService.getAll(arenaId);
+    public ResponseEntity<List<Quadra>> getAll() {
+        List<Quadra> quadras = quadraService.getAll();
         return ResponseEntity.ok(quadras);
     }
 

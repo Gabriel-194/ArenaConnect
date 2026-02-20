@@ -7,6 +7,9 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -112,4 +115,24 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
 
         return lista;
     }
+
+    @Override
+    public void finalizarAgendamentosPorIds(List<Integer> ids, String schema) {
+        if (ids == null || ids.isEmpty()) return;
+
+        String idsStr = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+        String sql = "UPDATE " + schema + ".agendamentos SET status = 'FINALIZADO' WHERE id_agendamento IN (" + idsStr + ")";
+        entityManager.createNativeQuery(sql).executeUpdate();
+    }
+
+    @Override
+    public void cancelarAgendamentosPorIds(List<Integer> ids, String schema) {
+        if (ids == null || ids.isEmpty()) return;
+
+        String idsStr = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+        String sql = "UPDATE " + schema + ".agendamentos SET status = 'CANCELADO' WHERE id_agendamento IN (" + idsStr + ")";
+        entityManager.createNativeQuery(sql).executeUpdate();
+    }
+
+
 }

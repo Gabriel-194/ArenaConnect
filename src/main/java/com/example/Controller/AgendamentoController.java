@@ -27,9 +27,9 @@ public class AgendamentoController {
 
     @GetMapping("/disponibilidade")
     public ResponseEntity <List<LocalTime>> verDisponibilidade(@RequestParam Integer idQuadra,
-    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data, @RequestParam Long arenaId){
+    @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data){
 
-        return ResponseEntity.ok(agendamentoService.getHorariosDisponiveis(idQuadra, data,arenaId));
+        return ResponseEntity.ok(agendamentoService.getHorariosDisponiveis(idQuadra, data));
     }
 
 
@@ -42,9 +42,9 @@ public class AgendamentoController {
     }
 
     @PostMapping("/reservar")
-    public ResponseEntity<?> criar(@RequestBody Agendamentos agendamento, @RequestParam Long arenaId) {
+    public ResponseEntity<?> criar(@RequestBody Agendamentos agendamento) {
         try {
-            Agendamentos novoAgendamento = agendamentoService.createBooking(agendamento, arenaId);
+            Agendamentos novoAgendamento = agendamentoService.createBooking(agendamento);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -88,7 +88,7 @@ public class AgendamentoController {
     }
 
     @PutMapping("/{id}/reagendar")
-    public ResponseEntity<?> reagendar(@PathVariable Integer id, @RequestBody Map<String, String> payload, @RequestParam Long  arenaId) {
+    public ResponseEntity<?> reagendar(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
         try {
             String novaDataStr = payload.get("data_inicio");
 
@@ -98,7 +98,7 @@ public class AgendamentoController {
 
             LocalDateTime novaData = LocalDateTime.parse(novaDataStr);
 
-            Agendamentos atualizado = agendamentoService.updateBookingDate(id, novaData,arenaId);
+            Agendamentos atualizado = agendamentoService.updateBookingDate(id, novaData);
 
             return ResponseEntity.ok(Map.of(
                     "message", "Reagendamento realizado com sucesso!",

@@ -53,7 +53,7 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public List<LocalTime> getHorariosDisponiveis(Integer idQuadra, LocalDate data,Long arenaId) {
+    public List<LocalTime> getHorariosDisponiveis(Integer idQuadra, LocalDate data) {
         String schema = configurarSchema();
 
         Arena arena = arenaRepository.findBySchemaName(schema)
@@ -84,7 +84,7 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public Agendamentos createBooking(Agendamentos booking,Long arenaId) {
+    public Agendamentos createBooking(Agendamentos booking) {
 
         String schema = configurarSchema();
 
@@ -100,13 +100,13 @@ public class AgendamentoService {
         processarPagamentoAsaas(user, arena, booking);
 
         Agendamentos salvo = agendamentoRepository.salvarComSchema(booking, schema);
-        salvarHistorico(salvo, schema, arena);
+        salvarHistorico(salvo, arena);
 
         return salvo;
     }
 
     @Transactional
-    public Agendamentos updateBookingDate(Integer idAgendamento, LocalDateTime novaDataInicio,Long arenaId) {
+    public Agendamentos updateBookingDate(Integer idAgendamento, LocalDateTime novaDataInicio) {
 
         String schema = configurarSchema();
         Users user = getUsuarioLogado();
@@ -133,10 +133,10 @@ public class AgendamentoService {
         return atualizado;
     }
 
-    private void salvarHistorico(Agendamentos original, String schema, Arena arena) {
+    private void salvarHistorico(Agendamentos original, Arena arena) {
         try {
             AgendamentoHistorico historico = new AgendamentoHistorico();
-            historico.setSchemaName(schema);
+            historico.setId_arena(arena.getId());
             historico.setIdUser(original.getId_user());
             historico.setIdAgendamento(original.getId_agendamento());
             historico.setId_quadra(original.getId_quadra());
@@ -149,6 +149,8 @@ public class AgendamentoService {
 
             historico.setArenaName(arena.getName());
             historico.setEnderecoArena(arena.getEndereco() + " - " + arena.getCidade());
+
+            String schema = arenaRepository.findSchemaNameById((long) arena.getId());
 
             quadraRepository.buscarPorIdComSchema(original.getId_quadra(), schema).ifPresent(quadra -> {
                 historico.setQuadraNome(quadra.getNome());
@@ -196,7 +198,6 @@ public class AgendamentoService {
             }
 
             a.setNumeroCliente(numeroCliente);
-
         }
         return new ArrayList<>(agendamento);
     }
@@ -229,6 +230,8 @@ public class AgendamentoService {
     public void atualizarStatus(Integer idAgendamento, String novoStatus) {
         String schema = configurarSchema();
         String statusAlvo = novoStatus.toUpperCase();
+
+        Long idArena = arenaRepository.findIdBySchemaName(schema);
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Users usuarioLogado = userRepository.findByEmail(email)
@@ -270,7 +273,7 @@ public class AgendamentoService {
         agendamento.setStatus(statusAlvo);
         agendamentoRepository.salvarComSchema(agendamento, schema);
 
-        historicoRepository.buscarPorOrigem(idAgendamento, schema).ifPresent(hist -> {
+        historicoRepository.buscarPorOrigem(idAgendamento, idArena.intValue()).ifPresent(hist -> {
             hist.setStatus(statusAlvo);
             if (statusAlvo.equals("CANCELADO")) {
                 hist.setAsaasInvoiceUrl(null);
@@ -291,8 +294,9 @@ public class AgendamentoService {
                 return true;
             }
 
-            String targetSchema = historico.getSchemaName();
-            TenantContext.setCurrentTenant(targetSchema);
+            Integer id_arena = historico.getId_arena();
+            String schema = arenaRepository.findSchemaNameById(id_arena.longValue());
+            TenantContext.setCurrentTenant(schema);
             try{
                 agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
                     agendamento.setStatus("CONFIRMADO");
@@ -315,7 +319,9 @@ public class AgendamentoService {
     }
 
     private void atualizarHistoricoData(Integer id, String schema, LocalDateTime inicio, LocalDateTime fim) {
-        historicoRepository.buscarPorOrigem(id, schema).ifPresent(hist -> {
+        Long idArena = arenaRepository.findIdBySchemaName(schema);
+
+        historicoRepository.buscarPorOrigem(id, idArena.intValue()).ifPresent(hist -> {
             hist.setDataInicio(inicio);
             hist.setData_fim(fim);
             historicoRepository.save(hist);

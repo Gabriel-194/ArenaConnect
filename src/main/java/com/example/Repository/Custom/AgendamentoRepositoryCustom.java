@@ -20,4 +20,7 @@ public interface AgendamentoRepositoryCustom {
 
     List<AgendamentoDashboardDTO> findAllDashboard(String schema);
 
+    void finalizarAgendamentosPorIds(List<Integer> ids, String schema);
+    void cancelarAgendamentosPorIds(List<Integer> ids, String schema);
+
 }
