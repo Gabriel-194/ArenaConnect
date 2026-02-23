@@ -1,6 +1,7 @@
 package com.example.Repository.Custom;
 
 import com.example.DTOs.AgendamentoDashboardDTO;
+import com.example.DTOs.FaturamentoDTO;
 import com.example.Models.Agendamentos;
 import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
@@ -95,7 +96,8 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     @Override
     public List<AgendamentoDashboardDTO> findAllDashboard(String schema) {
 
-        String sql = "SELECT id_agendamento, status FROM " + schema + ".agendamentos";
+        definirSchema(schema);
+        String sql = "SELECT id_agendamento, status FROM agendamentos";
 
         Query query = entityManager.createNativeQuery(sql);
 
@@ -120,8 +122,9 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     public void finalizarAgendamentosPorIds(List<Integer> ids, String schema) {
         if (ids == null || ids.isEmpty()) return;
 
+        definirSchema(schema);
         String idsStr = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
-        String sql = "UPDATE " + schema + ".agendamentos SET status = 'FINALIZADO' WHERE id_agendamento IN (" + idsStr + ")";
+        String sql = "UPDATE agendamentos SET status = 'FINALIZADO' WHERE id_agendamento IN (" + idsStr + ")";
         entityManager.createNativeQuery(sql).executeUpdate();
     }
 
@@ -129,9 +132,41 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     public void cancelarAgendamentosPorIds(List<Integer> ids, String schema) {
         if (ids == null || ids.isEmpty()) return;
 
+        definirSchema(schema);
         String idsStr = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
-        String sql = "UPDATE " + schema + ".agendamentos SET status = 'CANCELADO' WHERE id_agendamento IN (" + idsStr + ")";
+        String sql = "UPDATE agendamentos SET status = 'CANCELADO' WHERE id_agendamento IN (" + idsStr + ")";
         entityManager.createNativeQuery(sql).executeUpdate();
+    }
+
+    @Override
+    public List<FaturamentoDTO> findFaturamentoAnual(String schema, int ano) {
+        String sql = "SELECT EXTRACT(MONTH FROM a.data_inicio) as mes, SUM(a.valor_total) as total " +
+                "FROM " + schema + ".agendamentos a " +
+                "WHERE a.status IN ('FINALIZADO', 'CONFIRMADO') " +
+                "AND EXTRACT(YEAR FROM a.data_inicio) = :ano " +
+                "GROUP BY EXTRACT(MONTH FROM a.data_inicio) " +
+                "ORDER BY mes";
+
+        Query query = entityManager.createNativeQuery(sql);
+        query.setParameter("ano", ano);
+
+        List<Object[]> resultados = query.getResultList();
+
+        String[] nomesMeses = {"Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"};
+        List<FaturamentoDTO> lista = new ArrayList<>();
+
+        for (String nome : nomesMeses) {
+            lista.add(new FaturamentoDTO(nome, 0.0));
+        }
+
+        for (Object[] row : resultados) {
+            int mesIndex = ((Number) row[0]).intValue() - 1;
+            double valorTotal = ((Number) row[1]).doubleValue();
+
+            lista.get(mesIndex).setValor(valorTotal);
+        }
+
+        return lista;
     }
 
 

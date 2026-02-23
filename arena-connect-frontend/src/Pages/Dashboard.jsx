@@ -11,6 +11,9 @@ import {
 export default function Dashboard() {
     const carouselRef = useRef(null);
 
+    const [ano,setAno]= useState(new Date().getFullYear());
+    const [dadosFaturamento,setDadosFaturamento] = useState([]);
+
     const [stats, setStats] = useState({
         confirmados: 0,
         pendentes: 0,
@@ -18,20 +21,22 @@ export default function Dashboard() {
         cancelados: 0
     });
 
-    const dadosFaturamento = [
-        { mes: 'Jan', valor: 3200 },
-        { mes: 'Fev', valor: 4100 },
-        { mes: 'Mar', valor: 2800 },
-        { mes: 'Abr', valor: 5600 },
-        { mes: 'Mai', valor: 4900 },
-        { mes: 'Jun', valor: 6200 },
-        { mes: 'Jul', valor: 7100 },
-        { mes: 'Ago', valor: 6800 },
-        { mes: 'Set', valor: 5200 },
-        { mes: 'Out', valor: 4300 },
-        { mes: 'Nov', valor: 3900 },
-        { mes: 'Dez', valor: 8500 },
-    ];
+
+    useEffect(() => {
+        const fetchFaturamento = async () => {
+            try {
+
+                const response = await axios.get(`http://localhost:8080/api/agendamentos/faturamento?ano=${ano}`, {
+                    withCredentials: true
+                });
+
+                setDadosFaturamento(response.data);
+            } catch (error) {
+                console.error("Erro ao carregar dados do faturamento:", error);
+            }
+        };
+        fetchFaturamento();
+    }, [ano]);
 
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
@@ -180,19 +185,25 @@ export default function Dashboard() {
                         <div className="chart-container dashboard-glass-panel">
                             <div className="chart-header">
                                 <h3>Faturamento Anual</h3>
-                                <select className="chart-filter">
-                                    <option>2026</option>
+                                <select
+                                    className="chart-filter"
+                                    value={ano}
+                                    onChange={(e) => setAno(e.target.value)}
+                                >
+                                    <option value="2026">2026</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2027">2027</option>
                                 </select>
                             </div>
 
-                            <div style={{ width: '100%', height: 300 }}>
+                            <div style={{ width: '100%', height: 300, marginTop: '20px' }}>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={dadosFaturamento} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
 
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
 
                                         <XAxis dataKey="mes" stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} />
-                                        <YAxis stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `R$${val/1000}k`} />
+                                        <YAxis stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `R$${val}`} />
 
                                         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
 

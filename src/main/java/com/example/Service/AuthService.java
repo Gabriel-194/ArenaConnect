@@ -161,9 +161,7 @@ public class AuthService {
                 return "/home";
             case SUPERADMIN:
                 return "/homeSuperAdmin";
-
             case CLIENTE:
-
                 return "/homeClient";
 
             default:

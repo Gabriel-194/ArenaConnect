@@ -1,6 +1,7 @@
 package com.example.Controller;
 
 import com.example.DTOs.AgendamentoDashboardDTO;
+import com.example.DTOs.FaturamentoDTO;
 import com.example.Models.AgendamentoHistorico;
 import com.example.Models.Agendamentos;
 import com.example.Repository.AgendamentoRepository;
@@ -119,6 +120,13 @@ public class AgendamentoController {
         List<AgendamentoDashboardDTO> agendamentos = agendamentoService.findStatusForDashboard();
 
         return ResponseEntity.ok(agendamentos);
+    }
+
+    @GetMapping("/faturamento")
+    public ResponseEntity<List<FaturamentoDTO>> findFaturamentoAnual(@RequestParam(required = false, defaultValue = "2026") int ano){
+        List<FaturamentoDTO> faturamento = agendamentoService.findFaturamentoAnual(ano);
+
+        return ResponseEntity.ok(faturamento);
     }
 
 }

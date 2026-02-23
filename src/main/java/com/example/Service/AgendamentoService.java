@@ -2,6 +2,7 @@ package com.example.Service;
 
 import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.Asaas.AsaasResponseDTO;
+import com.example.DTOs.FaturamentoDTO;
 import com.example.Domain.RoleEnum;
 import com.example.Models.*;
 import com.example.Multitenancy.TenantContext;
@@ -395,6 +396,12 @@ public class AgendamentoService {
         }
 
         return agendamentoRepository.findAllDashboard(schema);
+    }
+
+    public List<FaturamentoDTO> findFaturamentoAnual(int ano){
+        String schema = configurarSchema();
+
+        return agendamentoRepository.findFaturamentoAnual(schema,ano);
     }
 }
 
