@@ -46,6 +46,8 @@ public class AgendamentoScheduler {
         logger.info("⏰ Encontrados {} jogos para finalizar no total.", vencidosGlobal.size());
 
         Map<Integer, List<Integer>> gamesSchema = vencidosGlobal.stream()
+                .filter(a -> a.getId_arena() != null)
+                .filter(a -> a.getIdAgendamento() != null)
                 .collect(Collectors.groupingBy(
                         AgendamentoHistorico::getId_arena,
                         Collectors.mapping(AgendamentoHistorico::getIdAgendamento,Collectors.toList())
@@ -71,6 +73,7 @@ public class AgendamentoScheduler {
             }
 
             try{
+                TenantContext.setCurrentTenant("public");
                 historicoRepository.atualizarStatusEmLoteManual(idsParaFinalizar, id_Arena,"FINALIZADO");
             } catch (Exception e){
                 logger.error("Erro ao atualizar jogos finalizados na tabela do public");
@@ -88,6 +91,8 @@ public class AgendamentoScheduler {
         if (pendentes.isEmpty()) return;
 
         Map<Integer, List<AgendamentoHistorico>> porSchema = pendentes.stream()
+                .filter(a -> a.getId_arena() != null)
+                .filter(a -> a.getIdAgendamento() != null)
                 .collect(Collectors.groupingBy(AgendamentoHistorico::getId_arena));
 
         for (Map.Entry<Integer, List<AgendamentoHistorico>> entry : porSchema.entrySet()) {
@@ -121,7 +126,7 @@ public class AgendamentoScheduler {
             }
 
             try {
-
+                TenantContext.setCurrentTenant("public");
                 historicoRepository.atualizarStatusEmLoteManual(idsParaCancelar, id_arena, "CANCELADO");
             } catch (Exception e) {
                 logger.error("Erro ao atualizar histórico cancelado", e);

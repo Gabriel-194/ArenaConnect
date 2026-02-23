@@ -4,6 +4,10 @@ import '../Styles/Dashboard.css';
 import {useRef} from "react";
 import axios from "axios";
 
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+} from 'recharts';
+
 export default function Dashboard() {
     const carouselRef = useRef(null);
 
@@ -13,6 +17,35 @@ export default function Dashboard() {
         finalizados: 0,
         cancelados: 0
     });
+
+    const dadosFaturamento = [
+        { mes: 'Jan', valor: 3200 },
+        { mes: 'Fev', valor: 4100 },
+        { mes: 'Mar', valor: 2800 },
+        { mes: 'Abr', valor: 5600 },
+        { mes: 'Mai', valor: 4900 },
+        { mes: 'Jun', valor: 6200 },
+        { mes: 'Jul', valor: 7100 },
+        { mes: 'Ago', valor: 6800 },
+        { mes: 'Set', valor: 5200 },
+        { mes: 'Out', valor: 4300 },
+        { mes: 'Nov', valor: 3900 },
+        { mes: 'Dez', valor: 8500 },
+    ];
+
+    const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="dashboard-glass-panel" style={{ padding: '10px 15px', border: '1px solid rgba(0, 255, 127, 0.4)' }}>
+                    <p style={{ margin: 0, color: '#aaa', fontSize: '0.85rem' }}>{label} / 2026</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#00ff7f', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                        R$ {payload[0].value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
 
     useEffect(() => {
         const fecthStatusAgendamentos = async () => {
@@ -123,14 +156,12 @@ export default function Dashboard() {
                         <div className="courts-carousel-container dashboard-glass-panel">
                             <h3>Desempenho das Quadras</h3>
 
-                            {/* Wrapper relativo para segurar os botões */}
                             <div className="carousel-wrapper">
 
                                 <button className="carousel-btn left" onClick={scrollLeft}>
-                                    &#10094; {/* Ícone de seta */}
+                                    &#10094;
                                 </button>
 
-                                {/* Adicionamos o ref aqui */}
                                 <div className="courts-carousel" ref={carouselRef}>
                                     {quadrasMock.map((quadra) => (
                                         <div className="court-card-dashboard" key={quadra.id}>
@@ -141,20 +172,46 @@ export default function Dashboard() {
                                 </div>
 
                                 <button className="carousel-btn right" onClick={scrollRight}>
-                                    &#10095; {/* Ícone de seta */}
+                                    &#10095;
                                 </button>
                             </div>
                         </div>
 
                         <div className="chart-container dashboard-glass-panel">
                             <div className="chart-header">
-                                <h3>Faturamento em cada mês do ano</h3>
+                                <h3>Faturamento Anual</h3>
                                 <select className="chart-filter">
                                     <option>2026</option>
                                 </select>
                             </div>
-                            <div className="chart-placeholder">
-                                <p>[ Gráfico de Linhas / Barras virá aqui ]</p>
+
+                            <div style={{ width: '100%', height: 300 }}>
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={dadosFaturamento} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+
+                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+
+                                        <XAxis dataKey="mes" stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                        <YAxis stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `R$${val/1000}k`} />
+
+                                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+
+                                        <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
+                                            {
+                                                dadosFaturamento.map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill="#008f4c"
+                                                        style={{
+                                                            fill: '#00ff7f',
+                                                            filter: 'drop-shadow(0px 0px 8px rgba(0, 255, 127, 0.4))'
+                                                        }}
+                                                    />
+                                                ))
+                                            }
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
 
