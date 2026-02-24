@@ -1,5 +1,6 @@
 package com.example.Repository.Custom;
 
+import com.example.DTOs.QuadraDashboardDTO;
 import com.example.Models.Quadra;
 
 import java.util.List;
@@ -14,4 +15,5 @@ public interface QuadraRepositoryCustom {
     Optional<Quadra> buscarPorIdComSchema(Integer id, String schema);
     void alterarStatusComSchema(Integer id, String schema);
     List<Quadra> listarAtivasComSchema(String schema);
+    List<QuadraDashboardDTO> findEstatisticasQuadras(String schema);
 }

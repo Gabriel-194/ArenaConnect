@@ -42,7 +42,7 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
     useEffect(() => {
         const init = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/quadra`, {
+                const response = await axios.get(`http://localhost:8080/api/quadra/courtAtivas`, {
                     withCredentials: true,
                     headers: getHeaders()
                 });

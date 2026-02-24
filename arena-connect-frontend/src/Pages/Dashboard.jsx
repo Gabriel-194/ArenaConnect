@@ -1,4 +1,4 @@
-import React, {useEffect,useState} from 'react';
+import React, {use, useEffect, useState} from 'react';
 import Sidebar from '../Components/Sidebar';
 import '../Styles/Dashboard.css';
 import {useRef} from "react";
@@ -13,6 +13,8 @@ export default function Dashboard() {
 
     const [ano,setAno]= useState(new Date().getFullYear());
     const [dadosFaturamento,setDadosFaturamento] = useState([]);
+
+    const [quadras,setQuadras] = useState([]);
 
     const [stats, setStats] = useState({
         confirmados: 0,
@@ -37,20 +39,6 @@ export default function Dashboard() {
         };
         fetchFaturamento();
     }, [ano]);
-
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="dashboard-glass-panel" style={{ padding: '10px 15px', border: '1px solid rgba(0, 255, 127, 0.4)' }}>
-                    <p style={{ margin: 0, color: '#aaa', fontSize: '0.85rem' }}>{label} / 2026</p>
-                    <p style={{ margin: '5px 0 0 0', color: '#00ff7f', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                        R$ {payload[0].value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
 
     useEffect(() => {
         const fecthStatusAgendamentos = async () => {
@@ -91,12 +79,19 @@ export default function Dashboard() {
         }
     };
 
-    const quadrasMock = [
-        { id: 1, nome: "Quadra 1 (Sintética)", jogos: 25 },
-        { id: 2, nome: "Quadra 2 (Futsal)", jogos: 18 },
-        { id: 3, nome: "Quadra 3 (Areia)", jogos: 9 },
-        { id: 4, nome: "Quadra 4 (Society)", jogos: 12 },
-    ];
+    useEffect(() => {
+        const fetchEstatisticasQuadras = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/quadra/estatisticas', {
+                    withCredentials: true
+                });
+                setQuadras(response.data);
+            } catch (error) {
+                console.error("Erro ao carregar estatísticas das quadras:", error);
+            }
+        };
+        fetchEstatisticasQuadras();
+    }, []);
 
     return (
         <div className="dashboard-layout">
@@ -163,22 +158,29 @@ export default function Dashboard() {
 
                             <div className="carousel-wrapper">
 
-                                <button className="carousel-btn left" onClick={scrollLeft}>
-                                    &#10094;
-                                </button>
+                                {quadras.length > 3 && (
+                                    <button className="carousel-btn left" onClick={scrollLeft}>
+                                        &#10094;
+                                    </button>
+                                )}
 
                                 <div className="courts-carousel" ref={carouselRef}>
-                                    {quadrasMock.map((quadra) => (
+                                    {quadras.map((quadra) => (
                                         <div className="court-card-dashboard" key={quadra.id}>
                                             <span className="court-name">{quadra.nome}</span>
                                             <span className="court-games text-green">{quadra.jogos} jogos</span>
                                         </div>
                                     ))}
+                                    {quadras.length === 0 && (
+                                        <p style={{ color: '#aaa', padding: '10px' }}>Nenhuma quadra encontrada.</p>
+                                    )}
                                 </div>
 
-                                <button className="carousel-btn right" onClick={scrollRight}>
-                                    &#10095;
-                                </button>
+                                {quadras.length > 3 && (
+                                    <button className="carousel-btn right" onClick={scrollRight}>
+                                        &#10095;
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -192,20 +194,18 @@ export default function Dashboard() {
                                 >
                                     <option value="2026">2026</option>
                                     <option value="2027">2027</option>
-                                    <option value="2027">2027</option>
+                                    <option value="2027">2028</option>
                                 </select>
                             </div>
 
                             <div style={{ width: '100%', height: 300, marginTop: '20px' }}>
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={dadosFaturamento} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
 
                                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
 
                                         <XAxis dataKey="mes" stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} />
-                                        <YAxis stroke="#666" tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `R$${val}`} />
-
-                                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                                        <YAxis stroke="#666" width={80} tick={{ fill: '#aaa', fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(val) => `R$${val}`} />
 
                                         <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
                                             {

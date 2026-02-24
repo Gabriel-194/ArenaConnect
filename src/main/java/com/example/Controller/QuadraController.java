@@ -1,5 +1,6 @@
 package com.example.Controller;
 
+import com.example.DTOs.QuadraDashboardDTO;
 import com.example.Models.Quadra;
 import com.example.Service.QuadraService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/quadra")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN','CLIENTE')")
 public class QuadraController {
 
     @Autowired
@@ -33,9 +33,10 @@ public class QuadraController {
         return ResponseEntity.ok(quadras);
     }
 
+
     @GetMapping("/courtAtivas")
-    public ResponseEntity<List<Quadra>> getCourtAtivas(@RequestParam Long arenaId) {
-        List<Quadra> quadras = quadraService.getCourtAtiva(arenaId);
+    public ResponseEntity<List<Quadra>> getCourtAtivas( ) {
+        List<Quadra> quadras = quadraService.getCourtAtiva();
 
         return ResponseEntity.ok(quadras);
     }
@@ -61,6 +62,12 @@ public class QuadraController {
         return quadraService.buscarPorId(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/estatisticas")
+    public ResponseEntity<List<QuadraDashboardDTO>> getEstatisticasQuadras() {
+        List<QuadraDashboardDTO> estatisticas = quadraService.getQuadraEstatisticasDashboard();
+        return ResponseEntity.ok(estatisticas);
     }
 
 

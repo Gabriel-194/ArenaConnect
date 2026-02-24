@@ -1,5 +1,6 @@
 package com.example.Service;
 
+import com.example.DTOs.QuadraDashboardDTO;
 import com.example.Models.Quadra;
 import com.example.Multitenancy.TenantContext;
 import com.example.Repository.ArenaRepository;
@@ -70,7 +71,7 @@ public class QuadraService {
     }
 
     @Transactional
-    public List<Quadra> getCourtAtiva(Long arenaId) {
+    public List<Quadra> getCourtAtiva() {
 
         String schema = configurarSchema();
 
@@ -95,6 +96,12 @@ public class QuadraService {
     @Transactional
     public Optional<Quadra> buscarPorId(Integer id) {
         return quadraRepository.buscarPorIdComSchema(id, configurarSchema());
+    }
+
+    @Transactional
+    public List<QuadraDashboardDTO> getQuadraEstatisticasDashboard() {
+        String schema = configurarSchema();
+        return quadraRepository.findEstatisticasQuadras(schema);
     }
 
 

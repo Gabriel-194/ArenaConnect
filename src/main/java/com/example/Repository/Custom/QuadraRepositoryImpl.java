@@ -1,14 +1,21 @@
 package com.example.Repository.Custom;
 
+import com.example.DTOs.QuadraDashboardDTO;
 import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.DataClassRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class QuadraRepositoryImpl implements QuadraRepositoryCustom {
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -65,6 +72,18 @@ public class QuadraRepositoryImpl implements QuadraRepositoryCustom {
         Query query = entityManager.createNativeQuery(sql, Quadra.class);
 
         return query.getResultList();
+    }
+
+    @Override
+    public List<QuadraDashboardDTO> findEstatisticasQuadras(String schema) {
+        String sql = "SELECT q.id_quadra as id, q.nome as nome, COUNT(a.id_agendamento) as jogos " +
+                "FROM " + schema + ".quadras q " +
+                "LEFT JOIN " + schema + ".agendamentos a ON q.id_quadra = a.id_quadra " +
+                "AND a.status != 'CANCELADO' " +
+                "GROUP BY q.id_quadra, q.nome " +
+                "ORDER BY jogos DESC";
+
+        return jdbcTemplate.query(sql, new DataClassRowMapper<>(QuadraDashboardDTO.class));
     }
 
 }

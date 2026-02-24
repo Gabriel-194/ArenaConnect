@@ -8,8 +8,11 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -19,6 +22,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -94,28 +100,13 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     }
 
     @Override
+    @Transactional
     public List<AgendamentoDashboardDTO> findAllDashboard(String schema) {
 
         definirSchema(schema);
-        String sql = "SELECT id_agendamento, status FROM agendamentos";
+        String sql = "SELECT id_agendamento AS idAgendamento, status FROM agendamentos";
 
-        Query query = entityManager.createNativeQuery(sql);
-
-        List<Object[]> results = query.getResultList();
-
-        List<AgendamentoDashboardDTO> lista = new ArrayList<>();
-
-        for (Object[] obj : results) {
-
-            AgendamentoDashboardDTO dto = new AgendamentoDashboardDTO();
-
-            dto.setIdAgendamento((Integer) obj[0]);
-            dto.setStatus((String) obj[1]);
-
-            lista.add(dto);
-        }
-
-        return lista;
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(AgendamentoDashboardDTO.class));
     }
 
     @Override
