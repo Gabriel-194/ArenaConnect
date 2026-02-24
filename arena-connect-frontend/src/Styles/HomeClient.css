@@ -351,3 +351,149 @@
         padding: 0 20px;
     }
 }
+
+/* ==========================================
+   NOTIFICAÇÕES (CLIENT HEADER)
+   ========================================== */
+
+/* Bolinha vermelha no sino */
+.notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background-color: #ff4d4d;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.6);
+}
+
+/* Modal flutuante - FUNDO PRETO SÓLIDO */
+.notifications-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    width: 320px;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+    background-color: #050505; /* Preto quase puro, muito elegante */
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9); /* Sombra mais forte para destacar do fundo */
+}
+
+/* Cabeçalho do modal */
+.notifications-header {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0f0f0f;
+}
+
+.notifications-header h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.mark-all-read {
+    font-size: 0.8rem;
+    color: #00ff7f;
+    cursor: pointer;
+}
+
+.mark-all-read:hover {
+    text-decoration: underline;
+}
+
+
+.notifications-body {
+    overflow-y: auto;
+    max-height: 340px;
+    background-color: #000000;
+}
+
+.notifications-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-body::-webkit-scrollbar-track {
+    background: #000000;
+    border-radius: 8px;
+}
+
+.notifications-body::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 8px;
+}
+
+.notifications-body::-webkit-scrollbar-thumb:hover {
+    background: #00ff7f;
+}
+
+.notification-item {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.notification-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Efeito de não lido */
+.notification-item.unread {
+    background: rgba(0, 255, 127, 0.05);
+}
+
+.notif-content {
+    flex: 1;
+}
+
+.notif-title {
+    margin: 0 0 5px 0;
+    font-size: 0.95rem;
+}
+
+.notif-desc {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #bbb;
+    line-height: 1.4;
+}
+
+.notif-time {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.75rem;
+    color: #555;
+}
+
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #00ff7f;
+    border-radius: 50%;
+    margin-left: 10px;
+    box-shadow: 0 0 8px rgba(0, 255, 127, 0.6);
+}
+
+.no-notifications {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}

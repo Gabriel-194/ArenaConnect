@@ -24,8 +24,17 @@ export default function ClientAgendamentos(){
         }
     }
 
+
     useEffect(() => {
-        fetchBookings()
+        fetchBookings();
+
+        const tempoEmMilissegundos = 10000;
+
+        const intervalId = setInterval(() => {
+            fetchBookings();
+        }, tempoEmMilissegundos);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const handleCancelBooking = async (idAgendamento, idArena) => {

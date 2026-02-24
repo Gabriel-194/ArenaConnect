@@ -119,11 +119,13 @@ export default function Login(){
                         <span style={{ margin: '0 10px' }}>ou</span>
                         <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
                     </div>
-
-                    <GoogleAuthButton
+                    {/*
+                                       <GoogleAuthButton
                         onRequireExtraData={handleRequireExtraData}
                         setErro={setErro}
                     />
+
+                    */}
 
                     <div className="form-footer">
                         <span className="footer-text">Não tem uma conta?</span>

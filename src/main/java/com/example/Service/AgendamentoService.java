@@ -43,6 +43,8 @@ public class AgendamentoService {
     @Autowired
     private AsaasService asaasService;
 
+    @Autowired
+    private NotificacaoService notificacaoService;
 
     private String configurarSchema() {
         String currentTenant = TenantContext.getCurrentTenant();
@@ -104,6 +106,13 @@ public class AgendamentoService {
         Agendamentos salvo = agendamentoRepository.salvarComSchema(booking, schema);
         salvarHistorico(salvo, arena);
 
+        notificacaoService.enviar(
+                user.getIdUser().longValue(),
+                "Reserva criada! ",
+                "Pague sua reserva para confirma-lá!",
+                "PENDENTE"
+        );
+
         return salvo;
     }
 
@@ -131,6 +140,13 @@ public class AgendamentoService {
 
         Agendamentos atualizado = agendamentoRepository.salvarComSchema(booking, schema);
         atualizarHistoricoData(idAgendamento, schema, novaDataInicio, novaDataFim);
+
+        notificacaoService.enviar(
+                user.getIdUser().longValue(),
+                "Reserva atualizada! ",
+                "sua reserva foi atualizada!",
+                "atualzação"
+        );
 
         return atualizado;
     }
@@ -282,6 +298,13 @@ public class AgendamentoService {
             }
             historicoRepository.save(hist);
         });
+
+        notificacaoService.enviar(
+                usuarioLogado.getIdUser().longValue(),
+                "Reserva cancelada! ",
+                "Sua reserva foi cancelada!",
+                "CANCELADO"
+        );
     }
 
     public boolean confirmPaymentWebhook(String paymentId){
@@ -303,6 +326,17 @@ public class AgendamentoService {
                 agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
                     agendamento.setStatus("CONFIRMADO");
                     agendamentoRepository.save(agendamento);
+
+                    if (agendamento.getId_user() != null) {
+                        Long userId = agendamento.getId_user().longValue();
+
+                        notificacaoService.enviar(
+                                userId,
+                                "Pagamento Aprovado! ",
+                                "O pagamento da sua reserva foi confirmado com sucesso. Bom jogo!",
+                                "CONFIRMADO"
+                        );
+                    }
                 });
 
                 historico.setStatus("CONFIRMADO");
@@ -410,7 +444,3 @@ public class AgendamentoService {
         return agendamentoRepository.findUltimasMovimentacoes(schema);
     }
 }
-
-
-
-

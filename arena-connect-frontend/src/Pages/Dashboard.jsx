@@ -131,7 +131,21 @@ export default function Dashboard() {
                 </header>
 
                 <h3>Agendamentos:</h3>
+
                 <section className="status-cards-row">
+                    <div className="status-card dashboard-glass-panel">
+                        <div className="card-icon pending">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffcc00" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0px 0px 6px rgba(255, 204, 0, 0.4))' }}>
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div className="card-info">
+                            <span className="card-label">Pendentes</span>
+                            <h3 className="card-value text-yellow">{stats.pendentes}</h3>
+                        </div>
+                    </div>
+
                     <div className="status-card dashboard-glass-panel">
                         <div className="card-icon confirmed">✓</div>
                         <div className="card-info">
@@ -141,15 +155,12 @@ export default function Dashboard() {
                     </div>
 
                     <div className="status-card dashboard-glass-panel">
-                        <div className="card-icon pending">⌛</div>
-                        <div className="card-info">
-                            <span className="card-label">Pendentes</span>
-                            <h3 className="card-value text-yellow">{stats.pendentes}</h3>
+                        <div className="card-icon finalized">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0px 0px 6px rgba(0, 229, 255, 0.4))' }}>
+                                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                <line x1="4" y1="22" x2="4" y2="15"></line>
+                            </svg>
                         </div>
-                    </div>
-
-                    <div className="status-card dashboard-glass-panel">
-                        <div className="card-icon finalized">🏁</div>
                         <div className="card-info">
                             <span className="card-label">Finalizados</span>
                             <h3 className="card-value text-blue">{stats.finalizados}</h3>
