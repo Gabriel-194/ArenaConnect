@@ -2,6 +2,7 @@ package com.example.Repository.Custom;
 
 import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.FaturamentoDTO;
+import com.example.DTOs.MovimentacaoDTO;
 import com.example.Models.Agendamentos;
 
 import java.time.LocalDate;
@@ -25,4 +26,5 @@ public interface AgendamentoRepositoryCustom {
     void cancelarAgendamentosPorIds(List<Integer> ids, String schema);
 
     List<FaturamentoDTO> findFaturamentoAnual(String schema, int ano);
+    List<MovimentacaoDTO> findUltimasMovimentacoes(String schema);
 }

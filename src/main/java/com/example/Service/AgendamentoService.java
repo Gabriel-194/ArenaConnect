@@ -3,6 +3,7 @@ package com.example.Service;
 import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.Asaas.AsaasResponseDTO;
 import com.example.DTOs.FaturamentoDTO;
+import com.example.DTOs.MovimentacaoDTO;
 import com.example.Domain.RoleEnum;
 import com.example.Models.*;
 import com.example.Multitenancy.TenantContext;
@@ -402,6 +403,11 @@ public class AgendamentoService {
         String schema = configurarSchema();
 
         return agendamentoRepository.findFaturamentoAnual(schema,ano);
+    }
+
+    public List<MovimentacaoDTO> getUltimasMovimentacoes() {
+        String schema = configurarSchema();
+        return agendamentoRepository.findUltimasMovimentacoes(schema);
     }
 }
 

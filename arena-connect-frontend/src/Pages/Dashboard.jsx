@@ -16,6 +16,8 @@ export default function Dashboard() {
 
     const [quadras,setQuadras] = useState([]);
 
+    const [movimentacoes, setMovimentacoes] = useState([]);
+
     const [stats, setStats] = useState({
         confirmados: 0,
         pendentes: 0,
@@ -91,6 +93,20 @@ export default function Dashboard() {
             }
         };
         fetchEstatisticasQuadras();
+    }, []);
+
+    useEffect(() => {
+        const fetchMovimentacoes = async () => {
+            try {
+                const response = await axios.get('http://localhost:8080/api/agendamentos/movimentacoes', {
+                    withCredentials: true
+                });
+                setMovimentacoes(response.data);
+            } catch (error) {
+                console.error("Erro ao carregar movimentações:", error);
+            }
+        };
+        fetchMovimentacoes();
     }, []);
 
     return (
@@ -233,18 +249,21 @@ export default function Dashboard() {
                         <div className="recent-activity dashboard-glass-panel">
                             <h3>Últimas Movimentações</h3>
                             <ul className="activity-list">
-                                <li>
-                                    <span className="activity-time">Há 5 min</span>
-                                    <span className="activity-desc">João pagou a reserva da <strong>Quadra 1</strong>.</span>
-                                </li>
-                                <li>
-                                    <span className="activity-time">Há 20 min</span>
-                                    <span className="activity-desc">Novo agendamento: <strong>Quadra 3</strong> (19:00).</span>
-                                </li>
-                                <li>
-                                    <span className="activity-time">Há 1 hora</span>
-                                    <span className="activity-desc text-red">Reserva cancelada por Marcos (Quadra 2).</span>
-                                </li>
+                                {movimentacoes.map((mov, index) => {
+                                    const statusClass = `mov-${mov.tipoStatus.toLowerCase()}`;
+
+                                    return (
+                                        <li key={index} className={`activity-item ${statusClass}`}>
+                                            <span className="activity-time">{mov.tempo}</span>
+                                            <span className="activity-desc">
+                                                {mov.descricao}
+                                            </span>
+                                        </li>
+                                    );
+                                })}
+                                {movimentacoes.length === 0 && (
+                                    <p style={{ color: '#aaa', fontSize: '0.9rem', padding: '10px 0' }}>Nenhuma atividade recente.</p>
+                                )}
                             </ul>
                         </div>
 

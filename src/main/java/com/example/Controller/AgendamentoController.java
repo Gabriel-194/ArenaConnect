@@ -2,6 +2,7 @@ package com.example.Controller;
 
 import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.FaturamentoDTO;
+import com.example.DTOs.MovimentacaoDTO;
 import com.example.Models.AgendamentoHistorico;
 import com.example.Models.Agendamentos;
 import com.example.Repository.AgendamentoRepository;
@@ -127,6 +128,11 @@ public class AgendamentoController {
         List<FaturamentoDTO> faturamento = agendamentoService.findFaturamentoAnual(ano);
 
         return ResponseEntity.ok(faturamento);
+    }
+
+    @GetMapping("/movimentacoes")
+    public ResponseEntity<List<MovimentacaoDTO>> getUltimasMovimentacoes() {
+        return ResponseEntity.ok(agendamentoService.getUltimasMovimentacoes());
     }
 
 }

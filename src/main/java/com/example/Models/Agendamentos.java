@@ -28,7 +28,6 @@ public class Agendamentos {
     @Column(name = "valor_total")
     private Double valor;
 
-    private String cliente_avulso;
 
     @Transient
     private String nomeCliente;

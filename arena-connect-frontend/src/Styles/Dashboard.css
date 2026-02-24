@@ -286,3 +286,7 @@
     min-width: 0 !important;
     max-width: 100% !important;
 }
+
+.mov-alerta .activity-desc {
+    color: #ff4d4d;
+}

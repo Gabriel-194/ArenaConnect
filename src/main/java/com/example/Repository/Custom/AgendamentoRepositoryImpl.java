@@ -2,6 +2,7 @@ package com.example.Repository.Custom;
 
 import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.FaturamentoDTO;
+import com.example.DTOs.MovimentacaoDTO;
 import com.example.Models.Agendamentos;
 import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
@@ -160,5 +161,51 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         return lista;
     }
 
+    @Transactional
+    public List<MovimentacaoDTO> findUltimasMovimentacoes(String schema) {
+        definirSchema(schema);
+        String sql = "SELECT a.status, a.data_inicio, q.nome as quadra_nome, " +
+                "COALESCE(u.nome, 'Cliente') as cliente_nome " +
+                "FROM agendamentos a " +
+                "JOIN quadras q ON a.id_quadra = q.id_quadra " +
+                "LEFT JOIN public.users u ON a.id_user = u.id_user " +
+                "ORDER BY a.id_agendamento DESC LIMIT 6";
 
+        return jdbcTemplate.query(sql, rs -> {
+            List<MovimentacaoDTO> lista = new ArrayList<>();
+            while (rs.next()) {
+                String status = rs.getString("status");
+                String cliente = rs.getString("cliente_nome");
+                String quadra = rs.getString("quadra_nome");
+
+                java.sql.Timestamp dataInicio = rs.getTimestamp("data_inicio");
+                String horaFormato = dataInicio != null ?
+                        new java.text.SimpleDateFormat("HH:mm").format(dataInicio) : "";
+
+                String descricao = "";
+                String tipo = "NORMAL";
+
+                if ("CONFIRMADO".equalsIgnoreCase(status)) {
+                    descricao = "Reserva paga: " + quadra + " (" + horaFormato + ") por " + cliente + ".";
+                    tipo = "CONFIRMADO";
+                } else if ("PENDENTE".equalsIgnoreCase(status)) {
+                    descricao = "Nova reserva: " + quadra + " (" + horaFormato + ") por " + cliente + ".";
+                    tipo = "PENDENTE";
+                } else if ("CANCELADO".equalsIgnoreCase(status)) {
+                    descricao = "Reserva cancelada: " + quadra + " (" + horaFormato + ") para " + cliente + ".";
+                    tipo = "CANCELADO";
+                } else if("FINALIZADO".equalsIgnoreCase(status)) {
+                    descricao = "Reserva finalizada: " + quadra + " (" + horaFormato + ") para " + cliente + ".";
+                    tipo = "FINALIZADO";
+                }
+
+                lista.add(new MovimentacaoDTO("Jogo às " + horaFormato, descricao, tipo));
+            }
+            return lista;
+        });
+    }
 }
+
+
+
+
