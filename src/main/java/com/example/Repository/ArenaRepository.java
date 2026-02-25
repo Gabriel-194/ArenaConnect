@@ -80,4 +80,5 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
 
     Optional<Arena> findByAssasSubscriptionId(String assasSubscriptionId);
 
+    String findNameById(long l);
 }

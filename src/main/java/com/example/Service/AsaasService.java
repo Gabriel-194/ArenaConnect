@@ -200,7 +200,7 @@ public class AsaasService {
 
     public String checkPaymentStatus(String paymentId){
         try{
-            String url = asaasUrl + "/payments" + paymentId;
+            String url = asaasUrl + "/payments/" + paymentId;
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("access_token", apiKey);

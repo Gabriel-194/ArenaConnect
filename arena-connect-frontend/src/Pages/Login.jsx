@@ -2,14 +2,15 @@ import { useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom'
 import axios from "axios";
 import GoogleAuthButton from '../Components/GoogleAuthButton';
-
 import '../styles/login.css';
+import ForgotPasswordModal from "../Components/ForgotPasswordModal.jsx";
 
 export default function Login(){
     const [email,setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [erro, setErro] = useState('');
     const navigate = useNavigate();
+    const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -105,7 +106,16 @@ export default function Login(){
                         />
                     </div>
 
-                    <a href="#" className="forgot-password">Esqueci minha senha</a>
+                    <a
+                        href="#"
+                        className="forgot-password"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsForgotModalOpen(true); // Abre o modal!
+                        }}
+                    >
+                        Esqueci minha senha
+                    </a>
 
                     <button type="submit" className="btn-primary">Entrar</button>
 
@@ -119,13 +129,12 @@ export default function Login(){
                         <span style={{ margin: '0 10px' }}>ou</span>
                         <div style={{ flex: 1, height: '1px', backgroundColor: '#444' }}></div>
                     </div>
-                    {/*
-                                       <GoogleAuthButton
+
+                    <GoogleAuthButton
                         onRequireExtraData={handleRequireExtraData}
                         setErro={setErro}
                     />
 
-                    */}
 
                     <div className="form-footer">
                         <span className="footer-text">Não tem uma conta?</span>
@@ -133,6 +142,10 @@ export default function Login(){
                     </div>
                 </form>
             </div>
+
+            {isForgotModalOpen && (
+                <ForgotPasswordModal onClose={() => setIsForgotModalOpen(false)} />
+            )}
         </div>
     );
 }

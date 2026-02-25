@@ -108,7 +108,7 @@ public class AgendamentoService {
 
         notificacaoService.enviar(
                 user.getIdUser().longValue(),
-                "Reserva criada! ",
+                "Reserva criada para "+ arena.getName()+"! ",
                 "Pague sua reserva para confirma-lá!",
                 "PENDENTE"
         );
@@ -141,11 +141,13 @@ public class AgendamentoService {
         Agendamentos atualizado = agendamentoRepository.salvarComSchema(booking, schema);
         atualizarHistoricoData(idAgendamento, schema, novaDataInicio, novaDataFim);
 
+        Arena arena = getArenaAtual(schema);
+
         notificacaoService.enviar(
                 user.getIdUser().longValue(),
-                "Reserva atualizada! ",
-                "sua reserva foi atualizada!",
-                "atualzação"
+                "Reserva atualizada !",
+                "sua reserva foi atualizada para a arena "+ arena.getName() +"!",
+                "INFO"
         );
 
         return atualizado;
@@ -299,12 +301,27 @@ public class AgendamentoService {
             historicoRepository.save(hist);
         });
 
-        notificacaoService.enviar(
-                usuarioLogado.getIdUser().longValue(),
-                "Reserva cancelada! ",
-                "Sua reserva foi cancelada!",
-                "CANCELADO"
-        );
+        if (agendamento.getId_user() != null) {
+            Long idClienteDaReserva = agendamento.getId_user().longValue();
+            Arena arena = getArenaAtual(schema);
+
+            if (statusAlvo.equals("CANCELADO")) {
+                notificacaoService.enviar(
+                        idClienteDaReserva,
+                        "Reserva cancelada ",
+                        "A sua reserva na " + arena.getName() + " foi cancelada.",
+                        "CANCELADO"
+                );
+            }
+            else if (statusAlvo.equals("FINALIZADO")) {
+                notificacaoService.enviar(
+                        idClienteDaReserva,
+                        "Reserva Finalizada ",
+                        "O seu jogo na " + arena.getName() + " foi concluído. Obrigado por jogar conosco e até a próxima!",
+                        "FINALIZADO"
+                );
+            }
+        }
     }
 
     public boolean confirmPaymentWebhook(String paymentId){
@@ -329,11 +346,12 @@ public class AgendamentoService {
 
                     if (agendamento.getId_user() != null) {
                         Long userId = agendamento.getId_user().longValue();
+                        Arena arena = getArenaAtual(schema);
 
                         notificacaoService.enviar(
                                 userId,
                                 "Pagamento Aprovado! ",
-                                "O pagamento da sua reserva foi confirmado com sucesso. Bom jogo!",
+                                "O pagamento da sua reserva na "+ arena.getName() +" foi confirmado com sucesso. Bom jogo!",
                                 "CONFIRMADO"
                         );
                     }

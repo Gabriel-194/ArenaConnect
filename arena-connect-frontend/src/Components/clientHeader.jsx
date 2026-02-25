@@ -91,14 +91,18 @@ export default function ClientHeader() {
                                     <div key={notif.id} className={`notification-item ${notif.lida ? 'read' : 'unread'}`}>
                                         <div className="notif-content">
                                             <h5 className={`notif-title ${
-                                                notif.tipo === 'SUCESSO' ? 'text-green' :
+                                                notif.tipo === 'CONFIRMADO' ? 'text-green' :
                                                     notif.tipo === 'PENDENTE' ? 'text-yellow' :
-                                                        notif.tipo === 'ALERTA' ? 'text-red' : ''
+                                                        notif.tipo === 'CANCELADO' ? 'text-red' : 
+                                                            notif.tipo === 'FINALIZADO' ? 'text-blue' : ''
                                             }`}>
                                                 {notif.titulo}
                                             </h5>
-                                            <p className="notif-desc">{notif.desc}</p>
-                                            <span className="notif-time">{notif.tempo}</span>
+                                            <p className="notif-desc">{notif.mensagem}</p>
+
+                                            <span className="notif-time">
+                                                {new Date(notif.dataCriacao).toLocaleDateString('pt-BR')} às {new Date(notif.dataCriacao).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
                                         </div>
                                         {!notif.lida && <div className="unread-dot"></div>}
                                     </div>
