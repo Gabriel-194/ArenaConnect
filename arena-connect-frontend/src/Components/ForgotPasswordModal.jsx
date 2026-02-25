@@ -1,39 +1,47 @@
-import React from 'react';
+import React, {useState} from 'react';
 import styled from 'styled-components';
+import axios from "axios";
 
 const ForgotPasswordModal = ({onClose}) => {
-    // Troque esse número (1, 2, 3 ou 4) para visualizar cada etapa do layout!
-    const step = 1;
+    const [email,setEmail] = useState();
+    const [step, setStep] = useState(1);
+
+    const handleEmailSender = async (e)=> {
+        e.preventDefault();
+        try{
+            const response = await axios.post('http://localhost:8080/api/email/enviar-codigo',
+                { email: email },
+                { withCredentials: true }
+            );
+            console.log(response.data);
+            setStep(2);
+        } catch(error){
+            console.error("Erro ao enviar e-mail:", error);
+            alert(error.response?.data || "Erro ao tentar enviar o código.");
+        }
+    }
 
     return (
         <StyledWrapper>
             <div className="modal-overlay" onClick={onClose}>
                 <div className="form" onClick={(e) => e.stopPropagation()}>
-
-                    {/* O SVG de fundo animado (Liquid Blur) fica fixo para todos os steps */}
                     <svg className="svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                         <path fill="#4073ff" d="M56.8,-23.9C61.7,-3.2,45.7,18.8,26.5,31.7C7.2,44.6,-15.2,48.2,-35.5,36.5C-55.8,24.7,-73.9,-2.6,-67.6,-25.2C-61.3,-47.7,-30.6,-65.6,-2.4,-64.8C25.9,-64.1,51.8,-44.7,56.8,-23.9Z" transform="translate(100 100)" className="path" />
                     </svg>
 
-                    {/* ==========================================
-              STEP 1: INSERIR E-MAIL
-              ========================================== */}
                     {step === 1 && (
                         <div className="content">
                             <p align="center">Recuperar Senha</p>
                             <span className="subtitle" align="center">Digite seu e-mail para receber o código.</span>
 
                             <div className="input-group">
-                                <input placeholder="exemplo@email.com" type="email" className="full-input" />
+                                <input placeholder="exemplo@email.com" type="email" className="full-input" onChange={(e)=>setEmail(e.target.value)} />
                             </div>
 
-                            <button>Enviar Código</button>
+                            <button onClick={handleEmailSender}>Enviar Código</button>
                         </div>
                     )}
 
-                    {/* ==========================================
-              STEP 2: INSERIR TOKEN (Seu código original ajustado)
-              ========================================== */}
                     {step === 2 && (
                         <div className="content">
                             <p align="center">Código de Verificação</p>
@@ -50,9 +58,7 @@ const ForgotPasswordModal = ({onClose}) => {
                         </div>
                     )}
 
-                    {/* ==========================================
-              STEP 3: NOVA SENHA
-              ========================================== */}
+
                     {step === 3 && (
                         <div className="content">
                             <p align="center">Nova Senha</p>
@@ -67,9 +73,7 @@ const ForgotPasswordModal = ({onClose}) => {
                         </div>
                     )}
 
-                    {/* ==========================================
-              STEP 4: SUCESSO
-              ========================================== */}
+
                     {step === 4 && (
                         <div className="content success-content">
                             <div className="success-icon">
