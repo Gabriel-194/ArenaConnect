@@ -92,10 +92,11 @@ const ForgotPasswordModal = ({onClose}) => {
                 }
             );
             console.log(response.data);
-            alert("Success! Your password has been changed. You can now log in.");
+            setStep(4);
 
-            onClose();
-
+            setTimeout(() => {
+                onClose();
+            }, 3000);
         } catch (error) {
             console.error("Error resetting password:", error);
 

@@ -1,5 +1,6 @@
 package com.example.Service;
 
+import com.example.Repository.UserRepository;
 import jakarta.mail.internet.MimeMessage;
 import lombok.Setter;
 import org.hibernate.pretty.MessageHelper;
@@ -8,6 +9,7 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -20,6 +22,12 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private final Map<String, String> tokenStorage = new ConcurrentHashMap<>();
     private final Map<String, Integer> attemptsStorage = new ConcurrentHashMap<>();
@@ -82,7 +90,6 @@ public class EmailService {
         }
 
         if(tokenDigitado.equals(tokenReal)){
-            tokenStorage.remove(email);
             attemptsStorage.remove(email);
             return true;
 
@@ -107,11 +114,7 @@ public class EmailService {
             throw new RuntimeException("token invalido");
         }
 
-        // 3. SUCCESS! The token is correct.
-        // TODO: Here is where you call your UserRepository to actually save the new password
-        // example: userRepository.updatePassword(email, passwordEncoder.encode(newPassword));
-
-        // 4. Clean up: Remove the token and reset attempts so it can't be used again
+        userRepository.updatePassword(email, passwordEncoder.encode(newPassword));
         tokenStorage.remove(email);
         resetAttemptsStorage.remove(email);
     }
