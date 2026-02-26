@@ -53,6 +53,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/auth/**", "/api/users/register-client", "/api/users/register-partner").permitAll()
                         .requestMatchers("/api/webhook/**").permitAll()
+                        .requestMatchers("/api/email/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE", "ADMIN")
 

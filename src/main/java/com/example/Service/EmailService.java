@@ -23,6 +23,7 @@ public class EmailService {
 
     private final Map<String, String> tokenStorage = new ConcurrentHashMap<>();
     private final Map<String, Integer> attemptsStorage = new ConcurrentHashMap<>();
+    private Map<String, Integer> resetAttemptsStorage = new ConcurrentHashMap<>();
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -80,7 +81,6 @@ public class EmailService {
             return false;
         }
 
-
         if(tokenDigitado.equals(tokenReal)){
             tokenStorage.remove(email);
             attemptsStorage.remove(email);
@@ -91,4 +91,29 @@ public class EmailService {
             return false;
         }
     }
+
+    public void resetPassword(String email, String token,String newPassword) {
+        int tentativas = resetAttemptsStorage.getOrDefault(email, 0);
+
+        if(tentativas >= 5){
+            tokenStorage.remove(email);
+            resetAttemptsStorage.remove(email);
+            throw new RuntimeException("Bloqueado por numero de tentativas");
+        }
+
+        String storedToken = tokenStorage.get(email);
+        if (storedToken == null || !storedToken.equals(token)) {
+            resetAttemptsStorage.put(email, tentativas + 1);
+            throw new RuntimeException("token invalido");
+        }
+
+        // 3. SUCCESS! The token is correct.
+        // TODO: Here is where you call your UserRepository to actually save the new password
+        // example: userRepository.updatePassword(email, passwordEncoder.encode(newPassword));
+
+        // 4. Clean up: Remove the token and reset attempts so it can't be used again
+        tokenStorage.remove(email);
+        resetAttemptsStorage.remove(email);
+    }
+
 }

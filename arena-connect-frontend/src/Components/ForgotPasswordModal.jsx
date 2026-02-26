@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState,useRef} from 'react';
 import styled from 'styled-components';
 import axios from "axios";
 
@@ -6,18 +6,110 @@ const ForgotPasswordModal = ({onClose}) => {
     const [email,setEmail] = useState();
     const [step, setStep] = useState(1);
 
+    const [tokenValues, setTokenValues] = useState(['', '', '', '']);
+
+    const inputRefs = useRef([]);
+    const [erro, setErro] = useState('');
+
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
     const handleEmailSender = async (e)=> {
         e.preventDefault();
+        setErro();
         try{
             const response = await axios.post('http://localhost:8080/api/email/enviar-codigo',
                 { email: email },
-                { withCredentials: true }
             );
             console.log(response.data);
             setStep(2);
         } catch(error){
             console.error("Erro ao enviar e-mail:", error);
             alert(error.response?.data || "Erro ao tentar enviar o código.");
+        }
+    }
+    const handleChange = (e,index) =>{
+        const newValue = e.target.value;
+        const newValues = [... tokenValues]
+        newValues[index] = newValue;
+        setTokenValues(newValues);
+
+        if (index < 3 && newValue !== '') {
+            inputRefs.current[index + 1].focus();
+        }
+    }
+
+    const handleVerification = async (e) =>{
+        e.preventDefault();
+        setErro('');
+
+        const tokenCompleto = tokenValues.join('');
+        try{
+            const response = await axios.post('http://localhost:8080/api/email/validar-codigo',
+                {
+                    token:tokenCompleto,
+                    email:email
+                }
+            )
+
+            console.log(response.data);
+            setStep(3);
+        } catch (error){
+            const status = error.response?.status;
+            const mensagemErro = error.response?.data || "Código inválido.";
+
+            setErro(mensagemErro);
+
+            if (status === 429) {
+                setStep(1);
+                setTokenValues(['', '', '', '']);
+            }
+        }
+    }
+
+    const handleResetPassword = async (e) =>{
+        e.preventDefault();
+        setErro('');
+
+        if (newPassword !== confirmPassword) {
+            setErro("As senhas devem ser iguais");
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            setErro("A senha precisa ter 6 caracteres");
+            return;
+        }
+
+        const tokenCompleto = tokenValues.join('');
+
+        try{
+            const response = await axios.post('http://localhost:8080/api/email/reset-senha',
+                {
+                    email: email,
+                    token: tokenCompleto,
+                    newPassword: newPassword
+                }
+            );
+            console.log(response.data);
+            alert("Success! Your password has been changed. You can now log in.");
+
+            onClose();
+
+        } catch (error) {
+            console.error("Error resetting password:", error);
+
+            const status = error.response?.status;
+            const mensagemErro = error.response?.data || "Failed to reset password.";
+
+            setErro(mensagemErro);
+
+            if (status === 429) {
+                setStep(1);
+                setTokenValues(['', '', '', '']);
+                setNewPassword('');
+                setConfirmPassword('');
+            }
         }
     }
 
@@ -39,6 +131,8 @@ const ForgotPasswordModal = ({onClose}) => {
                             </div>
 
                             <button onClick={handleEmailSender}>Enviar Código</button>
+                            {erro && <p style={{ color: '#ff4d4d', fontSize: '14px', marginTop: '10px', textAlign: 'center' }}>{erro}</p>}
+
                         </div>
                     )}
 
@@ -48,13 +142,19 @@ const ForgotPasswordModal = ({onClose}) => {
                             <span className="subtitle" align="center">Enviamos um código para o seu e-mail.</span>
 
                             <div className="inp">
-                                <input placeholder="" type="text" className="input" maxLength={1} />
-                                <input placeholder="" type="text" className="input" maxLength={1} />
-                                <input placeholder="" type="text" className="input" maxLength={1} />
-                                <input placeholder="" type="text" className="input" maxLength={1} />
+                                <input placeholder="" type="text" className="input" maxLength={1} onChange={(e)=>handleChange(e,0)}
+                                       ref={(elemento) => (inputRefs.current[0] = elemento)}/>
+                                <input placeholder="" type="text" className="input" maxLength={1} onChange={(e)=>handleChange(e,1)}
+                                       ref={(elemento) => (inputRefs.current[1] = elemento)}/>
+                                <input placeholder="" type="text" className="input" maxLength={1} onChange={(e)=>handleChange(e,2)}
+                                       ref={(elemento) => (inputRefs.current[2] = elemento)}/>
+                                <input placeholder="" type="text" className="input" maxLength={1} onChange={(e)=>handleChange(e,3)}
+                                       ref={(elemento) => (inputRefs.current[3] = elemento)}/>
                             </div>
 
-                            <button>Verificar</button>
+                            <button onClick={handleVerification}>Verificar</button>
+
+                            {erro && <p style={{ color: '#ff4d4d', fontSize: '14px', marginTop: '10px', textAlign: 'center' }}>{erro}</p>}
                         </div>
                     )}
 
@@ -65,11 +165,15 @@ const ForgotPasswordModal = ({onClose}) => {
                             <span className="subtitle" align="center">Crie uma nova senha segura.</span>
 
                             <div className="input-group">
-                                <input placeholder="Nova senha" type="password" className="full-input" />
-                                <input placeholder="Confirme a senha" type="password" className="full-input" />
+                                <input placeholder="Nova senha" type="password" className="full-input" value={newPassword}
+                                       onChange={(e) => setNewPassword(e.target.value)} />
+                                <input placeholder="Confirme a senha" type="password" className="full-input"value={confirmPassword}
+                                       onChange={(e) => setConfirmPassword(e.target.value)}
+                                       style={{ marginTop: '10px' }} />
                             </div>
 
-                            <button>Redefinir Senha</button>
+                            <button onClick={handleResetPassword} >Redefinir Senha</button>
+                            {erro && <p style={{ color: '#ff4d4d', fontSize: '14px', marginTop: '10px', textAlign: 'center' }}>{erro}</p>}
                         </div>
                     )}
 
@@ -118,7 +222,6 @@ const StyledWrapper = styled.div`
         -webkit-backdrop-filter: blur(12px);
         border: 1px solid rgba(0, 255, 127, 0.4);
 
-        /* Tamanho ajustado para caber os formulários de senha */
         width: 26em;
         min-height: 28em;
         padding: 30px 20px;
@@ -179,7 +282,6 @@ const StyledWrapper = styled.div`
     .inp {
         margin-left: auto;
         margin-right: auto;
-        white-space: 4px;
         display: flex;
         gap: 0.5em;
     }
