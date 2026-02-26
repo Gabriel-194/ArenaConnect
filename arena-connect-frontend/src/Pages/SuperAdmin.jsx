@@ -11,6 +11,15 @@ const formatTelefone = (telefone) => {
     if (limpo.length === 10) return `(${limpo.slice(0, 2)}) ${limpo.slice(2, 6)}-${limpo.slice(6)}`;
     return telefone;
 };
+const formatDate = (dateString) => {
+    if (!dateString) return "---";
+    const [year, month, day] = dateString.split('T')[0].split('-');
+    return `${day}/${month}/${year}`;
+};
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+};
 
 const formatCep = (cep) => {
     if (!cep) return "---";
@@ -45,6 +54,32 @@ export default function SuperAdmin() {
     const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
     const [arenaToEdit, setArenaToEdit] = useState(null);
 
+
+    const [financeData, setFinanceData] = useState({
+        faturamentoTotal: 0,
+        aReceber: 0,
+        lucroSplit: 0,
+        lucroAssinatura: 0,
+        transacoes: []
+    });
+
+    const [loadingFinance, setLoadingFinance] = useState(false);
+
+    const fetchFinanceData = async () => {
+        setLoadingFinance(true);
+        try {
+
+            const response = await axios.get('http://localhost:8080/api/users/financeiro', {
+                withCredentials: true
+            });
+
+            setFinanceData(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar dados financeiros:", error);
+        } finally {
+            setLoadingFinance(false);
+        }
+    };
 
     const fetchDatas = async () => {
         setLoading(true);
@@ -113,6 +148,8 @@ export default function SuperAdmin() {
     useEffect(() => {
         if (activeTab === 'dashboard') {
             fetchDatas();
+        } else if (activeTab === 'finance') {
+            fetchFinanceData();
         }
     }, [activeTab]);
 
@@ -320,16 +357,33 @@ export default function SuperAdmin() {
                         <div className="finance-layout">
                             <div className="finance-summary">
                                 <div className="summary-card">
-                                    <span className="summary-label">Faturamento Total</span>
-                                    <h3 className="summary-value">R$ 15.250,00</h3>
+                                    <span className="summary-label">Faturamento Total (Asaas)</span>
+                                    <h3 className="summary-value">
+                                        {loadingFinance ? "Carregando..." : formatCurrency(financeData.faturamentoTotal)}
+                                    </h3>
                                 </div>
                                 <div className="summary-card highlight">
-                                    <span className="summary-label">A Receber (Asaas)</span>
-                                    <h3 className="summary-value">R$ 2.400,00</h3>
+                                    <span className="summary-label">A Receber</span>
+                                    <h3 className="summary-value">
+                                        {loadingFinance ? "Carregando..." : formatCurrency(financeData.aReceber)}
+                                    </h3>
                                 </div>
-                                <div className="summary-card">
-                                    <span className="summary-label">Lucro Plataforma</span>
-                                    <h3 className="summary-value text-green">+ R$ 1.250,00</h3>
+                                <div style={{ display: 'flex', gap: '15px', flex: 1 }}>
+
+                                    <div className="summary-card" style={{ flex: 1, padding: '15px' }}>
+                                        <span className="summary-label" style={{ fontSize: '0.8rem' }}>Lucro (Splits)</span>
+                                        <h3 className="summary-value text-green" style={{ fontSize: '1.2rem', marginTop: '5px' }}>
+                                            {loadingFinance ? "..." : `+ ${formatCurrency(financeData.lucroSplit)}`}
+                                        </h3>
+                                    </div>
+
+                                    <div className="summary-card" style={{ flex: 1, padding: '15px' }}>
+                                        <span className="summary-label" style={{ fontSize: '0.8rem' }}>Lucro (Assinaturas)</span>
+                                        <h3 className="summary-value text-green" style={{ fontSize: '1.2rem', marginTop: '5px' }}>
+                                            {loadingFinance ? "..." : `+ ${formatCurrency(financeData.lucroAssinatura)}`}
+                                        </h3>
+                                    </div>
+
                                 </div>
                             </div>
 
@@ -338,21 +392,33 @@ export default function SuperAdmin() {
                                     <h2>Transações Recentes</h2>
                                     <button className="btn-neon-sm">Exportar</button>
                                 </div>
+
                                 <div className="custom-scroll-area">
-                                    <div className="list-header">
+                                    <div className="list-header" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr 1fr 1fr', padding: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                                         <span>Data</span>
                                         <span>Cliente</span>
                                         <span>Descrição</span>
                                         <span>Valor</span>
                                         <span>Status</span>
                                     </div>
-                                    <div className="list-item transaction-row">
-                                        <span>12/02/2026</span>
-                                        <span>João Silva</span>
-                                        <span>Reserva Quadra 1</span>
-                                        <span className="text-green">R$ 200,00</span>
-                                        <span className="status-badge paid">Pago</span>
-                                    </div>
+
+                                    {loadingFinance ? (
+                                        <p style={{ textAlign: 'center', color: '#888', marginTop: '20px' }}>Buscando dados no Asaas...</p>
+                                    ) : financeData.transacoes && financeData.transacoes.length > 0 ? (
+                                        financeData.transacoes.map((transacao, index) => (
+                                            <div className="list-item transaction-row" key={transacao.id || index} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 2fr 1fr 1fr', padding: '15px 10px', alignItems: 'center' }}>
+                                                <span>{formatDate(transacao.data)}</span>
+                                                <span>{transacao.cliente}</span>
+                                                <span>{transacao.descricao}</span>
+                                                <span className="text-green">{formatCurrency(transacao.valor)}</span>
+                                                <span className={`status-badge ${transacao.status.toLowerCase()}`}>
+                                {transacao.status}
+                            </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p style={{ textAlign: 'center', color: '#888', marginTop: '20px' }}>Nenhuma transação encontrada no período.</p>
+                                    )}
                                 </div>
                             </section>
                         </div>

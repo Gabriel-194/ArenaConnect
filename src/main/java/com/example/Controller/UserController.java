@@ -1,24 +1,20 @@
 package com.example.Controller;
 
+import com.example.DTOs.FinanceiroDashboardDTO;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.UserRegistrationDTO;
 import com.example.DTOs.UserResponseDTO;
 import com.example.Exceptions.AsaasIntegrationException;
 import com.example.Models.Users;
+import com.example.Service.AsaasService;
 import com.example.Service.UserService;
-import com.example.Service.ArenaService;
-import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +31,7 @@ public class UserController {
     private UserService userService;
 
     @Autowired
-    private ArenaService arenaService;
+    private AsaasService asaasService;
 
 
     @PostMapping("/register-client")
@@ -143,4 +139,8 @@ public class UserController {
         }
     }
 
+    @GetMapping("/financeiro")
+    public ResponseEntity<FinanceiroDashboardDTO> getFinanceiro() {
+        return ResponseEntity.ok(asaasService.getFinanceiroDashboard());
+    }
 }

@@ -114,7 +114,8 @@ public class EmailService {
             throw new RuntimeException("token invalido");
         }
 
-        userRepository.updatePassword(email, passwordEncoder.encode(newPassword));
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        userRepository.updatePassword(email, passwordEncoder.encode(hashedPassword));
         tokenStorage.remove(email);
         resetAttemptsStorage.remove(email);
     }
