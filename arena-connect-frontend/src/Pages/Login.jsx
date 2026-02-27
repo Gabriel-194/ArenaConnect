@@ -131,12 +131,14 @@ export default function Login(){
                     </div>
 
 
-                    <GoogleAuthButton
+
+
+                    {/*
+                                        <GoogleAuthButton
                         onRequireExtraData={handleRequireExtraData}
                         setErro={setErro}
                     />
-
-
+                    */}
                     <div className="form-footer">
                         <span className="footer-text">Não tem uma conta?</span>
                         <Link to="/Register" className="link-accent">Criar conta</Link>

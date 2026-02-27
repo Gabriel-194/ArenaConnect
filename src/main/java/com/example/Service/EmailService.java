@@ -1,6 +1,7 @@
 package com.example.Service;
 
 import com.example.Repository.UserRepository;
+import io.github.bucket4j.Bucket;
 import jakarta.mail.internet.MimeMessage;
 import lombok.Setter;
 import org.hibernate.pretty.MessageHelper;
@@ -29,9 +30,11 @@ public class EmailService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
+
     private final Map<String, String> tokenStorage = new ConcurrentHashMap<>();
-    private final Map<String, Integer> attemptsStorage = new ConcurrentHashMap<>();
-    private Map<String, Integer> resetAttemptsStorage = new ConcurrentHashMap<>();
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -44,7 +47,8 @@ public class EmailService {
         try{
             String codigo = gerarToken();
             tokenStorage.put(email, codigo);
-            attemptsStorage.put(email, 0);
+
+            rateLimitService.resetarValidacaoCodigo(email);
 
             MimeMessage mensagem = mailSender.createMimeMessage();
 
@@ -76,48 +80,38 @@ public class EmailService {
     }
 
     public boolean validarToken(String email, String tokenDigitado) {
-        int tentativas = attemptsStorage.getOrDefault(email, 0);
-
-        if(tentativas >= 10){
+        if(!rateLimitService.ValidarCodigo(email)){
             tokenStorage.remove(email);
-            attemptsStorage.remove(email);
             throw new RuntimeException("Conta bloqueada por excesso de tentativas. Gere um novo código.");
         }
 
         String tokenReal = tokenStorage.get(email);
-        if (tokenReal == null) {
+        if(tokenReal == null){
             return false;
         }
 
         if(tokenDigitado.equals(tokenReal)){
-            attemptsStorage.remove(email);
+            rateLimitService.resetarValidacaoCodigo(email);
             return true;
-
-        } else {
-            attemptsStorage.put(email,tentativas +1);
-            return false;
         }
+        return false;
     }
 
     public void resetPassword(String email, String token,String newPassword) {
-        int tentativas = resetAttemptsStorage.getOrDefault(email, 0);
-
-        if(tentativas >= 5){
+        if(!rateLimitService.ResetSenha(email)){
             tokenStorage.remove(email);
-            resetAttemptsStorage.remove(email);
             throw new RuntimeException("Bloqueado por numero de tentativas");
         }
 
         String storedToken = tokenStorage.get(email);
-        if (storedToken == null || !storedToken.equals(token)) {
-            resetAttemptsStorage.put(email, tentativas + 1);
+        if(storedToken == null || !storedToken.equals(token)){
             throw new RuntimeException("token invalido");
         }
 
-        String hashedPassword = passwordEncoder.encode(newPassword);
-        userRepository.updatePassword(email, passwordEncoder.encode(hashedPassword));
+        userRepository.updatePassword(email, passwordEncoder.encode(newPassword));
+
         tokenStorage.remove(email);
-        resetAttemptsStorage.remove(email);
+        rateLimitService.resetarResetSenha(email);
     }
 
 }

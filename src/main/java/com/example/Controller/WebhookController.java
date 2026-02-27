@@ -25,13 +25,11 @@ public class WebhookController {
     private static final Logger logger = LoggerFactory.getLogger(WebhookController.class);
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ArenaRepository arenaRepository;
 
     @Value("${asaas.api.key}")
     private String asaasApiKey;
+
     @Autowired
     private AgendamentoService agendamentoService;
 
