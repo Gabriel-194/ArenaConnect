@@ -24,4 +24,6 @@ public interface UserRepository extends JpaRepository<Users, Integer> {
     @Transactional
     @Query("UPDATE Users u SET u.senhaHash = :newPassword WHERE u.email = :email")
     void updatePassword(@Param("email") String email, @Param("newPassword") String newPassword);
+
+    Optional<Users> findByasaasCustomerId(String customerIdAsaas);
 }

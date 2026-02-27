@@ -5,7 +5,9 @@ import com.example.DTOs.FinanceiroDashboardDTO;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.TransacaoDTO;
 import com.example.Models.Users;
+import com.example.Repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,9 @@ public class AsaasService {
 
     @Value("${asaas.api.key}")
     private String apiKey;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -223,72 +228,122 @@ public class AsaasService {
         return null;
     }
 
-    @Transactional
     public FinanceiroDashboardDTO getFinanceiroDashboard() {
         FinanceiroDashboardDTO dashboard = new FinanceiroDashboardDTO();
 
         try {
-            String balanceUrl = asaasUrl + "/finance/balance";
-            ResponseEntity<Map> balanceResponse = restTemplate.exchange(
-                    balanceUrl, HttpMethod.GET, new HttpEntity<>(getHeaders()), Map.class);
+            dashboard.setFaturamentoTotal(buscarSaldoAtual());
 
-            if (balanceResponse.getBody() != null && balanceResponse.getBody().containsKey("balance")) {
-                dashboard.setFaturamentoTotal(Double.valueOf(balanceResponse.getBody().get("balance").toString()));
-            }
-
-            String paymentUrl = asaasUrl = "/payments?limit=30";
-            ResponseEntity<Map> paymentResponse = restTemplate.exchange(paymentUrl, HttpMethod.GET, new HttpEntity<>(getHeaders()), Map.class);
-
-            List<TransacaoDTO> transacoes = new java.util.ArrayList<>();
-            double aReceber = 0.0;
-            double lucroSplit = 0.0;
-            double lucroAssinatura = 0.0;
-
-            if (paymentResponse.getBody() != null && paymentResponse.getBody().containsKey("data")) {
-                List<Map<String, Object>> data = (List<Map<String, Object>>) paymentResponse.getBody().get("data");
-
-                for (Map<String, Object> item : data) {
-                    TransacaoDTO t = new TransacaoDTO();
-                    t.setId((String) item.get("id"));
-                    t.setData((String) item.get("dueDate"));
-                    t.setStatus((String) item.get("status"));
-                    t.setDescricao((String) item.get("description"));
-
-                    Double valor = Double.valueOf(item.get("value").toString());
-                    t.setValor(valor);
-
-                    t.setCliente(item.get("customer").toString());
-
-                    transacoes.add(t);
-
-                    String status = t.getStatus();
-                    String descricao = t.getDescricao() != null ? t.getDescricao().toLowerCase() : "";
-                    if ("PENDING".equals(status) || "OVERDUE".equals(status)) {
-                        aReceber += valor;
-                    } else if ("RECEIVED".equals(status) || "CONFIRMED".equals(status)) {
-                        // netValue é o valor limpo após as taxas do Asaas
-                        Double valorLiquido = Double.valueOf(item.get("netValue").toString());
-
-                        if (descricao.contains("assinatura")) {
-                            lucroAssinatura += valorLiquido;
-                        } else if (descricao.contains("reserva") || descricao.contains("quadra")) {
-                            // Como os seus splits estão configurados para 90% para a arena,
-                            // o netValue que cai aqui já é exatamente a sua parte (os 10% menos taxas)
-                            lucroSplit += valorLiquido;
-                        }
-                    }
-                }
-
-            }
-            dashboard.setAReceber(aReceber);
-            dashboard.setLucroSplit(lucroSplit);
-            dashboard.setLucroAssinatura(lucroAssinatura);
-            dashboard.setTransacoes(transacoes);
+            processarTransacoes(dashboard);
 
         } catch (Exception e) {
             System.err.println("Erro ao gerar dashboard financeiro: " + e.getMessage());
         }
 
         return dashboard;
+    }
+
+    private Double buscarSaldoAtual() {
+        String balanceUrl = asaasUrl + "/finance/balance";
+        ResponseEntity<Map> balanceResponse = restTemplate.exchange(
+                balanceUrl, HttpMethod.GET, new HttpEntity<>(getHeaders()), Map.class);
+
+        if (balanceResponse.getBody() != null && balanceResponse.getBody().containsKey("balance")) {
+            return Double.valueOf(balanceResponse.getBody().get("balance").toString());
+        }
+        return 0.0;
+    }
+
+    private void processarTransacoes(FinanceiroDashboardDTO dashboard) {
+        dashboard.setTransacoes(new java.util.ArrayList<>());
+        dashboard.setAReceber(0.0);
+        dashboard.setLucroSplit(0.0);
+        dashboard.setLucroAssinatura(0.0);
+
+        int offset = 0;
+        int limit = 100;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            Map<String, Object> body = buscarPaginaAsaas(limit, offset);
+
+            if (body != null && body.containsKey("data")) {
+                List<Map<String, Object>> data = (List<Map<String, Object>>) body.get("data");
+
+                for (Map<String, Object> item : data) {
+                    processarItem(item, dashboard);
+                }
+
+                Boolean asaasHasMore = (Boolean) body.get("hasMore");
+                hasMore = asaasHasMore != null ? asaasHasMore : false;
+                offset += limit;
+            } else {
+                hasMore = false;
+            }
+        }
+    }
+
+    private Map<String, Object> buscarPaginaAsaas(int limit, int offset) {
+        String paymentsUrl = asaasUrl + "/payments?limit=" + limit + "&offset=" + offset;
+        ResponseEntity<Map> response = restTemplate.exchange(
+                paymentsUrl, HttpMethod.GET, new HttpEntity<>(getHeaders()), Map.class);
+        return response.getBody();
+    }
+
+    private void processarItem(Map<String, Object> item, FinanceiroDashboardDTO dashboard) {
+        String descricaoOriginal = (String) item.get("description");
+        String descricao = descricaoOriginal != null ? descricaoOriginal.toLowerCase() : "";
+        String status = (String) item.get("status");
+
+        Double valorTotalBruto = Double.valueOf(item.get("value").toString());
+        Double valorLiquido = item.get("netValue") != null && Double.valueOf(item.get("netValue").toString()) > 0
+                ? Double.valueOf(item.get("netValue").toString())
+                : valorTotalBruto;
+
+        boolean isReserva = descricao.contains("reserva") || descricao.contains("quadra");
+        double valorSuaFatia = isReserva ? (valorLiquido * 0.10) : valorLiquido;
+
+        if (dashboard.getTransacoes().size() < 30) {
+            dashboard.getTransacoes().add(montarTransacaoDTO(item, descricaoOriginal, status, valorSuaFatia));
+        }
+        atualizarTotais(dashboard, status, isReserva, valorSuaFatia);
+    }
+
+    private TransacaoDTO montarTransacaoDTO(Map<String, Object> item, String descricaoOriginal, String status, double valorSuaFatia) {
+        TransacaoDTO t = new TransacaoDTO();
+        t.setId((String) item.get("id"));
+        t.setData((String) item.get("dueDate"));
+        t.setStatus(status);
+        t.setDescricao(descricaoOriginal);
+        t.setValor(valorSuaFatia);
+
+        String customerIdAsaas = item.get("customer") != null ? item.get("customer").toString() : null;
+        t.setCliente(buscarDadosCliente(customerIdAsaas)); // Chama aquele método do banco de dados!
+
+        return t;
+    }
+
+    private void atualizarTotais(FinanceiroDashboardDTO dashboard, String status, boolean isReserva, double valorSuaFatia) {
+        if ("PENDING".equals(status)) {
+            dashboard.setAReceber(dashboard.getAReceber() + valorSuaFatia);
+        } else if ("RECEIVED".equals(status) || "CONFIRMED".equals(status)) {
+            if (isReserva) {
+                dashboard.setLucroSplit(dashboard.getLucroSplit() + valorSuaFatia);
+            } else {
+                dashboard.setLucroAssinatura(dashboard.getLucroAssinatura() + valorSuaFatia);
+            }
+        }
+    }
+
+    private String buscarDadosCliente(String customerIdAsaas) {
+        if (customerIdAsaas == null) return "Desconhecido";
+
+        return userRepository.findByasaasCustomerId(customerIdAsaas)
+                .map(user -> {
+                    String nome = user.getNome();
+                    String telefone = user.getTelefone() != null ? user.getTelefone() : "Sem telefone";
+                    return nome + " - " + telefone;
+                })
+                .orElse(customerIdAsaas);
     }
 }

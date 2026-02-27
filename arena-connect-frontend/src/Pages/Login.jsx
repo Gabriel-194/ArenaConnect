@@ -131,13 +131,10 @@ export default function Login(){
                     </div>
 
 
-                    {/*
-
                     <GoogleAuthButton
                         onRequireExtraData={handleRequireExtraData}
                         setErro={setErro}
                     />
-                    */}
 
 
                     <div className="form-footer">

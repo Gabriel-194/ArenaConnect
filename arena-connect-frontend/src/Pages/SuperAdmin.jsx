@@ -357,7 +357,7 @@ export default function SuperAdmin() {
                         <div className="finance-layout">
                             <div className="finance-summary">
                                 <div className="summary-card">
-                                    <span className="summary-label">Faturamento Total (Asaas)</span>
+                                    <span className="summary-label">Saldo Total (Asaas)</span>
                                     <h3 className="summary-value">
                                         {loadingFinance ? "Carregando..." : formatCurrency(financeData.faturamentoTotal)}
                                     </h3>
