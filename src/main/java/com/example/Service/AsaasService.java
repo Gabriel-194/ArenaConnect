@@ -301,36 +301,36 @@ public class AsaasService {
                 : valorTotalBruto;
 
         boolean isReserva = descricao.contains("reserva") || descricao.contains("quadra");
-        double valorSuaFatia = isReserva ? (valorLiquido * 0.10) : valorLiquido;
+        double meuLucro = isReserva ? (valorLiquido * 0.10) : valorLiquido;
 
         if (dashboard.getTransacoes().size() < 30) {
-            dashboard.getTransacoes().add(montarTransacaoDTO(item, descricaoOriginal, status, valorSuaFatia));
+            dashboard.getTransacoes().add(montarTransacaoDTO(item, descricaoOriginal, status, meuLucro));
         }
-        atualizarTotais(dashboard, status, isReserva, valorSuaFatia);
+        atualizarTotais(dashboard, status, isReserva, meuLucro);
     }
 
-    private TransacaoDTO montarTransacaoDTO(Map<String, Object> item, String descricaoOriginal, String status, double valorSuaFatia) {
+    private TransacaoDTO montarTransacaoDTO(Map<String, Object> item, String descricaoOriginal, String status, double meuLucro) {
         TransacaoDTO t = new TransacaoDTO();
         t.setId((String) item.get("id"));
         t.setData((String) item.get("dueDate"));
         t.setStatus(status);
         t.setDescricao(descricaoOriginal);
-        t.setValor(valorSuaFatia);
+        t.setValor(meuLucro);
 
         String customerIdAsaas = item.get("customer") != null ? item.get("customer").toString() : null;
-        t.setCliente(buscarDadosCliente(customerIdAsaas)); // Chama aquele método do banco de dados!
+        t.setCliente(buscarDadosCliente(customerIdAsaas));
 
         return t;
     }
 
-    private void atualizarTotais(FinanceiroDashboardDTO dashboard, String status, boolean isReserva, double valorSuaFatia) {
+    private void atualizarTotais(FinanceiroDashboardDTO dashboard, String status, boolean isReserva, double meuLucro) {
         if ("PENDING".equals(status)) {
-            dashboard.setAReceber(dashboard.getAReceber() + valorSuaFatia);
+            dashboard.setAReceber(dashboard.getAReceber() + meuLucro);
         } else if ("RECEIVED".equals(status) || "CONFIRMED".equals(status)) {
             if (isReserva) {
-                dashboard.setLucroSplit(dashboard.getLucroSplit() + valorSuaFatia);
+                dashboard.setLucroSplit(dashboard.getLucroSplit() + meuLucro);
             } else {
-                dashboard.setLucroAssinatura(dashboard.getLucroAssinatura() + valorSuaFatia);
+                dashboard.setLucroAssinatura(dashboard.getLucroAssinatura() + meuLucro);
             }
         }
     }
