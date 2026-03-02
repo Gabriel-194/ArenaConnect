@@ -20,6 +20,11 @@ public class RateLimitService {
     private final Map<String, Bucket> clientBuckets = new ConcurrentHashMap<>();
     private final Map<String, Bucket> partnerBuckets = new ConcurrentHashMap<>();
     private final Map<String, Bucket> statusAgendamentoBuckets = new ConcurrentHashMap<>();
+    private final Map<String, Bucket> limiteNavegacao = new ConcurrentHashMap<>();
+
+    public boolean limiteNavegacao(String ip){
+        return getBuckets(limiteNavegacao,ip, 300,Duration.ofMinutes(1)).tryConsume(1);
+    }
 
     public boolean RegistrarCliente(String ip) {
         return getBuckets(clientBuckets, ip, 3, Duration.ofHours(1)).tryConsume(1);
@@ -42,7 +47,7 @@ public class RateLimitService {
     }
 
     public boolean Reserva(String ip) {
-        return getBuckets(reservaBuckets, ip, 10, Duration.ofMinutes(1)).tryConsume(1);
+        return getBuckets(reservaBuckets, ip, 10, Duration.ofMinutes(5)).tryConsume(1);
     }
 
     public boolean ValidarCodigo(String email) {
@@ -62,7 +67,7 @@ public class RateLimitService {
     }
 
     public boolean AtualizarStatus(String ip) {
-        return getBuckets(statusAgendamentoBuckets, ip, 5, Duration.ofMinutes(1)).tryConsume(1);
+        return getBuckets(statusAgendamentoBuckets, ip, 10, Duration.ofMinutes(5)).tryConsume(1);
     }
 
     private Bucket getBuckets(Map<String, Bucket> mapa, String chave, int maxTokens, Duration periodo) {

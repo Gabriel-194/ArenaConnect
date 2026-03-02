@@ -22,8 +22,9 @@ public class RateLimitFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
+        String method = req.getMethod();
 
-        if (!"POST".equalsIgnoreCase(req.getMethod()) && !"PUT".equalsIgnoreCase(req.getMethod())) {
+        if (!"POST".equalsIgnoreCase(method) && !"PUT".equalsIgnoreCase(method) && !"GET".equalsIgnoreCase(method)) {
             chain.doFilter(request, response);
             return;
         }
@@ -32,6 +33,13 @@ public class RateLimitFilter implements Filter {
         String ip = getClientIp(req);
         boolean permitido = verificarLimite(uri, ip);
 
+        if ("GET".equalsIgnoreCase(method)) {
+            permitido = rateLimitService.limiteNavegacao(ip);
+        } else {
+            permitido = verificarLimite(uri, ip);
+        }
+
+        
         if (permitido) {
             chain.doFilter(request, response);
         } else {
@@ -58,9 +66,12 @@ public class RateLimitFilter implements Filter {
 
     private String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
+
         if (ip != null && !ip.isBlank()) {
-            return ip.split(",")[0].trim();
+            ip = ip.split(",")[0].trim();
+        } else {
+            ip = request.getRemoteAddr();
         }
-        return request.getRemoteAddr();
+        return ip;
     }
 }
