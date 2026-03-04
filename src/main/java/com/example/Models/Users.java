@@ -41,9 +41,6 @@ public class Users {
     @Column(nullable = false)
     private Boolean ativo = true;
 
-    @Column(name = "token", length = 2000)
-    private String token;
-
     @Column(name = "id_arena")
     private Integer idArena;
 

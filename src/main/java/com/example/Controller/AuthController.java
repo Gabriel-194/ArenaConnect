@@ -80,7 +80,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request) {
+    public ResponseEntity<Map<String, Object>> logout(HttpServletRequest request,HttpServletResponse response) {
         try{
             String token = extractToken(request);
 
@@ -89,13 +89,13 @@ public class AuthController {
                         .body(Map.of("success", false, "message", "Token não fornecido"));
             }
 
-            authService.logout(token);
-
             Cookie cookie = new Cookie("accessToken", null);
             cookie.setHttpOnly(true);
             cookie.setSecure(false);
             cookie.setPath("/");
             cookie.setMaxAge(0);
+
+            response.addCookie(cookie);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,

@@ -85,8 +85,6 @@ public class AuthService {
                 user.getNome()
         );
 
-        user.setToken(token);
-        userRepository.save(user);
 
         jakarta.servlet.http.Cookie jwtCookie = jwtService.createJwtCookie(token);
         response.addCookie(jwtCookie);
@@ -123,26 +121,9 @@ public class AuthService {
             return false;
         }
 
-        Users user = userOpt.get();
-        if (!token.equals(user.getToken())) {
-            return false;
-        }
 
         logger.info("✅ Token válido para: {}", email);
         return true;
-    }
-
-    @Transactional
-    public void logout(String token) {
-        String email = jwtService.getEmailFromToken(token);
-        Optional<Users> userOpt = userRepository.findByEmail(email);
-
-        if (userOpt.isPresent()) {
-            Users user = userOpt.get();
-            user.setToken(null);
-            userRepository.save(user);
-            logger.info("✅ Logout realizado: {}", email);
-        }
     }
 
     public Users getUserByToken(String token) {

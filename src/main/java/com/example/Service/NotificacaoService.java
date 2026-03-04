@@ -14,7 +14,6 @@ public class NotificacaoService {
     private NotificacaoRepository notificacaoRepository;
 
     public void enviar(Long userId, String titulo, String mensagem, String tipo) {
-        // Evita erro caso seja um cliente avulso (sem user_id logado)
         if (userId != null) {
             Notificacao novaNotificacao = new Notificacao(userId, titulo, mensagem, tipo);
             notificacaoRepository.save(novaNotificacao);
