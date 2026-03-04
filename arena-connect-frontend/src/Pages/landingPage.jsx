@@ -2,7 +2,9 @@
 
 import '../Styles/landingPage.css';
 import { Link } from 'react-router-dom';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect,useState } from 'react';
+import Chatbot from "../Components/Chatbot.jsx";
+import ModalPartners from "../Components/ModalPartners.jsx";
 
 
 const Icons = {
@@ -107,7 +109,6 @@ const Navbar = () => (
 
                 <div className="nav-links">
                     <a href="#features" className="nav-link">Recursos</a>
-                    <a href="#pricing" className="nav-link">Precos</a>
                 </div>
 
                 <div className="nav-cta">
@@ -126,7 +127,7 @@ const HeroSection = () => {
             <div className="hero-content">
 
                 <h1 className="hero-title text-balance">
-                    Gerencie sua Arena.
+                    Gerencie sua Arena,
                     <br />
                     <span className="hero-title-gradient">Domine o Jogo.</span>
                 </h1>
@@ -243,7 +244,7 @@ const FeaturesSection = () => {
 
 const Footer = () => {
     const links = {
-        suporte: ["Contato", "arennaConnect@gmal.com", "(41) 98489-0734"],
+        suporte: [ "arennaConnect@gmal.com", "(41) 98489-0734"],
     };
 
     return (
@@ -313,6 +314,10 @@ const LandingPage = () => {
 
         const handleScroll = (e) => {
 
+            if (e.target.closest('.chatbot-container') || e.target.closest('.modal')) {
+                return;
+            }
+
             if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
 
             e.preventDefault();
@@ -326,6 +331,8 @@ const LandingPage = () => {
         };
     }, []);
 
+    const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+
     return (
         <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
             <LiquidBackground />
@@ -336,6 +343,11 @@ const LandingPage = () => {
                 <FeaturesSection />
                 <Footer />
             </div>
+            <Chatbot onOpenPartnerModal={() => setIsPartnerModalOpen(true)} />
+
+            {isPartnerModalOpen && (
+                <ModalPartners onClose={() => setIsPartnerModalOpen(false)} />
+            )}
         </div>
     );
 };

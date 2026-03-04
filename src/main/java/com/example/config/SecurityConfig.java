@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/arena").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
 
                         .requestMatchers("/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers("/api/chatbot/**").permitAll()
 
                         .anyRequest().authenticated()
                 )

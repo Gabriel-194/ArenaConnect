@@ -4,11 +4,14 @@ import ModalUser from "../Components/ModalUser.jsx";
 import ModalPartners from "../Components/ModalPartners.jsx";
 
 import '../Styles/register.css';
+import Chatbot from "../Components/Chatbot.jsx";
 
 export default function Register (){
 
     const [showModalCliente, setShowModalCliente] = useState(false);
     const [showModalParceiro, setShowModalParceiro] = useState(false);
+    const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+
 
     const location = useLocation();
     const googleData = location.state?.googleData || null;
@@ -72,6 +75,11 @@ export default function Register (){
                     <Link to="/login" className="link-accent">Fazer Login</Link>
                 </div>
             </div>
+            <Chatbot onOpenPartnerModal={() => setIsPartnerModalOpen(true)} />
+
+            {isPartnerModalOpen && (
+                <ModalPartners onClose={() => setIsPartnerModalOpen(false)} />
+            )}
         </div>
     );
 }

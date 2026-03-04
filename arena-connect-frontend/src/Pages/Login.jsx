@@ -4,6 +4,8 @@ import axios from "axios";
 import GoogleAuthButton from '../Components/GoogleAuthButton';
 import '../styles/login.css';
 import ForgotPasswordModal from "../Components/ForgotPasswordModal.jsx";
+import Chatbot from "../Components/Chatbot.jsx";
+import ModalPartners from "../Components/ModalPartners.jsx";
 
 export default function Login(){
     const [email,setEmail] = useState('');
@@ -11,6 +13,8 @@ export default function Login(){
     const [erro, setErro] = useState('');
     const navigate = useNavigate();
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+    const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -142,6 +146,11 @@ export default function Login(){
                         <Link to="/Register" className="link-accent">Criar conta</Link>
                     </div>
                 </form>
+                <Chatbot onOpenPartnerModal={() => setIsPartnerModalOpen(true)} />
+
+                {isPartnerModalOpen && (
+                    <ModalPartners onClose={() => setIsPartnerModalOpen(false)} />
+                )}
             </div>
 
             {isForgotModalOpen && (
