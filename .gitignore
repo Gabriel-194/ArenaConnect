@@ -34,3 +34,6 @@ build/
 
 node_modeules/
 .env
+
+/logs/
+*.log

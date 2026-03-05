@@ -55,11 +55,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/webhook/**").permitAll()
                         .requestMatchers("/api/email/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/quadra/courtAtivas").hasAnyRole("CLIENTE", "ADMIN")
-
-                        .requestMatchers(HttpMethod.GET, "/api/arena").hasAnyRole("CLIENTE", "ADMIN", "SUPERADMIN")
-
-                        .requestMatchers("/api/agendamentos/**").hasAnyRole("CLIENTE", "ADMIN")
                         .requestMatchers("/api/chatbot/**").permitAll()
 
                         .anyRequest().authenticated()

@@ -202,6 +202,7 @@ public class AuthService {
     }
 
     public Map<String, Object> processarLoginGoogle(String tokenString, HttpServletResponse response) throws Exception {
+
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                 .setAudience(Collections.singletonList(googleClientId))
                 .build();

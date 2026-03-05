@@ -61,7 +61,9 @@ public class QuadraService {
         }
 
         quadra.setAtivo(true);
+        logger.info("Quadra criada com sucesso", quadra.getNome());
         return quadraRepository.salvarComSchema(quadra, configurarSchema());
+
     }
 
     @Transactional

@@ -2,11 +2,11 @@ package com.example.Multitenancy;
 
 import com.example.Models.Arena;
 import com.example.Repository.ArenaRepository;
-import com.example.Service.ArenaService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ public class TenantFilter implements Filter {
 
     private boolean isPublicEndpoint(String uri) {
 
-        if (uri.equals("/") || uri.equals("/login") || uri.equals("/register")) {
+        if (uri.equals("/") || uri.equals("/login") || uri.equals("/register") || uri.equals("/landingPage")) {
             return true;
         }
 
@@ -67,6 +67,8 @@ public class TenantFilter implements Filter {
         }
 
         String tenantSchema = resolveTenant(req);
+        String schemaParaLog = (tenantSchema != null) ? tenantSchema : "public";
+        MDC.put("schema", schemaParaLog);
 
         if (tenantSchema != null && !"public".equals(tenantSchema)) {
 
@@ -91,6 +93,7 @@ public class TenantFilter implements Filter {
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
+            MDC.remove("schema");
         }
     }
 
