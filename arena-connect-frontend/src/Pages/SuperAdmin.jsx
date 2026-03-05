@@ -441,8 +441,7 @@ export default function SuperAdmin() {
                             <section className="admin-glass-panel full-width">
                                 <div className="panel-header">
                                     <h2>Transações Recentes</h2>
-                                    <button className="btn-neon-sm"                             onClick={handleExportPdf}
-                                            disabled={exportingPdf}>Exportar</button>
+                                    <button className="btn-neon-outlined" onClick={handleExportPdf} disabled={exportingPdf}>Exportar</button>
                                 </div>
 
                                 <div className="custom-scroll-area">

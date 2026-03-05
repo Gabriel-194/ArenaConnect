@@ -23,6 +23,36 @@ export default function Agendamentos() {
 
     const [selectedDate, setSelectedDate] = useState("");
     const [selectedQuadra, setSelectedQuadra] = useState("");
+    const [exportingPdf, setExportingPdf] = useState(false);
+
+    const handleExportPdf = async () => {
+        setExportingPdf(true);
+        try {
+            const params = new URLSearchParams();
+            if (selectedDate)  params.append('dataInicio', selectedDate);
+            if (selectedDate)  params.append('dataFim',    selectedDate);
+            if (selectedQuadra) params.append('idQuadra', selectedQuadra);
+
+            const response = await axios.get(
+                `http://localhost:8080/api/relatorio/agendamentos?${params.toString()}`,
+                { withCredentials: true, responseType: 'blob' }
+            );
+            const url  = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href  = url;
+            const datePart = selectedDate ? `-${selectedDate}` : '';
+            link.download  = `relatorio-agendamentos${datePart}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Erro ao exportar PDF:", error);
+            alert("Erro ao gerar relatório. Tente novamente.");
+        } finally {
+            setExportingPdf(false);
+        }
+    };
 
     const [config, setConfig] = useState({
         abertura: "07:30",
@@ -154,6 +184,7 @@ export default function Agendamentos() {
                                 <div>
                                     <h2 className="glass-title">Painel de Agendamentos</h2>
                                     <p className="glass-subtitle">Controle total das reservas</p>
+                                    <button className="input-glass" onClick={handleExportPdf} disabled={exportingPdf}>   Exportar PDF  </button>
                                 </div>
 
                                 <div className="admin-filters glass-inner">
