@@ -1,21 +1,16 @@
 package com.example.Service;
 
 import com.example.Repository.UserRepository;
-import io.github.bucket4j.Bucket;
 import jakarta.mail.internet.MimeMessage;
-import lombok.Setter;
-import org.hibernate.pretty.MessageHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailSender;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.security.SecureRandom;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -33,6 +28,7 @@ public class EmailService {
     @Autowired
     private RateLimitService rateLimitService;
 
+    private static final Logger logger = LoggerFactory.getLogger(ArenaService.class);
 
     private final Map<String, String> tokenStorage = new ConcurrentHashMap<>();
 
@@ -72,9 +68,9 @@ public class EmailService {
             helper.setText(htmlMsg,true);
 
             mailSender.send(mensagem);
-            System.out.println("E-mail HTML enviado com sucesso para: " + email);
+            logger.info("E-mail HTML enviado com sucesso para: " + email);
         }catch (Exception e) {
-            System.err.println("Erro ao enviar e-mail: " + e.getMessage());
+            logger.error("Erro ao enviar e-mail: " + e.getMessage());
             throw new RuntimeException("Falha ao enviar o e-mail de recuperação.");
         }
     }

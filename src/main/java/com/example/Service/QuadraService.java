@@ -84,6 +84,7 @@ public class QuadraService {
     public void alterarStatus(Integer id) {
         if (id == null) throw new RuntimeException("ID inválido");
 
+        logger.info("status da quadra:"+id+" alterado com sucesso");
         quadraRepository.alterarStatusComSchema(id, configurarSchema());
     }
 
@@ -91,7 +92,7 @@ public class QuadraService {
     @Transactional
     public Quadra atualizar (Quadra quadraAtualizada) {
         if(quadraAtualizada.getId() == null) throw new IllegalArgumentException("ID obrigatório para atualização");
-
+        logger.info("quadra:" + quadraAtualizada.getId()+ " atualizada com sucesso ");
         return quadraRepository.salvarComSchema(quadraAtualizada, configurarSchema());
     }
 
@@ -105,6 +106,4 @@ public class QuadraService {
         String schema = configurarSchema();
         return quadraRepository.findEstatisticasQuadras(schema);
     }
-
-
 }

@@ -121,8 +121,6 @@ public class AuthService {
             return false;
         }
 
-
-        logger.info("✅ Token válido para: {}", email);
         return true;
     }
 

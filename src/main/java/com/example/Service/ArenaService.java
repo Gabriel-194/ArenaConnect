@@ -110,11 +110,6 @@ public class ArenaService {
         }
     }
 
-    public List<Arena> getArenaAtivo() {
-        logger.info("Listando todas as arenas");
-        return arenaRepository.findByAtivoTrue();
-    }
-
     public void validarArena(PartnerRegistrationDTO dto) {
         if (dto.getNomeArena() == null || dto.getNomeArena().isBlank())
             throw new IllegalArgumentException("Nome da arena é obrigatório");
@@ -250,6 +245,8 @@ public class ArenaService {
 
         arena.setAtivo(ativo);
         arenaRepository.save(arena);
+
+        logger.info("o status da arena:" + arena.getName() + "foi mudado para" + ativo);
     }
 
     public Arena updateArena(Long idArena, Arena updateArena) {

@@ -9,6 +9,8 @@ import com.example.Models.*;
 import com.example.Multitenancy.TenantContext;
 import com.example.Repository.*;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AgendamentoService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AgendamentoService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -113,6 +117,8 @@ public class AgendamentoService {
                 "PENDENTE"
         );
 
+        logger.info("agendamento criado para " + arena.getName()+ " pelo user: " + user.getIdUser());
+
         return salvo;
     }
 
@@ -150,6 +156,7 @@ public class AgendamentoService {
                 "INFO"
         );
 
+        logger.info("horario alterado para o agendamento "+ idAgendamento+ " da arena: " + arena.getName() + "pelo user:"+user.getIdUser());
         return atualizado;
     }
 
@@ -312,6 +319,7 @@ public class AgendamentoService {
                         "A sua reserva na " + arena.getName() + " foi cancelada.",
                         "CANCELADO"
                 );
+                logger.info("agendamento do user" + idClienteDaReserva + " foi cancelado para a arena:" + arena.getName());
             }
             else if (statusAlvo.equals("FINALIZADO")) {
                 notificacaoService.enviar(
@@ -320,6 +328,8 @@ public class AgendamentoService {
                         "O seu jogo na " + arena.getName() + " foi concluído. Obrigado por jogar conosco e até a próxima!",
                         "FINALIZADO"
                 );
+                logger.info("agendamento do user" + idClienteDaReserva + " foi finalizado para a arena:" + arena.getName());
+
             }
         }
     }
@@ -354,6 +364,8 @@ public class AgendamentoService {
                                 "O pagamento da sua reserva na "+ arena.getName() +" foi confirmado com sucesso. Bom jogo!",
                                 "CONFIRMADO"
                         );
+
+                        logger.info("agendamento do user" + userId + " foi PAGO para a arena:" + arena.getName());
                     }
                 });
 

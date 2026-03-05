@@ -58,7 +58,6 @@ export default function SuperAdmin() {
     const [isArenaModalOpen, setIsArenaModalOpen] = useState(false);
     const [arenaToEdit, setArenaToEdit] = useState(null);
 
-
     const [financeData, setFinanceData] = useState({
         faturamentoTotal: 0,
         aReceber: 0,
@@ -175,6 +174,35 @@ export default function SuperAdmin() {
         }
     }
 
+    const [exportingPdf, setExportingPdf] = useState(false);
+
+    const handleExportPdf = async () => {
+        setExportingPdf(true);
+        try {
+            const response = await axios.get(
+                'http://localhost:8080/api/relatorio/superadmin',
+                {
+                    withCredentials: true,
+                    responseType: 'blob',
+                }
+            );
+
+            const url      = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link     = document.createElement('a');
+            link.href      = url;
+            link.download  = `relatorio-superadmin-${new Date().toISOString().slice(0, 10)}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Erro ao exportar PDF:", error);
+            alert("Não foi possível gerar o relatório. Tente novamente.");
+        } finally {
+            setExportingPdf(false);
+        }
+    };
+
     return (
         <div className="superadmin-body">
             <div className="liquid-background-fixed">
@@ -210,6 +238,7 @@ export default function SuperAdmin() {
                     </nav>
 
                     <button className="btn-neon-outlined" onClick={handleLogout}>Sair</button>
+
                 </header>
 
                 <div className="admin-content-area">
@@ -412,7 +441,8 @@ export default function SuperAdmin() {
                             <section className="admin-glass-panel full-width">
                                 <div className="panel-header">
                                     <h2>Transações Recentes</h2>
-                                    <button className="btn-neon-sm">Exportar</button>
+                                    <button className="btn-neon-sm"                             onClick={handleExportPdf}
+                                            disabled={exportingPdf}>Exportar</button>
                                 </div>
 
                                 <div className="custom-scroll-area">

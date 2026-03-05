@@ -119,6 +119,7 @@ public class UserService {
         admin.setAtivo(true);
 
         Users savedAdmin = userRepository.save(admin);
+        logger.info("Dono de arena criado juntamente com sua arena");
 
         String asaasCustomerId = null;
 
@@ -218,6 +219,7 @@ public class UserService {
 
         user.setAtivo(status);
         userRepository.save(user);
+        logger.info("status do user:" +idUser+ "alterado para" +status);
     }
 
     @Transactional
@@ -240,7 +242,7 @@ public class UserService {
         if (updatedData.getTelefone() != null) {
             existingUser.setTelefone(updatedData.getTelefone());
         }
-
+        logger.info("O usuario" +id+ "foi atualizado");
         return userRepository.save(existingUser);
     }
 

@@ -18,6 +18,9 @@ export default function Dashboard() {
 
     const [movimentacoes, setMovimentacoes] = useState([]);
 
+    const [exportingPdf, setExportingPdf] = useState(false);
+
+
     const [stats, setStats] = useState({
         confirmados: 0,
         pendentes: 0,
@@ -109,6 +112,33 @@ export default function Dashboard() {
         fetchMovimentacoes();
     }, []);
 
+    const handleExportPdf = async () => {
+        setExportingPdf(true);
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/relatorio/dashboard?ano=${ano}`,
+                {
+                    withCredentials: true,
+                    responseType: 'blob',
+                }
+            );
+
+            const url     = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link    = document.createElement('a');
+            link.href     = url;
+            link.download = `relatorio-dashboard-${ano}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Erro ao exportar PDF:", error);
+            alert("Não foi possível gerar o relatório. Tente novamente.");
+        } finally {
+            setExportingPdf(false);
+        }
+    };
+
     return (
         <div className="dashboard-layout">
 
@@ -127,7 +157,8 @@ export default function Dashboard() {
                         <h2>Visão Geral da Arena</h2>
                         <p>Acompanhe seus agendamentos, finanças e desempenho das quadras.</p>
                     </div>
-                    <button className="btn-neon-outlined">Gerar Relatório</button>
+                    <button className="btn-neon-outlined"                        onClick={handleExportPdf}
+                            disabled={exportingPdf}>Gerar Relatório</button>
                 </header>
 
                 <h3>Agendamentos:</h3>
