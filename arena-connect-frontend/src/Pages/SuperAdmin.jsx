@@ -1,8 +1,10 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState,useEffect, } from 'react';
 import '../Styles/SuperAdmin.css';
 import axios from 'axios';
 import ModalUser from "../Components/ModalUser.jsx";
 import ModalArena from "../Components/ModalArena.jsx";
+import { useNavigate} from "react-router-dom";
+
 
 const formatTelefone = (telefone) => {
     if (!telefone) return "---";
@@ -43,6 +45,8 @@ const formatCnpj = (cnpj) => {
 };
 
 export default function SuperAdmin() {
+    const navigate = useNavigate();
+
     const [activeTab, setActiveTab] = useState('dashboard');
     const [users, setUsers] = useState([]);
     const [arenas, setArenas] = useState([]);
@@ -153,6 +157,24 @@ export default function SuperAdmin() {
         }
     }, [activeTab]);
 
+    const handleLogout = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post(
+                'http://localhost:8080/api/auth/logout',
+                {},
+                {
+                    withCredentials: true
+                }
+            );
+            localStorage.removeItem('userName');
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            navigate('/login');
+        }
+    }
+
     return (
         <div className="superadmin-body">
             <div className="liquid-background-fixed">
@@ -187,7 +209,7 @@ export default function SuperAdmin() {
                         </button>
                     </nav>
 
-                    <button className="btn-neon-outlined">Sair</button>
+                    <button className="btn-neon-outlined" onClick={handleLogout}>Sair</button>
                 </header>
 
                 <div className="admin-content-area">
