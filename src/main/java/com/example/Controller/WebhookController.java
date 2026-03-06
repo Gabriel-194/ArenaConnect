@@ -80,7 +80,7 @@ public class WebhookController {
                 .findByAssasSubscriptionId(subscriptionId);
 
         if (arenaOpt.isPresent()) {
-
+            
             Arena arena = arenaOpt.get();
 
             arena.setAtivo(true);

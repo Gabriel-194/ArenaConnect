@@ -388,4 +388,136 @@ public class ReportService {
         if (d.length() == 10) return d.replaceAll("(\\d{2})(\\d{4})(\\d{4})", "($1) $2-$3");
         return t;
     }
+
+    public void gerarRelatorioAgendamentos(Integer idQuadra, LocalDate data,
+                                           String statusFiltro, OutputStream out) {
+        try {
+            List<com.example.Models.Agendamentos> todos =
+                    agendamentoService.findAllAgendamentos(idQuadra, data);
+
+            List<com.example.Models.Agendamentos> agendamentos = (statusFiltro != null && !statusFiltro.isBlank())
+                    ? todos.stream().filter(a -> statusFiltro.equalsIgnoreCase(a.getStatus())).toList()
+                    : todos;
+
+            long total       = agendamentos.size();
+            long confirmados = agendamentos.stream().filter(a -> "CONFIRMADO".equals(a.getStatus())).count();
+            long finalizados = agendamentos.stream().filter(a -> "FINALIZADO".equals(a.getStatus())).count();
+            long cancelados  = agendamentos.stream().filter(a -> "CANCELADO" .equals(a.getStatus())).count();
+            long pendentes   = agendamentos.stream().filter(a -> "PENDENTE"  .equals(a.getStatus())).count();
+
+            double receitaTotal = agendamentos.stream()
+                    .filter(a -> "CONFIRMADO".equals(a.getStatus()) || "FINALIZADO".equals(a.getStatus()))
+                    .mapToDouble(a -> a.getValor() != null ? a.getValor() : 0)
+                    .sum();
+            double ticketMedio = (confirmados + finalizados) > 0 ? receitaTotal / (confirmados + finalizados) : 0;
+
+            StringBuilder sub = new StringBuilder("Gerado em " + today());
+            if (data != null)
+                sub.append("  •  Data: ").append(data.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            if (statusFiltro != null && !statusFiltro.isBlank())
+                sub.append("  •  Status: ").append(statusFiltro);
+
+            Document  doc    = new Document(PageSize.A4, 36, 36, 50, 40);
+            PdfWriter writer = PdfWriter.getInstance(doc, out);
+            addPageFooter(writer);
+            doc.open();
+
+            addHeader(doc, "Relatório de Agendamentos", sub.toString());
+
+            addSectionTitle(doc, "Resumo do Período");
+            addKpiRow(doc, new String[][]{
+                    {"Total",       str(total)},
+                    {"Confirmadas", str(confirmados)},
+                    {"Finalizadas", str(finalizados)},
+                    {"Pendentes",   str(pendentes)},
+                    {"Canceladas",  str(cancelados)}
+            });
+            addKpiRow(doc, new String[][]{
+                    {"Receita (confirmadas + finalizadas)", cur(receitaTotal)},
+                    {"Ticket Médio",                        cur(ticketMedio)}
+            });
+
+            addSectionTitle(doc, "Listagem de Agendamentos");
+
+            if (agendamentos.isEmpty()) {
+                doc.add(new Paragraph("Nenhum agendamento encontrado para os filtros selecionados.", fSmall()));
+            } else {
+                PdfPTable t = table(new float[]{1.3f, 1.2f, 2.4f, 2f, 1.2f, 1.2f});
+                addHeaders(t, "Data", "Horário", "Cliente", "Quadra", "Valor", "Status");
+
+                int row = 0;
+                for (com.example.Models.Agendamentos a : agendamentos) {
+                    String dataFmt = a.getData_inicio() != null
+                            ? a.getData_inicio().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "—";
+                    String horario = agendamentoHorario(a.getData_inicio(), a.getData_fim());
+                    String cliente = nvl(a.getNomeCliente())
+                            + (a.getNumeroCliente() != null ? "\n" + a.getNumeroCliente() : "");
+                    String quadra  = nvl(a.getQuadraNome());
+                    double valor   = a.getValor() != null ? a.getValor() : 0;
+                    String status  = nvl(a.getStatus());
+                    boolean pago   = "CONFIRMADO".equals(status) || "FINALIZADO".equals(status);
+
+                    Color bg = (row % 2 == 0) ? WHITE : LIGHT_GRAY;
+
+                    PdfPCell cData = cell(dataFmt,                       fCell());
+                    PdfPCell cHor  = cell(horario,                       fCell());
+                    PdfPCell cCli  = cell(cliente,                       fSmall());
+                    PdfPCell cQua  = cell(quadra,                        fCell());
+                    PdfPCell cVal  = cell(valor > 0 ? cur(valor) : "—", pago ? fCellBold() : fCell());
+                    PdfPCell cSts  = agendamentoStatusCell(status);
+
+                    cHor.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    cVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    for (PdfPCell c : new PdfPCell[]{cData, cHor, cCli, cQua, cVal}) c.setBackgroundColor(bg);
+                    cSts.setBackgroundColor(bg);
+
+                    t.addCell(cData); t.addCell(cHor); t.addCell(cCli);
+                    t.addCell(cQua);  t.addCell(cVal); t.addCell(cSts);
+                    row++;
+                }
+
+                Color totBg = LIGHT_GRAY;
+                PdfPCell ct0 = cell("TOTAL",                       fCellBold()); ct0.setBackgroundColor(totBg);
+                PdfPCell ct1 = cell("",                            fCell());     ct1.setBackgroundColor(totBg);
+                PdfPCell ct2 = cell(total + " agendamento(s)",     fCellBold()); ct2.setBackgroundColor(totBg);
+                PdfPCell ct3 = cell("",                            fCell());     ct3.setBackgroundColor(totBg);
+                PdfPCell ct4 = cell(cur(receitaTotal),             fCellBold()); ct4.setBackgroundColor(totBg);
+                PdfPCell ct5 = cell("",                            fCell());     ct5.setBackgroundColor(totBg);
+                ct4.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                t.addCell(ct0); t.addCell(ct1); t.addCell(ct2);
+                t.addCell(ct3); t.addCell(ct4); t.addCell(ct5);
+
+                doc.add(t);
+            }
+
+            doc.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar relatório de agendamentos: " + e.getMessage(), e);
+        }
+    }
+
+    private String agendamentoHorario(java.time.LocalDateTime inicio, java.time.LocalDateTime fim) {
+        try {
+            String hi = inicio != null ? inicio.format(DateTimeFormatter.ofPattern("HH:mm")) : "—";
+            String hf = fim    != null ? fim   .format(DateTimeFormatter.ofPattern("HH:mm")) : "—";
+            return hi + " – " + hf;
+        } catch (Exception e) { return "—"; }
+    }
+
+    private PdfPCell agendamentoStatusCell(String status) {
+        Font f = switch (status.toUpperCase()) {
+            case "CONFIRMADO" -> new Font(Font.HELVETICA, 8, Font.BOLD,   new Color(30, 120, 60));
+            case "FINALIZADO" -> new Font(Font.HELVETICA, 8, Font.BOLD,   DARK_GRAY);
+            case "CANCELADO"  -> new Font(Font.HELVETICA, 8, Font.BOLD,   new Color(160, 40, 40));
+            case "PENDENTE"   -> new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(140, 100, 0));
+            default           -> fCell();
+        };
+        PdfPCell c = new PdfPCell(new Phrase(status, f));
+        c.setPadding(4);
+        c.setBorder(Rectangle.BOTTOM);
+        c.setBorderColor(MID_GRAY);
+        c.setBorderWidthBottom(0.4f);
+        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+        return c;
+    }
 }

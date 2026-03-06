@@ -27,14 +27,7 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
     Optional<Arena> findBySchemaName(String schemaName);
 
     @Query(value = """
-    SELECT 
-        a.id,           
-        a.name,         
-        a.endereco,     
-        a.cidade,       
-        a.estado,       
-        a.latitude,     
-        a.longitude,    
+    SELECT a.id, a.name, a.endereco, a.cidade, a.estado, a.latitude, a.longitude,    
         (6371 * acos(
             cos(radians(:lat)) * cos(radians(a.latitude)) *
             cos(radians(a.longitude) - radians(:lon)) +
@@ -58,14 +51,7 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
     );
 
     @Query(value = """
-    SELECT 
-        a.id,           
-        a.name,         
-        a.endereco,     
-        a.cidade,       
-        a.estado,       
-        a.latitude,     
-        a.longitude,    
+    SELECT a.id, a.name, a.endereco, a.cidade, a.estado, a.latitude, a.longitude,    
         NULL as distance, 
         a.hora_inicio,
         a.hora_fim      

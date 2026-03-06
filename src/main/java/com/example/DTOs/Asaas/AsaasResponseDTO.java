@@ -9,8 +9,8 @@ import lombok.Setter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AsaasResponseDTO {
     private String id;
-    private String walletId; // Adicione este por segurança para subcontas
-    private String apiKey;   // A chave de API da subconta (vem na criação)
+    private String walletId;
+    private String apiKey;
     private String customer;
     private String invoiceUrl;
     private String bankSlipUrl;

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/relatorio")
@@ -41,5 +42,19 @@ public class ReportController {
                 "attachment; filename=\"relatorio-dashboard-" + ano + ".pdf\"");
 
         reportService.gerarRelatorioDashboard(ano, response.getOutputStream());
+    }
+
+    @GetMapping("/agendamentos")
+    public void exportAgendamentosReport(
+            @RequestParam(required = false) Integer idQuadra,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) LocalDate data,
+            @RequestParam(required = false) String status,
+            HttpServletResponse response
+    ) throws IOException {
+        String filePart = data != null ? "-" + data : "";
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition",
+                "attachment; filename=\"relatorio-agendamentos" + filePart + ".pdf\"");
+        reportService.gerarRelatorioAgendamentos(idQuadra, data, status, response.getOutputStream());
     }
 }
