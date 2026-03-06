@@ -172,7 +172,6 @@ public class ReportService {
                 vc.setHorizontalAlignment(Element.ALIGN_RIGHT);
                 pc.setHorizontalAlignment(Element.ALIGN_CENTER);
 
-                // Highlight best month
                 if (val == melhor && melhor > 0) {
                     mc.setBackgroundColor(LIGHT_GRAY);
                     vc.setBackgroundColor(LIGHT_GRAY);

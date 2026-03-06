@@ -67,6 +67,16 @@ public class AgendamentoService {
         Arena arena = arenaRepository.findBySchemaName(schema)
                 .orElseThrow(() -> new RuntimeException("Arena não encontrada para o schema: " + schema));
 
+        if (arena.getDiasFuncionamento() != null && !arena.getDiasFuncionamento().isBlank()) {
+
+            String diasConfigurados = arena.getDiasFuncionamento().toLowerCase();
+            String diaAtual = traduzirDiaDaSemana(data.getDayOfWeek()).toLowerCase();
+
+            if (!diasConfigurados.contains(diaAtual)) {
+                return new ArrayList<>();
+            }
+        }
+
         LocalTime abertura = (arena.getHoraInicio() != null) ? arena.getHoraInicio() : LocalTime.of(6, 00);
         LocalTime fechamento = (arena.getHoraFim() != null) ? arena.getHoraFim() : LocalTime.of(23, 00);
 
@@ -99,6 +109,8 @@ public class AgendamentoService {
         Users user = getUsuarioLogado();
         Arena arena = getArenaAtual(schema);
 
+        validarDiasFuncionamento(arena,booking.getData_inicio().toLocalDate());
+
         booking.setId_user(user.getIdUser());
         booking.setStatus("PENDENTE");
         booking.setData_fim(booking.getData_inicio().plusHours(1));
@@ -127,9 +139,12 @@ public class AgendamentoService {
 
         String schema = configurarSchema();
         Users user = getUsuarioLogado();
+        Arena arena = getArenaAtual(schema);
 
         Agendamentos booking = agendamentoRepository.buscarPorIdComSchema(idAgendamento, schema)
                 .orElseThrow(() -> new RuntimeException("Agendamento não encontrado."));
+
+        validarDiasFuncionamento(arena,novaDataInicio.toLocalDate());
 
         validarPermissaoEdicao(user, booking);
 
@@ -146,8 +161,6 @@ public class AgendamentoService {
 
         Agendamentos atualizado = agendamentoRepository.salvarComSchema(booking, schema);
         atualizarHistoricoData(idAgendamento, schema, novaDataInicio, novaDataFim);
-
-        Arena arena = getArenaAtual(schema);
 
         notificacaoService.enviar(
                 user.getIdUser().longValue(),
@@ -472,5 +485,35 @@ public class AgendamentoService {
     public List<MovimentacaoDTO> getUltimasMovimentacoes() {
         String schema = configurarSchema();
         return agendamentoRepository.findUltimasMovimentacoes(schema);
+    }
+
+    private String traduzirDiaDaSemana(java.time.DayOfWeek dayOfWeek) {
+        return switch (dayOfWeek) {
+            case MONDAY    -> "seg";
+            case TUESDAY   -> "ter";
+            case WEDNESDAY -> "quar";
+            case THURSDAY  -> "qui";
+            case FRIDAY    -> "sex";
+            case SATURDAY  -> "sab";
+            case SUNDAY    -> "dom";
+        };
+    }
+
+    private void validarDiasFuncionamento(Arena arena, LocalDate data){
+        String diasConfig = arena.getDiasFuncionamento();
+
+        if(diasConfig == null && diasConfig.isBlank()){
+            return;
+        }
+
+        String diaAtual = traduzirDiaDaSemana(data.getDayOfWeek());
+
+        boolean diaAberto = java.util.Arrays.stream(diasConfig.split(","))
+                .map(String::trim)
+                .anyMatch(d -> d.equalsIgnoreCase(diaAtual));
+
+        if(!diaAberto){
+            throw new IllegalArgumentException("A arena esta fechada neste dia");
+        }
     }
 }

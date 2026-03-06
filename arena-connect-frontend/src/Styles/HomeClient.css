@@ -328,33 +328,26 @@
 
 .home-arenas-list {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 40px;
-    width: 100%;
-    max-width: 1280px;
+    grid-template-columns: repeat(3, minmax(500px, 450px));
+    gap: 20px;
+    justify-content: center;
     margin: 0 auto;
+    max-width: 1300px;
+    padding: 20px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1100px) {
     .home-arenas-list {
-        grid-template-columns: repeat(2, 1fr);
-        max-width: 800px;
-        gap: 30px;
+        grid-template-columns: repeat(2, minmax(340px, 420px));
     }
 }
 
 @media (max-width: 768px) {
     .home-arenas-list {
         grid-template-columns: 1fr;
-        max-width: 100%;
-        gap: 20px;
-        padding: 0 20px;
+        padding: 10px;
     }
 }
-
-/* ==========================================
-   NOTIFICAÇÕES (CLIENT HEADER)
-   ========================================== */
 
 /* Bolinha vermelha no sino */
 .notification-badge {
@@ -496,4 +489,89 @@
     padding: 20px;
     text-align: center;
     color: #777;
+}
+
+/* Container Principal do Card */
+.arena-card-compact {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    gap: 15px;
+    border-radius: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.arena-card-compact:active {
+    transform: scale(0.98);
+}
+
+/* O círculo que envolve o seu SVG */
+.arena-icon-wrapper {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+    background: rgba(0, 255, 127, 0.1); /* Fundo verdinho neon bem fraco */
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* O SVG em si */
+.arena-icon-svg {
+    width: 28px;
+    height: 28px;
+    /* Se o SVG for preto, você pode usar filter para deixá-lo branco ou verde */
+    filter: invert(100%) sepia(100%) saturate(0%) hue-rotate(288deg) brightness(102%) contrast(102%);
+}
+
+/* Meio: Textos */
+.arena-info-compact {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden; /* Evita que nomes gigantes quebrem o layout */
+}
+
+.arena-header-compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.arena-header-compact h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Coloca "..." se o nome for grande */
+}
+
+/* A badge de distância colada no nome */
+.distance-badge-compact {
+    font-size: 0.7rem;
+    font-weight: bold;
+    background: #00ff7f; /* Seu verde neon */
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.arena-address-compact {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Lado Direito: Botão */
+.arena-action-compact {
+    flex-shrink: 0;
 }

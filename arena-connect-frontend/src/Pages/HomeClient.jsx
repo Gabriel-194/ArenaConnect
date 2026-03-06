@@ -135,31 +135,37 @@ export default function HomeClient() {
                     ) : (
                         processedArenas.length > 0 ? (
                             processedArenas.map((arena) => (
-                                <div key={arena.id} className="arena-card glass-panel">
-                                    <div className="liquid-glow"></div>
+                                <div key={arena.id} className="arena-card-compact glass-panel">
 
-                                    <div className="arena-image-container">
-                                        <div className="img-placeholder-gradient" />
-                                        <div className="arena-badge">
-                                            {arena.formattedDistance}
-                                        </div>
+                                    {/* Lado Esquerdo: Ícone SVG com fundo arredondado */}
+                                    <div className="arena-icon-wrapper">
+                                        <img
+                                            src="/Assets/stadium-svgrepo-com.svg"
+                                            alt="arena logo"
+                                            className="arena-icon-svg"
+                                        />
                                     </div>
 
-                                    <div className="arena-info">
-                                        <div className="arena-header-row">
-                                            <h4>{arena.name || arena.nome}</h4>
+                                    {/* Meio: Informações e Distância */}
+                                    <div className="arena-info-compact">
+                                        <div className="arena-header-compact">
+                                            <h4 title={arena.name || arena.nome}>{arena.name || arena.nome}</h4>
+                                            <span className="distance-badge-compact">
+                                                {arena.formattedDistance}
+                                            </span>
                                         </div>
-                                        <p className="arena-address">
-                                            {arena.endereco || 'Endereço não informado'} - {arena.cidade || ''} - {arena.estado || ''}
+                                        <p className="arena-address-compact">
+                                            {arena.endereco || 'Endereço não informado'} • {arena.cidade || ''}
                                         </p>
-
-                                        <div className="arena-footer-row">
-                                            <span></span>
-                                            <button className="btn-book-mini" onClick={() => setSelectedArena(arena)}>
-                                                Agendar
-                                            </button>
-                                        </div>
                                     </div>
+
+                                    {/* Lado Direito: Botão Agendar */}
+                                    <div className="arena-action-compact">
+                                        <button className="btn-book-mini" onClick={() => setSelectedArena(arena)}>
+                                            Agendar
+                                        </button>
+                                    </div>
+
                                 </div>
                             ))
                         ): (

@@ -42,7 +42,7 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
         OR LOWER(a.name) LIKE LOWER(CONCAT('%', :search, '%'))
         OR LOWER(a.cidade) LIKE LOWER(CONCAT('%', :search, '%')))
     ORDER BY distance ASC
-    LIMIT 9
+    LIMIT 12
 """, nativeQuery = true)
     List<Object[]> findNearestWithDistance(
             @Param("lat") Double lat,
@@ -60,7 +60,7 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
            OR LOWER(a.name) LIKE LOWER(CONCAT('%', :search, '%')) 
            OR LOWER(a.cidade) LIKE LOWER(CONCAT('%', :search, '%')))
     ORDER BY a.id DESC 
-    LIMIT 9
+    LIMIT 12
 """, nativeQuery = true)
     List<Object[]> findRecent(@Param("search") String search);
 

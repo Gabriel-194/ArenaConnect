@@ -15,10 +15,7 @@ public class ReportController {
     @Autowired
     private ReportService reportService;
 
-    /**
-     * Export SuperAdmin report (all arenas + users summary)
-     * GET /api/relatorio/superadmin
-     */
+
     @GetMapping("/superadmin")
     public void exportSuperAdminReport(HttpServletResponse response) throws IOException {
         response.setContentType("application/pdf");
@@ -28,10 +25,7 @@ public class ReportController {
         reportService.gerarRelatorioSuperAdmin(response.getOutputStream());
     }
 
-    /**
-     * Export Dashboard report (bookings stats + annual billing)
-     * GET /api/relatorio/dashboard?ano=2026
-     */
+
     @GetMapping("/dashboard")
     public void exportDashboardReport(
             @RequestParam(defaultValue = "2026") int ano,
