@@ -192,7 +192,7 @@ public class ArenaService {
 
             if(row[7] != null){
                 double rawDistance = ((Number) row[7]).doubleValue();
-                dto.setDistanceKm(applyTortuosity(rawDistance));
+                dto.setDistanceKm(rawDistance);
             } else {
                 dto.setDistanceKm(null);
             }
@@ -207,12 +207,6 @@ public class ArenaService {
         }).toList();
     }
 
-
-    private double applyTortuosity(double km) {
-        if (km < 2) return km * 1.1;
-        if (km < 5) return km * 1.3;
-        return km * 1;
-    }
 
     public List<ArenaResponseDTO> findAllAdmin() {
         List<Arena> arenas = arenaRepository.findAll();

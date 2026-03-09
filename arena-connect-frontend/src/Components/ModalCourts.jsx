@@ -35,7 +35,8 @@ export default function ModalCourts({ onClose,onSuccess,quadraToEdit }) {
             const datas = {
                 nome: nome,
                 tipo_quadra: tipo,
-                valor_hora: parseFloat(valorHora)
+                valor_hora: parseFloat(valorHora),
+                ativo: quadraToEdit ? quadraToEdit.ativo : true
             };
 
             if (quadraToEdit) {

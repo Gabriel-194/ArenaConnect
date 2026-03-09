@@ -59,7 +59,7 @@ public class PaymentReconciliationScheduler {
     }
 
     @Transactional
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 3000000)
     public void corrigirDivergenciasConfirmados() {
         List<AgendamentoHistorico> confirmados = historicoRepository.findByStatus("CONFIRMADO");
 

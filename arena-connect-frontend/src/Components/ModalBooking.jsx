@@ -56,9 +56,9 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                     if (court) setSelectedQuadra(court);
 
                     if (dateRaw) {
-                        const dateObj = new Date(dateRaw);
-                        const isoDate = dateObj.toISOString().split('T')[0];
-                        const hourStr = dateObj.toTimeString().split(' ')[0].substring(0, 5);
+                        const [datePart, timePart] = dateRaw.split('T');
+                        const isoDate = datePart;
+                        const hourStr = timePart.substring(0, 5);
 
                         setSelectedDate(isoDate);
                         setSelectedHour(hourStr);
@@ -114,14 +114,16 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                         });
                     }
 
-                    if (isEditing) {
-                        const originalDate = new Date(bookingToEdit.data_inicio).toISOString().split('T')[0];
-                        const originalTime = new Date(bookingToEdit.data_inicio).toTimeString().substring(0,5);
+                    let normalizedHours = filteredHours.map(h => h.toString().substring(0, 5));
 
-                        if (selectedDate === originalDate && selectedQuadra.id === bookingToEdit.id_quadra) {
-                            if (!filteredHours.includes(originalTime)) {
-                                filteredHours.push(originalTime);
-                                filteredHours.sort();
+                    if (isEditing) {
+                        const [origDate, origTimeRaw] = bookingToEdit.data_inicio.split('T');
+                        const origTime = origTimeRaw.substring(0, 5);
+
+                        if (selectedDate === origDate && selectedQuadra.id === bookingToEdit.id_quadra) {
+                            if (!normalizedHours.includes(origTime)) {
+                                normalizedHours.push(origTime);
+                                normalizedHours.sort();
                             }
                         }
                     }
@@ -147,9 +149,11 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
         const timeFormatted = hourString.length === 5 ? hourString + ':00' : hourString;
         const dataInicioISO = `${selectedDate}T${timeFormatted}`;
 
-        const actionText = isEditing ? "Confirmar novo horário" : "Confirmar reserva";
-        if(!window.confirm(`${actionText} para ${selectedDate} às ${hourString}?`)) return;
+        const [year, month, day] = selectedDate.split('-');
+        const dataFormatada = `${day}/${month}/${year}`;
 
+        const actionText = isEditing ? "Confirmar novo horário" : "Confirmar reserva";
+        if(!window.confirm(`${actionText} para ${dataFormatada} às ${hourString}?`)) return;
         try {
             if (isEditing) {
                 await axios.put(
@@ -315,7 +319,9 @@ const StyledWrapper = styled.div`
     .form-container {
         width: 100%;
         max-width: 450px;
-        max-height: 85vh; 
+        max-height: calc(100vh - 155px);
+        margin-top: 20px;
+        margin-bottom: 20px;
         background: linear-gradient(#212121, #212121) padding-box,
         linear-gradient(145deg, transparent 35%, #4ade80, #062904) border-box;
         border: 2px solid transparent;

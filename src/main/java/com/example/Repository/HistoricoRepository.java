@@ -37,6 +37,7 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
             @Param("idArena") Integer idArena,
             @Param("novoStatus") String novoStatus
     );
+
     @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status = 'PENDENTE' AND h.dataInicio < :limiteTempo")
     List<AgendamentoHistorico> findPendentesParaCancelar(@Param("limiteTempo") LocalDateTime limiteTempo);
 }

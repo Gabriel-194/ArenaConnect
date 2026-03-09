@@ -6,6 +6,8 @@ import com.example.Repository.AgendamentoRepository;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.HistoricoRepository;
 import com.example.Service.AsaasService;
+import com.example.Service.NotificacaoService;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,9 @@ public class AgendamentoScheduler {
     @Autowired
     private AsaasService asaasService;
 
+    @Autowired
+    private NotificacaoService notificacaoService;
+
     @Scheduled(fixedRate = 600000)
     @Transactional
     public void finishedBookings() {
@@ -42,8 +47,6 @@ public class AgendamentoScheduler {
         List<AgendamentoHistorico> vencidosGlobal = historicoRepository.findJogosVencidosGlobalmente(now);
 
         if (vencidosGlobal.isEmpty()) return;
-
-        logger.info("⏰ Encontrados {} jogos para finalizar no total.", vencidosGlobal.size());
 
         Map<Integer, List<Integer>> gamesSchema = vencidosGlobal.stream()
                 .filter(a -> a.getId_arena() != null)
@@ -60,11 +63,26 @@ public class AgendamentoScheduler {
             if(id_Arena == null || id_Arena.equals(0)) continue;
 
             try{
-
                 String schema = arenaRepository.findSchemaNameById(id_Arena.longValue());
                 TenantContext.setCurrentTenant(schema);
 
                 agendamentoRepository.finalizarAgendamentosPorIds(idsParaFinalizar,schema);
+
+                List<AgendamentoHistorico> agendamentosDestaArena = vencidosGlobal.stream()
+                        .filter(a -> id_Arena.equals(a.getId_arena()))
+                        .collect(Collectors.toList());
+
+                for (AgendamentoHistorico hist : agendamentosDestaArena) {
+                    if (hist.getIdUser() != null) {
+                        notificacaoService.enviar(
+                                hist.getIdUser().longValue(),
+                                "Reserva Finalizada",
+                                "Sua reserva foi Finalizada.",
+                                "FINALIZADO"
+                        );
+                    }
+                }
+
                 logger.info("✅ Arena {}: Finalizados {} jogos (IDs: {})", id_Arena, idsParaFinalizar.size(), idsParaFinalizar);
             } catch (Exception e) {
             logger.error("❌ Erro ao finalizar jogos na arena {}: {}", id_Arena, e.getMessage());
@@ -111,6 +129,21 @@ public class AgendamentoScheduler {
                 TenantContext.setCurrentTenant(schema);
 
                 agendamentoRepository.cancelarAgendamentosPorIds(idsParaCancelar,schema);
+
+                List<AgendamentoHistorico> agendamentosDestaArena = pendentes.stream()
+                        .filter(a -> id_arena.equals(a.getId_arena()))
+                        .collect(Collectors.toList());
+
+                for (AgendamentoHistorico hist : agendamentosDestaArena) {
+                    if (hist.getIdUser() != null) {
+                        notificacaoService.enviar(
+                                hist.getIdUser().longValue(),
+                                "Reserva Cancelada",
+                                "Sua reserva foi cancelada por falta de pagamento.",
+                                "CANCELADO"
+                        );
+                    }
+                }
                 logger.info("❌ Arena {}: Cancelados {} agendamentos por falta de pagamento.", schema, idsParaCancelar.size());
 
             } catch (Exception e) {

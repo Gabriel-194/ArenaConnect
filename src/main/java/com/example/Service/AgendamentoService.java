@@ -457,10 +457,6 @@ public class AgendamentoService {
             booking.setAsaasPaymentId(cobranca.getId());
             booking.setAsaasInvoiceUrl(cobranca.getInvoiceUrl());
 
-            if (cobranca.getPix() != null) {
-                booking.setPixQrCode(cobranca.getPix().getEncodedImage());
-                booking.setPixCopyPaste(cobranca.getPix().getPayload());
-            }
         } catch (Exception e) {
             throw new RuntimeException("Erro no Asaas: " + e.getMessage());
         }
@@ -502,7 +498,7 @@ public class AgendamentoService {
     private void validarDiasFuncionamento(Arena arena, LocalDate data){
         String diasConfig = arena.getDiasFuncionamento();
 
-        if(diasConfig == null && diasConfig.isBlank()){
+        if (diasConfig == null || diasConfig.isBlank()) {
             return;
         }
 

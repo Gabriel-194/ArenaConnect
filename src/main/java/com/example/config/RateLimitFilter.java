@@ -31,8 +31,7 @@ public class RateLimitFilter implements Filter {
 
         String uri = req.getRequestURI();
         String ip = getClientIp(req);
-        boolean permitido = verificarLimite(uri, ip);
-
+        boolean permitido;
         if ("GET".equalsIgnoreCase(method)) {
             permitido = rateLimitService.limiteNavegacao(ip);
         } else {

@@ -25,7 +25,9 @@ const ForgotPasswordModal = ({onClose}) => {
             setStep(2);
         } catch(error){
             console.error("Erro ao enviar e-mail:", error);
-            alert(error.response?.data || "Erro ao tentar enviar o código.");
+            const resposta = error.response?.data;
+            const mensagemErro = resposta?.message || resposta || "Erro ao tentar enviar o código.";
+            setErro(mensagemErro);
         }
     }
     const handleChange = (e,index) =>{
@@ -101,7 +103,7 @@ const ForgotPasswordModal = ({onClose}) => {
             console.error("Error resetting password:", error);
 
             const status = error.response?.status;
-            const mensagemErro = error.response?.data || "Failed to reset password.";
+            const mensagemErro = error.response?.data || "falha ao resetar a senha.";
 
             setErro(mensagemErro);
 

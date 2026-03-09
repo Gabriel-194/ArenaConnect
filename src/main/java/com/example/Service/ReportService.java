@@ -44,12 +44,13 @@ public class ReportService {
     private Font fKpiLbl()   { return new Font(Font.HELVETICA,  7, Font.NORMAL, DARK_GRAY); }
 
     public void gerarRelatorioSuperAdmin(OutputStream out) {
+        Document doc = null;
         try {
             List<ArenaResponseDTO> arenas  = arenaService.findAllAdmin();
             List<UserResponseDTO>  users   = userService.findAll();
             FinanceiroDashboardDTO finance = asaasService.getFinanceiroDashboard();
 
-            Document  doc    = new Document(PageSize.A4, 36, 36, 50, 40);
+            doc = new Document(PageSize.A4, 36, 36, 50, 40);
             PdfWriter writer = PdfWriter.getInstance(doc, out);
             addPageFooter(writer);
             doc.open();
@@ -129,10 +130,15 @@ public class ReportService {
             doc.close();
         } catch (Exception e) {
             throw new RuntimeException("Erro ao gerar relatório SuperAdmin: " + e.getMessage(), e);
+        } finally {
+            if (doc != null && doc.isOpen()) {
+                doc.close();
+            }
         }
     }
 
     public void gerarRelatorioDashboard(int ano, OutputStream out) {
+        Document doc = null;
         try {
             List<FaturamentoDTO> faturamento = agendamentoService.findFaturamentoAnual(ano);
 
@@ -141,7 +147,7 @@ public class ReportService {
             long   ativos = faturamento.stream().filter(f -> f.getValor() > 0).count();
             double media  = ativos > 0 ? total / ativos : 0;
 
-            Document  doc    = new Document(PageSize.A4, 36, 36, 50, 40);
+            doc = new Document(PageSize.A4, 36, 36, 50, 40);
             PdfWriter writer = PdfWriter.getInstance(doc, out);
             addPageFooter(writer);
             doc.open();
@@ -195,6 +201,10 @@ public class ReportService {
             doc.close();
         } catch (Exception e) {
             throw new RuntimeException("Erro ao gerar relatório Dashboard: " + e.getMessage(), e);
+        } finally {
+            if (doc != null && doc.isOpen()) {
+                doc.close();
+            }
         }
     }
 
@@ -388,8 +398,8 @@ public class ReportService {
         return t;
     }
 
-    public void gerarRelatorioAgendamentos(Integer idQuadra, LocalDate data,
-                                           String statusFiltro, OutputStream out) {
+    public void gerarRelatorioAgendamentos(Integer idQuadra, LocalDate data,String statusFiltro, OutputStream out) {
+        Document doc = null;
         try {
             List<com.example.Models.Agendamentos> todos =
                     agendamentoService.findAllAgendamentos(idQuadra, data);
@@ -416,7 +426,7 @@ public class ReportService {
             if (statusFiltro != null && !statusFiltro.isBlank())
                 sub.append("  •  Status: ").append(statusFiltro);
 
-            Document  doc    = new Document(PageSize.A4, 36, 36, 50, 40);
+            doc = new Document(PageSize.A4, 36, 36, 50, 40);
             PdfWriter writer = PdfWriter.getInstance(doc, out);
             addPageFooter(writer);
             doc.open();
@@ -492,6 +502,10 @@ public class ReportService {
             doc.close();
         } catch (Exception e) {
             throw new RuntimeException("Erro ao gerar relatório de agendamentos: " + e.getMessage(), e);
+        } finally {
+            if (doc != null && doc.isOpen()) {
+                doc.close();
+            }
         }
     }
 

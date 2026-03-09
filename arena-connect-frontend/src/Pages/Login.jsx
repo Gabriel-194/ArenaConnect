@@ -2,7 +2,7 @@ import { useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom'
 import axios from "axios";
 import GoogleAuthButton from '../Components/GoogleAuthButton';
-import '../styles/login.css';
+import '../Styles/login.css';
 import ForgotPasswordModal from "../Components/ForgotPasswordModal.jsx";
 import Chatbot from "../Components/Chatbot.jsx";
 import ModalPartners from "../Components/ModalPartners.jsx";

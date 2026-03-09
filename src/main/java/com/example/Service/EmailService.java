@@ -96,7 +96,7 @@ public class EmailService {
     public void resetPassword(String email, String token,String newPassword) {
         if(!rateLimitService.ResetSenha(email)){
             tokenStorage.remove(email);
-            throw new RuntimeException("Bloqueado por numero de tentativas");
+            throw new RuntimeException("Bloqueado por numero de tentativas,crie um novo codigo");
         }
 
         String storedToken = tokenStorage.get(email);

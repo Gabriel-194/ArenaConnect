@@ -27,11 +27,11 @@ public class RateLimitService {
     }
 
     public boolean RegistrarCliente(String ip) {
-        return getBuckets(clientBuckets, ip, 3, Duration.ofHours(1)).tryConsume(1);
+        return getBuckets(clientBuckets, ip, 5, Duration.ofHours(1)).tryConsume(1);
     } 
 
     public boolean RegistrarParceiro(String ip) {
-        return getBuckets(partnerBuckets, ip, 3, Duration.ofHours(1)).tryConsume(1);
+        return getBuckets(partnerBuckets, ip, 5, Duration.ofHours(1)).tryConsume(1);
     }
 
     public boolean limiteGlobal(String ip){

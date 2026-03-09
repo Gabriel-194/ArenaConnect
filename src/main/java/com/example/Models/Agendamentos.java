@@ -28,7 +28,6 @@ public class Agendamentos {
     @Column(name = "valor_total")
     private Double valor;
 
-
     @Transient
     private String nomeCliente;
 
@@ -52,11 +51,5 @@ public class Agendamentos {
 
     @Column(name = "asaas_invoice_url")
     private String asaasInvoiceUrl;
-
-    @Column(name = "pix_qr_code")
-    private String pixQrCode;
-
-    @Column(name = "pix_copy_paste")
-    private String pixCopyPaste;
 
 }
