@@ -454,3 +454,21 @@
 .filter-box select.input-glass:hover {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 }
+
+@media (max-height: 800px) {
+    .admin-glass-container {
+        height: 95vh;
+    }
+
+    .glass-effect {
+        padding: 20px;
+    }
+
+    .admin-header {
+        margin-bottom: 20px;
+
+    .sidebar-title {
+        margin-bottom: 15px;
+    }
+}
+}
