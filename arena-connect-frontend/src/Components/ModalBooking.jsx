@@ -7,10 +7,13 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
     const [quadras, setQuadras] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const[selectedQuadra,setSelectedQuadra] = useState();
+    const [selectedQuadra, setSelectedQuadra] = useState();
     const [availableHours, setAvailableHours] = useState([]);
     const [loadingHours, setLoadingHours] = useState(false);
     const [selectedHour, setSelectedHour] = useState(null);
+
+    // 🟢 ESTADO PARA CONTROLAR O TIPO DE RESERVA
+    const [tipoReserva, setTipoReserva] = useState('AVULSO'); // 'AVULSO' ou 'MENSAL'
 
     const isEditing = !!bookingToEdit;
 
@@ -28,16 +31,18 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
     const getHeaders = () => {
         const headers = { 'Content-Type': 'application/json' };
 
-        if (bookingToEdit?.id) {
-            headers['X-Tenant-ID'] = bookingToEdit.id_arena;
+        // Verifica de onde tirar o ID da Arena (seja editando ou criando)
+        if (bookingToEdit) {
+            headers['X-Tenant-ID'] = bookingToEdit.id_arena || bookingToEdit.idArena || bookingToEdit.tenantId;
+        } else if (arena) {
+            headers['X-Tenant-ID'] = arena.id || arena.idArena || arena.id_arena;
         }
 
-        else if (arena?.id) {
-            headers['X-Tenant-ID'] = arena.id;
-        }
+        // Console log para te ajudar a debugar se o ID está indo certo
+        console.log("Tenant ID enviado:", headers['X-Tenant-ID']);
+
         return headers;
     };
-
 
     useEffect(() => {
         const init = async () => {
@@ -66,7 +71,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                 } else {
                     setSelectedDate(today);
                 }
-
             } catch (err) {
                 console.error("Erro ao inicializar:", err);
             } finally {
@@ -76,10 +80,10 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
         init();
     }, [bookingToEdit, arena]);
 
-
     const handleBack = () => {
         setSelectedQuadra(null);
         setAvailableHours([]);
+        setSelectedHour(null);
     }
 
     useEffect(() => {
@@ -139,12 +143,18 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
         }
     }, [selectedQuadra, selectedDate, isEditing, bookingToEdit]);
 
+    // Helper para o card do mensalista
+    const formatarDiaDaSemana = (jsDay) => {
+        const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        return dias[jsDay] || "";
+    };
 
     const handleConfirm = async () => {
         if(!selectedHour) {
             alert("Por favor, selecione um horário.");
             return;
         }
+
         const hourString = String(selectedHour);
         const timeFormatted = hourString.length === 5 ? hourString + ':00' : hourString;
         const dataInicioISO = `${selectedDate}T${timeFormatted}`;
@@ -154,6 +164,7 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
 
         const actionText = isEditing ? "Confirmar novo horário" : "Confirmar reserva";
         if(!window.confirm(`${actionText} para ${dataFormatada} às ${hourString}?`)) return;
+
         try {
             if (isEditing) {
                 await axios.put(
@@ -162,33 +173,62 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                     { withCredentials: true, headers: getHeaders() }
                 );
                 alert("Horário atualizado com sucesso!");
+            } else {
+
+                // 🟢 LÓGICA DIVIDIDA ENTRE AVULSO E MENSALISTA
+                if (tipoReserva === 'AVULSO') {
+                    const payload = {
+                        id_quadra: selectedQuadra.id,
+                        data_inicio: dataInicioISO,
+                        valor: selectedQuadra.valor_hora,
+                        status: "PENDENTE"
+                    };
+
+                    await axios.post(
+                        'http://localhost:8080/api/agendamentos/reservar',
+                        payload,
+                        { withCredentials: true, headers: getHeaders() }
+                    );
+                    alert("Reserva avulsa criada! Acesse 'Meus Agendamentos' para pagar.");
+
+                }else if (tipoReserva === 'MENSAL') {
+                    // Calcula horaFim (+1 hora)
+                    let [h, m] = hourString.split(':').map(Number);
+                    let hFim = (h + 1).toString().padStart(2, '0');
+                    let mFim = m.toString().padStart(2, '0');
+                    let horaFimStr = `${hFim}:${mFim}:00`;
+
+                    // Calcula diaSemanaBackend (1=Segunda, 7=Domingo)
+                    const jsDay = new Date(selectedDate + "T00:00:00").getDay();
+                    const diaSemanaBackend = jsDay === 0 ? 7 : jsDay;
+
+                    const idDaArena = arena?.id || arena?.idArena || arena?.id_arena || bookingToEdit?.id_arena || 1;
+
+                    // 🟢 EM VEZ DE URL PARAMS, ENVIAMOS UM JSON PAYLOAD
+                    const payloadMensal = {
+                        idArena: idDaArena,
+                        idQuadra: selectedQuadra.id,
+                        diaSemana: diaSemanaBackend,
+                        horaInicio: timeFormatted,
+                        horaFim: horaFimStr
+                    };
+
+                    await axios.post(
+                        'http://localhost:8080/api/contratos-mensalistas/assinar',
+                        payloadMensal,
+                        { withCredentials: true, headers: getHeaders() }
+                    );
+                    alert("Contrato mensalista criado com sucesso! Acesse 'Minhas Mensalidades' para realizar o pagamento.");
+                }
+                if (onSuccess) onSuccess();
+                onClose();
             }
-            else {
-                const payload = {
-                    id_quadra: selectedQuadra.id,
-                    data_inicio: dataInicioISO,
-                    valor: selectedQuadra.valor_hora,
-                    status: "PENDENTE"
-                };
-
-                await axios.post(
-                    'http://localhost:8080/api/agendamentos/reservar',
-                    payload,
-                    { withCredentials: true, headers: getHeaders() }
-                );
-                alert("Reserva criada! Acesse 'Meus Agendamentos' para pagar.");
-            }
-
-            if (onSuccess) onSuccess();
-            onClose();
-
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            const msg = error.response?.data?.message || "Erro ao processar solicitação.";
+            const msg = error.response?.data?.message || error.response?.data?.error || "Erro ao processar solicitação.";
             alert(msg);
         }
     };
-
 
     return (
         <div className="modal" onClick={onClose}>
@@ -225,7 +265,7 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                                                 <span className="court-type">{quadra.tipo_quadra}</span>
                                             </div>
                                             <div className="court-action">
-                                                <span className="court-price">R$ {quadra.valor_hora}</span>
+                                                <span className="court-price">R$ {quadra.valor_hora?.toFixed(2)}</span>
                                                 <button className="book-btn" onClick={() => setSelectedQuadra(quadra)}>Selecionar</button>
                                             </div>
                                         </div>
@@ -244,7 +284,6 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                                                     Trocar
                                                 </button>
                                             )}
-
                                         </div>
                                     </div>
 
@@ -280,6 +319,68 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                                                             </div>
                                                         ))}
                                                     </div>
+
+                                                    {/* 🟢 CARDS DE ESCOLHA APARECEM APÓS SELECIONAR A HORA */}
+                                                    {selectedHour && !isEditing && (
+                                                        <div className="checkout-options-container" style={{ marginTop: '20px' }}>
+                                                            <h4 style={{ textAlign: 'center', marginBottom: '15px', color: '#fff', fontSize: '1.1rem' }}>Escolha o tipo de reserva:</h4>
+
+                                                            <div className="cards-reserva-grid" style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+
+                                                                {/* CARD 1: JOGO AVULSO */}
+                                                                <div
+                                                                    className={`reserva-card glass-panel ${tipoReserva === 'AVULSO' ? 'active-neon' : ''}`}
+                                                                    style={{
+                                                                        flex: 1, padding: '20px', cursor: 'pointer', borderRadius: '12px',
+                                                                        border: tipoReserva === 'AVULSO' ? '2px solid #00ff7f' : '1px solid rgba(255,255,255,0.1)',
+                                                                        transition: 'all 0.3s'
+                                                                    }}
+                                                                    onClick={() => setTipoReserva('AVULSO')}
+                                                                >
+                                                                    <h3 style={{ margin: '0 0 10px 0', color: '#fff', fontSize: '1.1rem' }}>Jogo Avulso</h3>
+                                                                    <p style={{ fontSize: '0.85rem', color: '#aaa', minHeight: '40px', margin: 0 }}>
+                                                                        Reserva única para o dia <b>{new Date(selectedDate + "T00:00:00").toLocaleDateString('pt-BR')}</b>.
+                                                                    </p>
+                                                                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                                                        <span style={{ fontSize: '0.85rem', color: '#ccc' }}>Valor:</span><br/>
+                                                                        <strong style={{ fontSize: '1.4rem', color: '#fff' }}>R$ {selectedQuadra.valor_hora?.toFixed(2)}</strong>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* CARD 2: MENSALISTA */}
+                                                                <div
+                                                                    className={`reserva-card glass-panel ${tipoReserva === 'MENSAL' ? 'active-neon' : ''}`}
+                                                                    style={{
+                                                                        flex: 1, padding: '20px', cursor: 'pointer', borderRadius: '12px',
+                                                                        border: tipoReserva === 'MENSAL' ? '2px solid #00ff7f' : '1px solid rgba(255,255,255,0.1)',
+                                                                        background: tipoReserva === 'MENSAL' ? 'rgba(0, 255, 127, 0.05)' : '',
+                                                                        position: 'relative', overflow: 'hidden', transition: 'all 0.3s'
+                                                                    }}
+                                                                    onClick={() => setTipoReserva('MENSAL')}
+                                                                >
+                                                                    {/* Etiqueta de Promoção */}
+                                                                    <div style={{
+                                                                        position: 'absolute', top: '15px', right: '-35px', background: '#00ff7f', color: '#000',
+                                                                        padding: '4px 35px', fontSize: '0.7rem', fontWeight: 'bold', transform: 'rotate(45deg)'
+                                                                    }}>
+                                                                        MELHOR OPÇÃO
+                                                                    </div>
+
+                                                                    <h3 style={{ margin: '0 0 10px 0', color: '#00ff7f', fontSize: '1.1rem' }}>Mensalista</h3>
+                                                                    <p style={{ fontSize: '0.85rem', color: '#aaa', minHeight: '40px', margin: 0 }}>
+                                                                        Garanta toda <b>{formatarDiaDaSemana(new Date(selectedDate + "T00:00:00").getDay())}</b> neste horário!
+                                                                    </p>
+                                                                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                                                        <span style={{ fontSize: '0.85rem', color: '#ccc' }}>Valor por jogo:</span><br/>
+                                                                        <strong style={{ fontSize: '1.4rem', color: '#00ff7f' }}>
+                                                                            R$ {(selectedQuadra.valor_hora * (1 - (arena?.descontoMensalista || 10) / 100)).toFixed(2)}
+                                                                        </strong>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <div className="confirm-container">
                                                         <button
                                                             className="confirm-btn-glass"
@@ -287,7 +388,7 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                                                             onClick={handleConfirm}
                                                         >
                                                             {selectedHour
-                                                                ? (isEditing ? "Salvar Alterações" : "Confirmar Reserva")
+                                                                ? (isEditing ? "Salvar Alterações" : `Confirmar como ${tipoReserva === 'AVULSO' ? 'Jogo Único' : 'Mensalista'}`)
                                                                 : 'Selecione um horário'}
                                                         </button>
                                                     </div>
@@ -318,7 +419,7 @@ const gradient = keyframes`
 const StyledWrapper = styled.div`
     .form-container {
         width: 100%;
-        max-width: 450px;
+        max-width: 480px;
         max-height: calc(100vh - 155px);
         margin-top: 20px;
         margin-bottom: 20px;
@@ -377,7 +478,7 @@ const StyledWrapper = styled.div`
         line-height: 0.8;
     }
     .close-btn:hover { color: #4ade80; }
-    
+
     .change-court-btn {
         background: transparent;
         border: 1px solid #4ade80;
@@ -387,13 +488,13 @@ const StyledWrapper = styled.div`
         font-size: 0.75rem;
         cursor: pointer;
         transition: all 0.2s;
-        margin-left: 10px; 
+        margin-left: 10px;
     }
     .change-court-btn:hover {
         background: #4ade80;
         color: #000;
     }
-    
+
     .confirm-btn-glass {
         background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
         border: none;
@@ -415,7 +516,7 @@ const StyledWrapper = styled.div`
         transform: translateY(-2px);
         box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
     }
-    
+
     .form-content {
         overflow-y: auto;
         padding-right: 5px;
@@ -434,7 +535,7 @@ const StyledWrapper = styled.div`
         margin-top: 10px;
         font-style: italic;
     }
-    
+
     .courts-list {
         display: flex;
         flex-direction: column;
@@ -475,7 +576,7 @@ const StyledWrapper = styled.div`
         transition: all 0.2s;
     }
     .book-btn:hover { background: #4ade80; color: #121212; border-color: #4ade80; }
-    
+
     .booking-section {
         display: flex;
         flex-direction: column;
@@ -507,7 +608,7 @@ const StyledWrapper = styled.div`
         cursor: pointer;
     }
     .date-input:focus { border-color: #4ade80; }
-    
+
     .date-input::-webkit-calendar-picker-indicator {
         filter: invert(1);
         cursor: pointer;
@@ -518,26 +619,6 @@ const StyledWrapper = styled.div`
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
     }
-
-    .hour-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid #414141;
-        color: #4ade80;
-        padding: 10px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-
-    .hour-btn:hover {
-        background: #4ade80;
-        color: #121212;
-        box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
-        transform: translateY(-2px);
-    }
-
-    .hours-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
 
     .hour-card {
         background: rgba(255, 255, 255, 0.05);
@@ -555,13 +636,23 @@ const StyledWrapper = styled.div`
         background: rgba(74, 222, 128, 0.1);
         border-color: #4ade80;
     }
-    
+
     .hour-card.selected {
         background: #4ade80;
         color: #121212;
         border-color: #4ade80;
         box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
         transform: scale(1.05);
+    }
+
+    /* Animação extra para os cards de escolha */
+    .reserva-card {
+        animation: slideUp 0.3s ease-out forwards;
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes fadeIn {

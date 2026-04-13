@@ -63,4 +63,7 @@ public class Arena {
     @Column(name = "data_expiracao")
     private LocalDate dataExpiracao;
 
+    @Column(name = "desconto_mensalista")
+    private Double descontoMensalista;
+
 }

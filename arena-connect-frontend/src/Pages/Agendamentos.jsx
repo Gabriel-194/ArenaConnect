@@ -25,6 +25,10 @@ export default function Agendamentos() {
     const [selectedQuadra, setSelectedQuadra] = useState("");
     const [exportingPdf, setExportingPdf] = useState(false);
 
+    // Estados para Mensalidades
+    const [viewMode, setViewMode] = useState('agendamentos'); // 'agendamentos' ou 'mensalidades'
+    const [mensalidades, setMensalidades] = useState([]);
+
     const handleExportPdf = async () => {
         setExportingPdf(true);
         try {
@@ -54,17 +58,19 @@ export default function Agendamentos() {
         }
     };
 
+    // Configuração da Arena (agora incluindo o desconto)
     const [config, setConfig] = useState({
         abertura: "07:30",
         fechamento: "23:30",
-        diasOperacao: []
+        diasOperacao: [],
+        descontoMensalista: 0
     });
-
 
     useEffect(() => {
         findAllAgendamentos();
         findCourts();
         findArenaConfig();
+        fetchMensalidades();
     }, []);
 
     useEffect(() => {
@@ -80,10 +86,22 @@ export default function Agendamentos() {
             setConfig({
                 abertura: response.data.abertura ? response.data.abertura.slice(0,5) : "07:00",
                 fechamento: response.data.fechamento ? response.data.fechamento.slice(0,5) : "23:00",
-                diasOperacao: response.data.diasOperacao || []
+                diasOperacao: response.data.diasOperacao || [],
+                descontoMensalista: response.data.descontoMensalista || 0
             });
         }catch (error) {
             console.error("Erro ao carregar configurações da arena:", error);
+        }
+    };
+
+    const fetchMensalidades = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/contratos-mensalistas/arena', {
+                withCredentials: true
+            });
+            setMensalidades(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar mensalidades:", error);
         }
     };
 
@@ -95,7 +113,6 @@ export default function Agendamentos() {
             if(isActive){
                 newDays = prev.diasOperacao.filter(d => d !== dayCode)
             } else {
-
                 newDays = [...prev.diasOperacao, dayCode];
             }
             return { ...prev, diasOperacao: newDays };
@@ -107,7 +124,7 @@ export default function Agendamentos() {
             await axios.put('http://localhost:8080/api/arena/config', config, {
                 withCredentials: true
             });
-            alert("Status atualizado com sucesso!");
+            alert("Configurações atualizadas com sucesso!");
         } catch (error) {
             console.error("Erro ao atualizar:", error);
             alert("Erro ao salvar configurações.");
@@ -165,29 +182,55 @@ export default function Agendamentos() {
         }
     }
 
+    const formatarDiaSemana = (numero) => {
+        const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+        return dias[numero - 1] || "N/A";
+    };
+
 
     return (
-            <div className="admin-body">
-                <Sidebar/>
+        <div className="admin-body">
+            <Sidebar/>
 
-                <div className="liquid-bg">
-                    <div className="blob-admin b1"></div>
-                    <div className="blob-admin b2"></div>
-                    <div className="blob-admin b3"></div>
-                </div>
+            <div className="liquid-bg">
+                <div className="blob-admin b1"></div>
+                <div className="blob-admin b2"></div>
+                <div className="blob-admin b3"></div>
+            </div>
 
-                <div className="admin-glass-container">
-                    <div className="admin-grid-layout">
+            <div className="admin-glass-container">
+                <div className="admin-grid-layout">
 
-                        <main className="bookings-main-panel glass-effect">
-                            <header className="admin-header">
+                    <main className="bookings-main-panel glass-effect">
+                        <header className="admin-header">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
                                 <div>
                                     <h2 className="glass-title">Painel de Agendamentos</h2>
                                     <p className="glass-subtitle">Controle total das reservas</p>
-                                    <button className="input-glass" onClick={handleExportPdf} disabled={exportingPdf}>   Exportar PDF  </button>
+
+                                    {/* Toggle Avulsos / Mensalidades */}
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                                        <button
+                                            className="input-glass"
+                                            style={{ cursor: 'pointer', background: viewMode === 'agendamentos' ? 'rgba(0, 255, 127, 0.2)' : '', border: viewMode === 'agendamentos' ? '1px solid #00ff7f' : '' }}
+                                            onClick={() => setViewMode('agendamentos')}
+                                        >Reservas Avulsas</button>
+                                        <button
+                                            className="input-glass"
+                                            style={{ cursor: 'pointer', background: viewMode === 'mensalidades' ? 'rgba(0, 255, 127, 0.2)' : '', border: viewMode === 'mensalidades' ? '1px solid #00ff7f' : '' }}
+                                            onClick={() => setViewMode('mensalidades')}
+                                        >Contratos Mensais</button>
+                                    </div>
                                 </div>
 
-                                <div className="admin-filters glass-inner">
+                                <button className="input-glass" style={{ cursor: 'pointer' }} onClick={handleExportPdf} disabled={exportingPdf}>
+                                    {exportingPdf ? 'Exportando...' : 'Exportar PDF'}
+                                </button>
+                            </div>
+
+                            {/* Filtros só aparecem se estiver em agendamentos avulsos */}
+                            {viewMode === 'agendamentos' && (
+                                <div className="admin-filters glass-inner" style={{ marginTop: '20px' }}>
                                     <div className="filter-box">
                                         <label>Calendário</label>
                                         <input type="date" className="input-glass" value={selectedDate} onChange={(e)=>setSelectedDate(e.target.value)}/>
@@ -212,38 +255,41 @@ export default function Agendamentos() {
                                         </button>
                                     )}
                                 </div>
-                            </header>
+                            )}
+                        </header>
 
-                            <div className="bookings-scroll-area">
-                                {agendamentos.length > 0 ? (
+                        <div className="bookings-scroll-area">
+                            {viewMode === 'agendamentos' ? (
+                                // 🟢 RENDERIZAÇÃO DE AGENDAMENTOS AVULSOS
+                                agendamentos.length > 0 ? (
                                     agendamentos.map((agendamento) => (
                                         <div key={agendamento.id_agendamento} className="booking-card-mini">
 
                                             <div className="card-time-column">
-                                                <span className="mini-time">
-                                                {new Date(agendamento.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
+                                                    <span className="mini-time">
+                                                    {new Date(agendamento.data_inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
                                                 <span className="mini-date">
-                                                {new Date(agendamento.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-                                                </span>
+                                                    {new Date(agendamento.data_inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                                    </span>
                                             </div>
 
                                             <div className="card-info-column">
-                                                <span className="mini-client">
-                                                  {agendamento.nomeCliente || "Cliente"}{" "}
-                                                    <span style={{fontSize: "0.8rem", color: "#777", fontWeight: "400"}}>
-                                                    - {agendamento.numeroCliente}
-                                                  </span>
-                                                </span>
+                                                    <span className="mini-client">
+                                                      {agendamento.nomeCliente || "Cliente"}{" "}
+                                                        <span style={{fontSize: "0.8rem", color: "#777", fontWeight: "400"}}>
+                                                        - {agendamento.numeroCliente}
+                                                      </span>
+                                                    </span>
                                                 <span className="mini-details">
-                                                    {agendamento.quadraNome}
-                                                </span>
+                                                        {agendamento.quadraNome}
+                                                    </span>
                                             </div>
 
                                             <div className="card-status-column">
-                                                <span className={`mini-status ${agendamento.status ? agendamento.status.toLowerCase() : ''}`}>
-                                                        {agendamento.status}
-                                                </span>
+                                                    <span className={`mini-status ${agendamento.status ? agendamento.status.toLowerCase() : ''}`}>
+                                                            {agendamento.status}
+                                                    </span>
                                             </div>
 
 
@@ -286,111 +332,168 @@ export default function Agendamentos() {
                                     ))
                                 ) : (
                                     <p className="empty-msg">Nenhum agendamento encontrado.</p>
-                                )}
-                            </div>
-                        </main>
+                                )
+                            ) : (
+                                // 🟢 RENDERIZAÇÃO DAS MENSALIDADES (GRID)
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px', padding: '10px' }}>
+                                    {mensalidades.length > 0 ? (
+                                        mensalidades.map((m) => (
+                                            <div key={m.id} className="mensalidade-card glass-inner" style={{ padding: '20px', borderRadius: '12px', position: 'relative', overflow: 'hidden' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{m.userNome || `Contrato #${m.id}`}</span>
+                                                    <span className={`mini-status ${m.status ? m.status.toLowerCase() : ''}`}>{m.status}</span>
+                                                </div>
+                                                <p style={{ color: '#aaa', fontSize: '0.9rem', margin: '5px 0' }}>Quadra: {m.quadraNome || m.idQuadra}</p>
+                                                <p style={{ color: '#aaa', fontSize: '0.9rem', margin: '5px 0' }}>Dia: {formatarDiaSemana(m.diaSemana)} às {m.horaInicio}</p>
+                                                <p style={{ color: '#00ff7f', fontWeight: 'bold', fontSize: '1.2rem', marginTop: '15px', marginBottom: '0' }}>
+                                                    R$ {m.valorPactuado.toFixed(2)} <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#888' }}>/mês</span>
+                                                </p>
 
-                        <aside className="config-sidebar-panel glass-effect">
-                            <div className="sidebar-section">
-                                <h3 className="sidebar-title">Configurar Arena </h3>
+                                                {/* Hover Overlay Admin */}
+                                                <div className="mensalidade-hover-overlay">
+                                                    <h5 style={{ color: '#00ff7f', marginBottom: '10px' }}>Dados do Cliente</h5>
+                                                    <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem' }}>{m.userNome}</p>
+                                                    <p style={{ margin: '0', fontSize: '0.8rem', color: '#ccc' }}>{m.userEmail}</p>
 
-                                <div className="config-card">
-                                    <h5>Horários de Hoje</h5>
-                                    <div className="time-inputs-row">
-                                        <div className="input-unit">
-                                            <span>Abertura</span>
-                                            <input type="time" className="input-glass" value={config.abertura}
-                                                   onChange={(e) => setConfig({...config, abertura: e.target.value})}
-                                            />
-                                        </div>
-                                        <div className="input-unit">
-                                            <span>Fechamento</span>
-                                            <input type="time" className="input-glass" value={config.fechamento}
-                                                   onChange={(e) => setConfig({...config, fechamento: e.target.value})}
-                                            />
-                                        </div>
+                                                    <h5 style={{ color: '#00ff7f', marginTop: '15px', marginBottom: '10px' }}>Agendamentos do Mês</h5>
+                                                    <ul className="hover-agendamentos-list">
+                                                        {agendamentos.filter(a => a.id_quadra === m.idQuadra && (a.status === 'MENSALISTA_CONFIRMADO' || a.status === 'MENSALISTA_PENDENTE')).slice(0, 3).map(jogo => (
+                                                            <li key={jogo.id_agendamento} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '5px 0' }}>
+                                                                <span>{new Date(jogo.data_inicio).toLocaleDateString()}</span>
+                                                                <span>{jogo.status.replace('MENSALISTA_', '')}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="empty-msg" style={{ gridColumn: '1/-1' }}>Nenhum contrato mensalista ativo.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    <aside className="config-sidebar-panel glass-effect">
+                        <div className="sidebar-section">
+                            <h3 className="sidebar-title">Configurar Arena </h3>
+
+                            <div className="config-card">
+                                <h5>Horários de Hoje</h5>
+                                <div className="time-inputs-row">
+                                    <div className="input-unit">
+                                        <span>Abertura</span>
+                                        <input type="time" className="input-glass" value={config.abertura}
+                                               onChange={(e) => setConfig({...config, abertura: e.target.value})}
+                                        />
+                                    </div>
+                                    <div className="input-unit">
+                                        <span>Fechamento</span>
+                                        <input type="time" className="input-glass" value={config.fechamento}
+                                               onChange={(e) => setConfig({...config, fechamento: e.target.value})}
+                                        />
                                     </div>
                                 </div>
-
-                                <div className="config-card">
-                                    <h5>Dias de Operação</h5>
-                                    <div className="week-grid">
-                                        {DAYS_MAP.map((day) => {
-                                            const isActive = config.diasOperacao.includes(day.code);
-                                            return (
-                                                <button
-                                                    key={day.code}
-                                                    className={`day-btn ${isActive ? 'active' : ''}`}
-                                                    onClick={() => toggleDay(day.code)}
-                                                >
-                                                    {day.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <button className="btn-save-glass" onClick={handleUpdateConfig}>
-                                    Atualizar Configurações
-                                </button>
                             </div>
 
-                            <div className="sidebar-section" style={{ marginTop: '2rem' }}>
-                                <h3 className="sidebar-title">Regras Automáticas </h3>
+                            <div className="config-card">
+                                <h5>Dias de Operação</h5>
+                                <div className="week-grid">
+                                    {DAYS_MAP.map((day) => {
+                                        const isActive = config.diasOperacao.includes(day.code);
+                                        return (
+                                            <button
+                                                key={day.code}
+                                                className={`day-btn ${isActive ? 'active' : ''}`}
+                                                onClick={() => toggleDay(day.code)}
+                                            >
+                                                {day.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
 
-                                <div className="config-card" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            {/* 🟢 NOVO CAMPO: DESCONTO MENSALISTA */}
+                            <div className="config-card">
+                                <h5>Desconto Mensalista (%)</h5>
+                                <div className="input-unit" style={{ marginTop: '10px' }}>
+                                    <input
+                                        type="number"
+                                        className="input-glass"
+                                        value={config.descontoMensalista}
+                                        onChange={(e) => setConfig({...config, descontoMensalista: Number(e.target.value)})}
+                                        min="0" max="100"
+                                        style={{ width: '100%', textAlign: 'center', fontSize: '1.2rem', color: '#00ff7f' }}
+                                    />
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginTop: '8px', lineHeight: '1.3' }}>
+                                    Desconto aplicado automaticamente para clientes que fecharem contrato mensal.
+                                </p>
+                            </div>
 
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                                        <div style={{
-                                            minWidth: '24px', height: '24px', borderRadius: '50%',
-                                            background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                        }}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                        </div>
-                                        <div>
+                            <button className="btn-save-glass" onClick={handleUpdateConfig}>
+                                Atualizar Configurações
+                            </button>
+                        </div>
+
+                        <div className="sidebar-section" style={{ marginTop: '2rem' }}>
+                            <h3 className="sidebar-title">Regras Automáticas </h3>
+
+                            <div className="config-card" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                    <div style={{
+                                        minWidth: '24px', height: '24px', borderRadius: '50%',
+                                        background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                    <div>
                                             <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
                                                 Finalização Automática
                                             </span>
-                                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
-                                                Jogos <b>Confirmados</b> mudam para Finalizado assim que o horário termina.
-                                            </p>
-                                        </div>
+                                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
+                                            Jogos <b>Confirmados</b> mudam para Finalizado assim que o horário termina.
+                                        </p>
                                     </div>
+                                </div>
 
-                                    <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                                <div style={{ width: '100%', height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
 
-                                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                                        <div style={{
-                                            minWidth: '24px', height: '24px', borderRadius: '50%',
-                                            background: 'rgba(250,21,21,0.15)', color: '#fa1515',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                        }}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                        </div>
-                                        <div>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                                    <div style={{
+                                        minWidth: '24px', height: '24px', borderRadius: '50%',
+                                        background: 'rgba(250,21,21,0.15)', color: '#fa1515',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    </div>
+                                    <div>
                                             <span style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
                                                 Cancelamento automatico
                                             </span>
-                                            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
-                                                Reservas <b>Pendentes</b> são canceladas se não pagas até 30min antes do jogo.
-                                            </p>
-                                        </div>
+                                        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
+                                            Reservas <b>Pendentes</b> são canceladas se não pagas até 30min antes do jogo.
+                                        </p>
                                     </div>
-
                                 </div>
-                            </div>
 
-                        </aside>
-                    </div>
+                            </div>
+                        </div>
+
+                    </aside>
                 </div>
-                {editingBooking && (
-                    <ModalBooking
-                        bookingToEdit={editingBooking}
-                        onClose={() => setEditingBooking(null)}
-                        onSuccess={findAllAgendamentos}
-                    />
-                )}
             </div>
+            {editingBooking && (
+                <ModalBooking
+                    bookingToEdit={editingBooking}
+                    onClose={() => setEditingBooking(null)}
+                    onSuccess={findAllAgendamentos}
+                />
+            )}
+        </div>
     );
 }

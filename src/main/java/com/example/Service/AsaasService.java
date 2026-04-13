@@ -1,9 +1,12 @@
 package com.example.Service;
 
+import ch.qos.logback.core.joran.spi.HttpUtil;
 import com.example.DTOs.Asaas.*;
 import com.example.DTOs.FinanceiroDashboardDTO;
 import com.example.DTOs.PartnerRegistrationDTO;
 import com.example.DTOs.TransacaoDTO;
+import com.example.Exceptions.AsaasIntegrationException;
+import com.example.Models.Arena;
 import com.example.Models.Users;
 import com.example.Repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -12,7 +15,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +126,7 @@ public class AsaasService {
         dto.setCustomer(customerId);
         dto.setBillingType("UNDEFINED");
         dto.setValue(100.00);
-        dto.setNextDueDate(java.time.LocalDate.now().toString());
+        dto.setNextDueDate(LocalDate.now().toString());
         dto.setCycle("MONTHLY");
         dto.setDescription("Assinatura ArenaConnect SaaS");
 
@@ -135,10 +144,10 @@ public class AsaasService {
         String url = asaasUrl + "/subscriptions/" + subscriptionId + "/payments";
         HttpEntity<String> request = new HttpEntity<>(getHeaders());
 
-        ResponseEntity<Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, request, Map.class);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, request, Map.class);
 
         if (response.getBody() != null && response.getBody().containsKey("data")) {
-            java.util.List<Map> data = (java.util.List<Map>) response.getBody().get("data");
+            List<Map> data = (List<Map>) response.getBody().get("data");
             if (!data.isEmpty()) {
                 return (String) data.get(0).get("invoiceUrl");
             }
@@ -153,14 +162,14 @@ public class AsaasService {
         dto.setCustomer(customerId);
         dto.setBillingType("UNDEFINED");
         dto.setValue(valor);
-        dto.setDueDate(java.time.LocalDate.now().toString());
+        dto.setDueDate(LocalDate.now().toString());
         dto.setDescription("Reserva de quadra - ArenaConnect");
 
         AsaasSplitDTO splitArena = new AsaasSplitDTO();
         splitArena.setWalletId(walletIdArena);
         splitArena.setPercentualValue(90.0);
 
-        dto.setSplit(java.util.List.of(splitArena));
+        dto.setSplit(List.of(splitArena));
 
         HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(dto, getHeaders());
         ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url,request, AsaasResponseDTO.class);
@@ -172,6 +181,48 @@ public class AsaasService {
         throw new RuntimeException("Erro ao criar cobrança com split no Asaas");
     }
 
+    // NOVO MÉTODO PARA MENSALIDADES (Sobrecarga)
+    public AsaasResponseDTO createPaymentWithSplit(Double valorTotal, Users user, Arena arena, String descricao, String externalReference) {
+        String url = asaasUrl + "/payments";
+
+        try {
+            // Verifica/Cria cliente no Asaas
+            String asaasCustomerId = user.getAsaasCustomerId();
+            if (asaasCustomerId == null || asaasCustomerId.isEmpty()) {
+                asaasCustomerId = createCustomer(user);
+            }
+
+            AsaasPaymentDTO dto = new AsaasPaymentDTO();
+            dto.setCustomer(asaasCustomerId);
+            dto.setBillingType("PIX"); // Para mensalidade, PIX ou BOLETO geralmente é melhor
+            dto.setValue(valorTotal);
+            dto.setDueDate(LocalDate.now().plusDays(2).toString()); // Vence em 2 dias
+            dto.setDescription(descricao);
+
+            // IMPORTANTE: Adicione o setExternalReference no seu AsaasPaymentDTO se ainda não tiver!
+            dto.setExternalReference(externalReference);
+
+            // Configuração do Split (90% para a Arena, 10% para a Plataforma)
+            AsaasSplitDTO splitArena = new AsaasSplitDTO();
+            splitArena.setWalletId(arena.getAsaasWalletId());
+            splitArena.setPercentualValue(90.0);
+
+            dto.setSplit(List.of(splitArena));
+
+            HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(dto, getHeaders());
+            ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url, request, AsaasResponseDTO.class);
+
+            if (response.getBody() != null) {
+                return response.getBody();
+            }
+
+            throw new RuntimeException("O Asaas retornou corpo nulo ao criar a mensalidade.");
+
+        } catch (Exception e) {
+            throw new AsaasIntegrationException("Erro ao criar pagamento da mensalidade com split: " + e.getMessage());
+        }
+    }
+
     public String getPaymentUrlById(String paymentId) {
         try {
             String url = asaasUrl + "/payments/" + paymentId;
@@ -179,7 +230,7 @@ public class AsaasService {
 
             ResponseEntity<AsaasResponseDTO> response = restTemplate.exchange(
                     url,
-                    org.springframework.http.HttpMethod.GET,
+                    HttpMethod.GET,
                     request,
                     AsaasResponseDTO.class
             );
@@ -200,7 +251,7 @@ public class AsaasService {
             String url = asaasUrl + "/payments/" + paymentId;
             HttpEntity<String> request = new HttpEntity<>(getHeaders());
 
-            restTemplate.exchange(url,org.springframework.http.HttpMethod.DELETE, request, String.class);
+            restTemplate.exchange(url, HttpMethod.DELETE, request, String.class);
         }catch (Exception e) {
             System.err.println("Erro ao cancelar cobrança no Asaas (" + paymentId + "): " + e.getMessage());
 
@@ -255,7 +306,7 @@ public class AsaasService {
     }
 
     private void processarTransacoes(FinanceiroDashboardDTO dashboard) {
-        dashboard.setTransacoes(new java.util.ArrayList<>());
+        dashboard.setTransacoes(new ArrayList<>());
         dashboard.setAReceber(0.0);
         dashboard.setLucroSplit(0.0);
         dashboard.setLucroAssinatura(0.0);

@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,7 +43,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -56,6 +57,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/email/**").permitAll()
 
                         .requestMatchers("/api/chatbot/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/contratos-mensalistas/assinar").hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/contratos-mensalistas/meus-contratos").hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/contratos-mensalistas/cancelar/**").hasAnyAuthority("CLIENTE", "ADMIN")
+                        .requestMatchers("/api/contratos-mensalistas/arena/**").hasAuthority("ADMIN")
 
                         .anyRequest().authenticated()
                 )

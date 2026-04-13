@@ -167,6 +167,10 @@ public class ArenaService {
         } else {
             arena.setDiasFuncionamento("");
         }
+
+        if (dto.getDescontoMensalista() != null) {
+            arena.setDescontoMensalista(dto.getDescontoMensalista());
+        }
         arenaRepository.save(arena);
     }
 

@@ -11,4 +11,5 @@ public class ArenaConfigDTO {
     private LocalTime abertura;
     private LocalTime fechamento;
     private List<String> diasOperacao;
+    private Double descontoMensalista;
 }

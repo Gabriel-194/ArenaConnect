@@ -71,6 +71,23 @@ CREATE TABLE IF NOT EXISTS "{SCHEMA_NAME}".agendamentos
 ) ON DELETE CASCADE
     );
 
+-- Tabela: contratos_mensalistas
+CREATE TABLE IF NOT EXISTS "{SCHEMA_NAME}".contratos_mensalistas
+(
+    id               SERIAL PRIMARY KEY,
+    id_user          INT            NOT NULL,
+    id_quadra        INT            NOT NULL,
+    dia_semana       INT            NOT NULL, -- 1 = Segunda, 7 = Domingo
+    hora_inicio      TIME           NOT NULL,
+    hora_fim         TIME           NOT NULL,
+    valor_pactuado   DECIMAL(10, 2) NOT NULL,
+    status           VARCHAR(50)    DEFAULT 'PENDENTE',
+    ativo            BOOLEAN        DEFAULT TRUE,
+    asaas_payment_id VARCHAR(255),
+    asaas_invoice_url TEXT,
+    CONSTRAINT fk_contrato_quadra FOREIGN KEY (id_quadra) REFERENCES "{SCHEMA_NAME}".quadras (id_quadra)
+    );
+
 
 CREATE INDEX IF NOT EXISTS idx_agendamentos_quadra ON "{SCHEMA_NAME}".agendamentos(id_quadra);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON "{SCHEMA_NAME}".agendamentos(data_inicio, data_fim);

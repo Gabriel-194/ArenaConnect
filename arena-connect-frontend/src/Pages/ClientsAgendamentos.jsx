@@ -11,6 +11,9 @@ export default function ClientAgendamentos(){
     const [loading, setLoading] = useState(true);
     const [editingBooking, setEditingBooking] = useState(null);
 
+    // Estados adicionados para mensalidade
+    const [mensalidades, setMensalidades] = useState([]);
+
     const fetchBookings = async () =>{
         try{
             const response = await axios.get('http://localhost:8080/api/agendamentos/agendamentosClients',{
@@ -24,14 +27,27 @@ export default function ClientAgendamentos(){
         }
     }
 
+    // Função para buscar mensalidades
+    const fetchMensalidades = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/api/contratos-mensalistas/meus-contratos', {
+                withCredentials: true,
+            });
+            setMensalidades(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar mensalidades:", error);
+        }
+    }
 
     useEffect(() => {
         fetchBookings();
+        fetchMensalidades(); // Busca as mensalidades na montagem
 
         const tempoEmMilissegundos = 10000;
 
         const intervalId = setInterval(() => {
             fetchBookings();
+            fetchMensalidades(); // Atualiza as mensalidades a cada 10s também
         }, tempoEmMilissegundos);
 
         return () => clearInterval(intervalId);
@@ -58,6 +74,12 @@ export default function ClientAgendamentos(){
             alert(error.response?.data?.error || "Erro ao cancelar agendamento.");
         }
     }
+
+    // Helper para formatar o dia da semana das mensalidades
+    const formatarDiaSemana = (numero) => {
+        const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+        return dias[numero - 1] || "Dia não definido";
+    };
 
     const getAgendamentosFiltrados = () => {
         const now = new Date();
@@ -172,12 +194,76 @@ export default function ClientAgendamentos(){
                                 onClick={() => setFilterType('history')}>
                                 Histórico
                             </button>
+                            {/* Nova aba de Mensalidades adicionada ao seu menu existente */}
+                            <button
+                                className={`category-pill ${filterType === 'mensalidades' ? 'active' : ''}`}
+                                onClick={() => setFilterType('mensalidades')}>
+                                Minhas Mensalidades
+                            </button>
                         </div>
 
                         <div className="arenas-list">
                             {loading ? (
                                 <p style={{textAlign: 'center', color: '#888'}}>Carregando...</p>
+                            ) : filterType === 'mensalidades' ? (
+                                // --- RENDERIZAÇÃO DAS MENSALIDADES ---
+                                mensalidades.length > 0 ? (
+                                    mensalidades.map((mensal) => (
+                                        <div key={mensal.id} className="mensalidade-card glass-panel">
+                                            <div className="card-content-base">
+                                                <div className="card-main-info" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    <span className="arena-tag" style={{ alignSelf: 'flex-start' }}>Mensalista</span>
+                                                    <h3 style={{ color: '#fff', margin: '0' }}>Contrato #{mensal.id}</h3>
+                                                    <p className="booking-time" style={{ color: '#ccc', margin: '0', fontSize: '0.9rem' }}>
+                                                        {formatarDiaSemana(mensal.diaSemana)} às {mensal.horaInicio}
+                                                    </p>
+                                                    <p className="price-tag" style={{ color: '#00ff7f', margin: '0', fontWeight: 'bold' }}>
+                                                        R$ {mensal.valorPactuado ? mensal.valorPactuado.toFixed(2) : '0.00'}
+                                                    </p>
+                                                </div>
+                                                <div className="card-status-info" style={{ marginTop: '10px' }}>
+                                                    <span className={`status-badge ${getStatusClass(mensal.status)}`}>
+                                                        {mensal.status}
+                                                    </span>
+                                                </div>
+                                                {mensal.status === 'PENDENTE' && mensal.asaasInvoiceUrl && (
+                                                    <button
+                                                        className="btn-pay-neon"
+                                                        style={{ marginTop: '15px' }}
+                                                        onClick={() => window.open(mensal.asaasInvoiceUrl, '_blank')}
+                                                    >Pagar Mensalidade</button>
+                                                )}
+                                            </div>
+
+                                            {/* Efeito Liquid Blur no Hover */}
+                                            <div className="mensalidade-hover-overlay">
+                                                <h4>Agendamentos Vinculados</h4>
+                                                <ul className="hover-agendamentos-list">
+                                                    {bookings
+                                                        .filter(b => b.id_quadra === mensal.idQuadra && (b.status === 'MENSALISTA_CONFIRMADO' || b.status === 'MENSALISTA_PENDENTE'))
+                                                        .slice(0, 4)
+                                                        .map(jogo => (
+                                                            <li key={jogo.id_agendamento} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
+                                                                <span>{new Date(jogo.data_inicio).toLocaleDateString('pt-BR')}</span>
+                                                                <span style={{ color: jogo.status.includes('CONFIRMADO') ? '#00ff7f' : 'orange' }}>
+                                                                {jogo.status.replace('MENSALISTA_', '')}
+                                                            </span>
+                                                            </li>
+                                                        ))}
+                                                    {bookings.filter(b => b.id_quadra === mensal.idQuadra).length === 0 && (
+                                                        <p style={{ fontSize: '0.8rem', color: '#ccc' }}>Nenhum jogo encontrado para este mês.</p>
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div style={{textAlign: 'center', color: '#888', padding: '20px', gridColumn: '1 / -1'}}>
+                                        <p>Você ainda não possui contratos de mensalidade.</p>
+                                    </div>
+                                )
                             ) : (
+                                // --- RENDERIZAÇÃO DOS AGENDAMENTOS ORIGINAIS ---
                                 getAgendamentosFiltrados().length > 0 ? (
                                     getAgendamentosFiltrados().map((booking) => (
                                         <div key={`${booking.id_arena}${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
