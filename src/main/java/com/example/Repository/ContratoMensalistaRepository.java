@@ -1,13 +1,14 @@
 package com.example.Repository;
 
 import com.example.Models.ContratoMensalista;
+import com.example.Repository.Custom.ContratoMensalistaRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface ContratoMensalistaRepository extends JpaRepository<ContratoMensalista, Integer> {
+public interface ContratoMensalistaRepository extends JpaRepository<ContratoMensalista, Integer>, ContratoMensalistaRepositoryCustom {
 
     // Busca contratos de um usuário específico
     List<ContratoMensalista> findByIdUser(Integer idUser);

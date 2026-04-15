@@ -8,6 +8,7 @@ import com.example.Repository.AgendamentoRepository;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.ContratoMensalistaRepository;
 import com.example.Repository.UserRepository;
+import com.example.Service.AsaasService;
 import com.example.Service.ContratoMensalistaService;
 import com.example.Multitenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/contratos-mensalistas")
 public class ContratoMensalistaController {
+    @Autowired
+    private AsaasService asaasService;
 
     @Autowired
     private ContratoMensalistaService contratoService;
@@ -40,10 +43,6 @@ public class ContratoMensalistaController {
     @Autowired
     private ArenaRepository arenaRepository;
 
-    /**
-     * Helper para obter o utilizador logado através do token JWT.
-     * Ajuste conforme a sua implementação exata de segurança.
-     */
     private Users getUsuarioLogado() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
@@ -55,10 +54,10 @@ public class ContratoMensalistaController {
     // ==========================================
 
     @PostMapping("/assinar")
-    @PreAuthorize("hasAnyAuthority('CLIENTE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
     public ResponseEntity<?> assinarMensalidade(@RequestBody Map<String, Object> payload) {
         try {
-            // Extrai os valores do JSON recebido
+            // Lemos os dados a partir do JSON (Body) que o React envia
             Integer idArena = Integer.parseInt(payload.get("idArena").toString());
             Integer idQuadra = Integer.parseInt(payload.get("idQuadra").toString());
             int diaSemana = Integer.parseInt(payload.get("diaSemana").toString());
@@ -69,7 +68,7 @@ public class ContratoMensalistaController {
             Arena arena = arenaRepository.findById(idArena.longValue())
                     .orElseThrow(() -> new RuntimeException("Arena não encontrada"));
 
-            // Força o schema da arena escolhida
+            // Força o schema da arena escolhida para guardar o contrato no lugar certo
             TenantContext.setCurrentTenant(arena.getSchemaName());
 
             ContratoMensalista contrato = contratoService.criarAssinaturaMensalista(
@@ -85,13 +84,11 @@ public class ContratoMensalistaController {
     }
 
     @GetMapping("/meus-contratos")
-    @PreAuthorize("hasAnyAuthority('CLIENTE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'ADMIN')")
     public ResponseEntity<?> getMeusContratos() {
         try {
             Users user = getUsuarioLogado();
-
             var contratos = contratoService.listarMeusContratos(user);
-
             return ResponseEntity.ok(contratos);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "Erro ao buscar contratos: " + e.getMessage()));
@@ -104,26 +101,22 @@ public class ContratoMensalistaController {
     // ==========================================
 
     @GetMapping("/arena")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ContratoMensalista>> getContratosDaArena() {
-        // O TenantFilter já tratou do X-Tenant-ID e apontou para o schema correto da arena do Admin.
         List<ContratoMensalista> contratos = contratoRepository.findByAtivoTrue();
         return ResponseEntity.ok(contratos);
     }
 
     @GetMapping("/arena/{id}/detalhes")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getDetalhesContratoAdmin(@PathVariable Integer id) {
         try {
-            // Busca o contrato no schema da arena
             ContratoMensalista contrato = contratoRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Contrato não encontrado"));
 
-            // Vai ao schema público buscar os dados reais do cliente (Nome, Email)
-            TenantContext.clear(); // Limpa temporariamente para ir ao public
+            TenantContext.clear();
             Users cliente = userRepository.findById(contrato.getIdUser()).orElse(null);
 
-            // Devolve as informações mastigadas para o Hover do Admin (Liquid Blur)
             Map<String, Object> detalhes = new HashMap<>();
             detalhes.put("contrato", contrato);
             detalhes.put("clienteNome", cliente != null ? cliente.getNome() : "Desconhecido");
@@ -136,21 +129,76 @@ public class ContratoMensalistaController {
         }
     }
 
-    // Rota de Cancelamento Manual (Se o Admin ou Cliente quiser quebrar o contrato)
     @PutMapping("/cancelar/{id}")
-    @PreAuthorize("hasAnyAuthority('CLIENTE', 'ADMIN')")
     public ResponseEntity<?> cancelarContrato(@PathVariable Integer id) {
         try {
-            ContratoMensalista contrato = contratoRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Contrato não encontrado"));
+            List<Arena> arenas = arenaRepository.findAll();
+            ContratoMensalista contratoEncontrado = null;
 
-            contrato.setAtivo(false);
-            contrato.setStatus("CANCELADO");
-            contratoRepository.save(contrato);
+            // 1. Busca Inteligente: Procura em qual arena este contrato existe
+            for (Arena arena : arenas) {
+                if (arena.getSchemaName() == null || "public".equals(arena.getSchemaName())) continue;
 
-            return ResponseEntity.ok(Map.of("message", "Contrato cancelado com sucesso. O horário foi libertado para o público."));
+                TenantContext.setCurrentTenant(arena.getSchemaName());
+                java.util.Optional<ContratoMensalista> opt = contratoRepository.findById(id);
+
+                if (opt.isPresent()) {
+                    contratoEncontrado = opt.get();
+                    break; // Encontrou a arena correta!
+                }
+                TenantContext.clear();
+            }
+
+            if (contratoEncontrado == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Contrato não encontrado no sistema."));
+            }
+
+            // 2. Regra de Negócio: Só cancela se não estiver pago (PENDENTE)
+            if (!"PENDENTE".equals(contratoEncontrado.getStatus())) {
+                TenantContext.clear();
+                return ResponseEntity.badRequest().body(Map.of("error", "Apenas mensalidades pendentes podem ser canceladas."));
+            }
+
+            // 3. Cancelamento no Asaas Gateway
+            if (contratoEncontrado.getAsaasPaymentId() != null) {
+                try {
+                    asaasService.cancelarCobranca(contratoEncontrado.getAsaasPaymentId());
+                } catch (Exception e) {
+                    System.err.println("Aviso: Falha ao cancelar cobrança do contrato no Asaas: " + e.getMessage());
+                }
+            }
+
+            // 4. Cancelar o Contrato no Banco de Dados
+            contratoEncontrado.setAtivo(false);
+            contratoEncontrado.setStatus("CANCELADO");
+            contratoRepository.save(contratoEncontrado);
+
+            // 5. Cascata: Cancelar todos os agendamentos (jogos) futuros ligados a este contrato
+            List<Agendamentos> todosAgendamentos = agendamentoRepository.findAll();
+            for (Agendamentos ag : todosAgendamentos) {
+                // Filtra os jogos que são desta quadra, deste usuário e que são "MENSALISTAS"
+                if (ag.getId_user().equals(contratoEncontrado.getIdUser()) &&
+                        ag.getId_quadra().equals(contratoEncontrado.getIdQuadra()) &&
+                        ag.getStatus() != null && ag.getStatus().startsWith("MENSALISTA_") &&
+                        !ag.getStatus().equals("CANCELADO") && !ag.getStatus().equals("FINALIZADO")) {
+
+                    ag.setStatus("CANCELADO");
+                    agendamentoRepository.save(ag);
+
+                    // Se o jogo gerou uma fatura separada no Asaas, cancela também
+                    if (ag.getAsaasPaymentId() != null && !ag.getAsaasPaymentId().equals(contratoEncontrado.getAsaasPaymentId())) {
+                        try { asaasService.cancelarCobranca(ag.getAsaasPaymentId()); }
+                        catch (Exception ignored) {}
+                    }
+                }
+            }
+
+            return ResponseEntity.ok(Map.of("message", "Contrato e jogos vinculados cancelados com sucesso."));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } finally {
+            TenantContext.clear();
         }
     }
 }

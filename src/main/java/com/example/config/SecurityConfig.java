@@ -57,10 +57,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/email/**").permitAll()
 
                         .requestMatchers("/api/chatbot/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/contratos-mensalistas/assinar").hasAnyAuthority("CLIENTE", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/contratos-mensalistas/meus-contratos").hasAnyAuthority("CLIENTE", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/contratos-mensalistas/cancelar/**").hasAnyAuthority("CLIENTE", "ADMIN")
-                        .requestMatchers("/api/contratos-mensalistas/arena/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/contratos-mensalistas/assinar").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/contratos-mensalistas/meus-contratos").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/contratos-mensalistas/cancelar/**").hasAnyRole("CLIENTE", "ADMIN")
+                        .requestMatchers("/api/contratos-mensalistas/arena/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )

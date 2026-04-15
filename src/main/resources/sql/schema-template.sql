@@ -91,3 +91,4 @@ CREATE TABLE IF NOT EXISTS "{SCHEMA_NAME}".contratos_mensalistas
 
 CREATE INDEX IF NOT EXISTS idx_agendamentos_quadra ON "{SCHEMA_NAME}".agendamentos(id_quadra);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON "{SCHEMA_NAME}".agendamentos(data_inicio, data_fim);
+CREATE INDEX idx_contratos_id_user ON {SCHEMA_NAME}.contratos_mensalistas (id_user);

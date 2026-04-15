@@ -1,10 +1,16 @@
 package com.example.Models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "contratos_mensalistas")
+@Setter
+@Getter
 public class ContratoMensalista {
 
     @Id
@@ -39,40 +45,28 @@ public class ContratoMensalista {
     @Column(name = "asaas_invoice_url")
     private String asaasInvoiceUrl;
 
+    @Transient
+    private Integer idArena;
+
+    @Transient
+    private String arenaName;
+
+    @Transient
+    private Boolean temDesconto;
+
     // Construtor vazio obrigatório do JPA
     public ContratoMensalista() {}
 
-    // --- GETTERS E SETTERS ---
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ContratoMensalista that = (ContratoMensalista) o;
+        return Objects.equals(id, that.id) && Objects.equals(idArena, that.idArena);
+    }
 
-    public Integer getIdUser() { return idUser; }
-    public void setIdUser(Integer idUser) { this.idUser = idUser; }
-
-    public Integer getIdQuadra() { return idQuadra; }
-    public void setIdQuadra(Integer idQuadra) { this.idQuadra = idQuadra; }
-
-    public Integer getDiaSemana() { return diaSemana; }
-    public void setDiaSemana(Integer diaSemana) { this.diaSemana = diaSemana; }
-
-    public LocalTime getHoraInicio() { return horaInicio; }
-    public void setHoraInicio(LocalTime horaInicio) { this.horaInicio = horaInicio; }
-
-    public LocalTime getHoraFim() { return horaFim; }
-    public void setHoraFim(LocalTime horaFim) { this.horaFim = horaFim; }
-
-    public Double getValorPactuado() { return valorPactuado; }
-    public void setValorPactuado(Double valorPactuado) { this.valorPactuado = valorPactuado; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public Boolean getAtivo() { return ativo; }
-    public void setAtivo(Boolean ativo) { this.ativo = ativo; }
-
-    public String getAsaasPaymentId() { return asaasPaymentId; }
-    public void setAsaasPaymentId(String asaasPaymentId) { this.asaasPaymentId = asaasPaymentId; }
-
-    public String getAsaasInvoiceUrl() { return asaasInvoiceUrl; }
-    public void setAsaasInvoiceUrl(String asaasInvoiceUrl) { this.asaasInvoiceUrl = asaasInvoiceUrl; }
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, idArena);
+    }
 }

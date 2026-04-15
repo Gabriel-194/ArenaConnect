@@ -194,7 +194,7 @@ public class AsaasService {
 
             AsaasPaymentDTO dto = new AsaasPaymentDTO();
             dto.setCustomer(asaasCustomerId);
-            dto.setBillingType("PIX"); // Para mensalidade, PIX ou BOLETO geralmente é melhor
+            dto.setBillingType("UNDEFINED");
             dto.setValue(valorTotal);
             dto.setDueDate(LocalDate.now().plusDays(2).toString()); // Vence em 2 dias
             dto.setDescription(descricao);

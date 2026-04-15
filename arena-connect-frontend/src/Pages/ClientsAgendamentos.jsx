@@ -1,6 +1,6 @@
 import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
-import {useEffect, useState} from "react";
+import {useEffect, useState, useCallback} from "react";
 import axios from "axios";
 import "../Styles/ClientsAgendamentos.css"
 import ModalBooking from "../Components/ModalBooking.jsx";
@@ -10,6 +10,9 @@ export default function ClientAgendamentos(){
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [editingBooking, setEditingBooking] = useState(null);
+    // Estados para a Tooltip flutuante de Mensalidades
+    const [hoveredMensalidade, setHoveredMensalidade] = useState(null);
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     // Estados adicionados para mensalidade
     const [mensalidades, setMensalidades] = useState([]);
@@ -39,19 +42,8 @@ export default function ClientAgendamentos(){
         }
     }
 
-    useEffect(() => {
-        fetchBookings();
-        fetchMensalidades(); // Busca as mensalidades na montagem
-
-        const tempoEmMilissegundos = 10000;
-
-        const intervalId = setInterval(() => {
-            fetchBookings();
-            fetchMensalidades(); // Atualiza as mensalidades a cada 10s também
-        }, tempoEmMilissegundos);
-
-        return () => clearInterval(intervalId);
-    }, []);
+    // Os dados são carregados no onMount via refreshData().
+    // A mudança de aba (filterType) apenas alterna a visualização, sem refetch.
 
     const handleCancelBooking = async (idAgendamento, idArena) => {
         if (!confirm("Tem certeza que deseja cancelar este agendamento?")) return;
@@ -74,8 +66,28 @@ export default function ClientAgendamentos(){
             alert(error.response?.data?.error || "Erro ao cancelar agendamento.");
         }
     }
+    const handleCancelMensalidade = async (idContrato, status) => {
+        if (status !== 'PENDENTE') {
+            alert("Apenas contratos pendentes podem ser cancelados.");
+            return;
+        }
 
-    // Helper para formatar o dia da semana das mensalidades
+        if (!confirm("Tem certeza que deseja cancelar esta mensalidade? Todos os jogos vinculados no mês serão cancelados irreversivelmente.")) return;
+
+        try {
+            await axios.put(`http://localhost:8080/api/contratos-mensalistas/cancelar/${idContrato}`, {}, {
+                withCredentials: true
+            });
+
+            alert("Mensalidade cancelada com sucesso!");
+            refreshData(); // Recarrega a tela para sumir o botão
+
+        } catch (error) {
+            console.error("Erro ao cancelar mensalidade:", error);
+            alert(error.response?.data?.error || "Erro ao cancelar a mensalidade.");
+        }
+    };
+
     const formatarDiaSemana = (numero) => {
         const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
         return dias[numero - 1] || "Dia não definido";
@@ -123,6 +135,21 @@ export default function ClientAgendamentos(){
         if(!dateString) return '--:--';
         return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     };
+
+    const refreshData = useCallback(async () => {
+        setLoading(true);
+        // O Promise.all dispara as duas buscas em paralelo no frontend
+        await Promise.all([
+            fetchBookings(),
+            fetchMensalidades()
+        ]);
+        setLoading(false);
+    }, []);
+
+    // Carrega tudo apenas UMA VEZ quando entra na tela (onMount)
+    useEffect(() => {
+        refreshData();
+    }, [refreshData]);
 
     return (
         <div className="client-body">
@@ -194,7 +221,6 @@ export default function ClientAgendamentos(){
                                 onClick={() => setFilterType('history')}>
                                 Histórico
                             </button>
-                            {/* Nova aba de Mensalidades adicionada ao seu menu existente */}
                             <button
                                 className={`category-pill ${filterType === 'mensalidades' ? 'active' : ''}`}
                                 onClick={() => setFilterType('mensalidades')}>
@@ -207,18 +233,46 @@ export default function ClientAgendamentos(){
                                 <p style={{textAlign: 'center', color: '#888'}}>Carregando...</p>
                             ) : filterType === 'mensalidades' ? (
                                 // --- RENDERIZAÇÃO DAS MENSALIDADES ---
+                                // --- RENDERIZAÇÃO DAS MENSALIDADES ---
                                 mensalidades.length > 0 ? (
-                                    mensalidades.map((mensal) => (
-                                        <div key={mensal.id} className="mensalidade-card glass-panel">
+                                    mensalidades.map((mensal, mIndex) => (
+                                        <div
+                                            key={`mensal-${mensal.id}-${mIndex}`}
+                                            className="mensalidade-card glass-panel"
+                                            // Eventos para o mini-modal (tooltip)
+                                            onMouseEnter={(e) => {
+                                                setHoveredMensalidade(mensal);
+                                                setMousePos({ x: e.clientX, y: e.clientY });
+                                            }}
+                                            onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
+                                            onMouseLeave={() => setHoveredMensalidade(null)}
+                                            style={{ position: 'relative', zIndex: 1 }} // Garante que a z-index não atrapalha
+                                        >
                                             <div className="card-content-base">
                                                 <div className="card-main-info" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                                                     <span className="arena-tag" style={{ alignSelf: 'flex-start' }}>Mensalista</span>
                                                     <h3 style={{ color: '#fff', margin: '0' }}>Contrato #{mensal.id}</h3>
-                                                    <p className="booking-time" style={{ color: '#ccc', margin: '0', fontSize: '0.9rem' }}>
-                                                        {formatarDiaSemana(mensal.diaSemana)} às {mensal.horaInicio}
+
+                                                    {/* 🟢 NOVA LINHA: Dia da Semana em Destaque */}
+                                                    <div style={{
+                                                        background: 'rgba(0, 255, 127, 0.1)',
+                                                        borderLeft: '3px solid #00ff7f',
+                                                        padding: '4px 8px',
+                                                        marginTop: '5px',
+                                                        borderRadius: '0 4px 4px 0',
+                                                        display: 'inline-block',
+                                                        alignSelf: 'flex-start'
+                                                    }}>
+                                                        <span style={{ color: '#00ff7f', fontWeight: 'bold', fontSize: '0.85rem' }}>
+                                                            Toda {formatarDiaSemana(mensal.diaSemana)}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="booking-time" style={{ color: '#ccc', margin: '5px 0 0 0', fontSize: '0.9rem' }}>
+                                                        Horário: {mensal.horaInicio} às {mensal.horaFim}
                                                     </p>
-                                                    <p className="price-tag" style={{ color: '#00ff7f', margin: '0', fontWeight: 'bold' }}>
-                                                        R$ {mensal.valorPactuado ? mensal.valorPactuado.toFixed(2) : '0.00'}
+                                                    <p className="price-tag" style={{ color: '#00ff7f', margin: '5px 0 0 0', fontWeight: 'bold' }}>
+                                                        R$ {mensal.valorPactuado ? mensal.valorPactuado.toFixed(2) : '0.00'} <span style={{fontSize: '0.7rem', color: '#aaa', fontWeight: 'normal'}}>/ mês</span>
                                                     </p>
                                                 </div>
                                                 <div className="card-status-info" style={{ marginTop: '10px' }}>
@@ -226,35 +280,40 @@ export default function ClientAgendamentos(){
                                                         {mensal.status}
                                                     </span>
                                                 </div>
-                                                {mensal.status === 'PENDENTE' && mensal.asaasInvoiceUrl && (
-                                                    <button
-                                                        className="btn-pay-neon"
-                                                        style={{ marginTop: '15px' }}
-                                                        onClick={() => window.open(mensal.asaasInvoiceUrl, '_blank')}
-                                                    >Pagar Mensalidade</button>
+
+                                                {/* Botões protegidos: stopPropagation impede que o clique dispare eventos não desejados */}
+                                                {mensal.status === 'PENDENTE' && (
+                                                    <div
+                                                        style={{ display: 'flex', gap: '10px', marginTop: '15px', position: 'relative', zIndex: 10 }}
+                                                        onMouseEnter={() => setHoveredMensalidade(null)} // Esconde tooltip quando passa nos botões
+                                                    >
+                                                        {mensal.asaasInvoiceUrl && (
+                                                            <button
+                                                                className="btn-pay-neon"
+                                                                style={{ flex: 1, margin: 0, padding: '10px' }}
+                                                                onClick={(e) => { e.stopPropagation(); window.open(mensal.asaasInvoiceUrl, '_blank'); }}
+                                                            >
+                                                                Pagar
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            className="btn-cancel"
+                                                            style={{
+                                                                flex: 1, padding: '10px', background: 'transparent',
+                                                                border: '1px solid #fa1515', color: '#fa1515',
+                                                                borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold',
+                                                                transition: 'all 0.3s'
+                                                            }}
+                                                            onMouseOver={(e) => e.target.style.background = 'rgba(250, 21, 21, 0.1)'}
+                                                            onMouseOut={(e) => e.target.style.background = 'transparent'}
+                                                            onClick={(e) => { e.stopPropagation(); handleCancelMensalidade(mensal.id, mensal.status); }}
+                                                        >
+                                                            Cancelar
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
-
-                                            {/* Efeito Liquid Blur no Hover */}
-                                            <div className="mensalidade-hover-overlay">
-                                                <h4>Agendamentos Vinculados</h4>
-                                                <ul className="hover-agendamentos-list">
-                                                    {bookings
-                                                        .filter(b => b.id_quadra === mensal.idQuadra && (b.status === 'MENSALISTA_CONFIRMADO' || b.status === 'MENSALISTA_PENDENTE'))
-                                                        .slice(0, 4)
-                                                        .map(jogo => (
-                                                            <li key={jogo.id_agendamento} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-                                                                <span>{new Date(jogo.data_inicio).toLocaleDateString('pt-BR')}</span>
-                                                                <span style={{ color: jogo.status.includes('CONFIRMADO') ? '#00ff7f' : 'orange' }}>
-                                                                {jogo.status.replace('MENSALISTA_', '')}
-                                                            </span>
-                                                            </li>
-                                                        ))}
-                                                    {bookings.filter(b => b.id_quadra === mensal.idQuadra).length === 0 && (
-                                                        <p style={{ fontSize: '0.8rem', color: '#ccc' }}>Nenhum jogo encontrado para este mês.</p>
-                                                    )}
-                                                </ul>
-                                            </div>
+                                            {/* (Removemos a div "mensalidade-hover-overlay" daqui. Ela vai ser renderizada fora) */}
                                         </div>
                                     ))
                                 ) : (
@@ -265,8 +324,9 @@ export default function ClientAgendamentos(){
                             ) : (
                                 // --- RENDERIZAÇÃO DOS AGENDAMENTOS ORIGINAIS ---
                                 getAgendamentosFiltrados().length > 0 ? (
-                                    getAgendamentosFiltrados().map((booking) => (
-                                        <div key={`${booking.id_arena}${booking.id_agendamento}`} className="arena-card glass-panel booking-card">
+                                    // 🟢 CORREÇÃO DA KEY AQUI
+                                    getAgendamentosFiltrados().map((booking, bIndex) => (
+                                        <div key={`booking-${booking.id_arena}-${booking.id_agendamento}-${bIndex}`} className="arena-card glass-panel booking-card">
                                             <div className="liquid-glow"></div>
 
                                             <div className="booking-header-row">
@@ -350,12 +410,56 @@ export default function ClientAgendamentos(){
 
             <ClientNav active="agendamentos" />
 
+            {/* O Modal Normal (já estava cá) */}
             {editingBooking && (
                 <ModalBooking
                     bookingToEdit={editingBooking}
                     onClose={() => setEditingBooking(null)}
-                    onSuccess={fetchBookings}
+                    onSuccess={refreshData}
                 />
+            )}
+
+            {/* 🟢 NOVO: O Mini Modal Flutuante (Tooltip) */}
+            {hoveredMensalidade && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: mousePos.y + 15, // 15px abaixo do cursor
+                        left: mousePos.x + 15, // 15px à direita do cursor
+                        background: 'rgba(20, 20, 20, 0.95)',
+                        border: '1px solid #4ade80',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                        pointerEvents: 'none', // IMPORTANTE: O rato ignora a tooltip para não bloquear os cliques
+                        zIndex: 9999, // Fica por cima de tudo
+                        minWidth: '220px'
+                    }}
+                >
+                    <h4 style={{ color: '#4ade80', margin: '0 0 10px 0', fontSize: '0.85rem' }}>Jogos Vinculados (Este Mês)</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {bookings
+                            .filter(b => b.id_quadra === hoveredMensalidade.idQuadra && b.status?.includes('MENSALISTA'))
+                            .slice(0, 4)
+                            .map((jogo, jIndex) => {
+                                const dataJogo = new Date(jogo.data_inicio);
+                                return (
+                                    <li key={`tooltip-jogo-${jIndex}`} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}>
+                                        <span style={{ color: '#fff', fontSize: '0.8rem' }}>
+                                            {dataJogo.toLocaleDateString('pt-BR')}
+                                            <span style={{ color: '#aaa', fontSize: '0.7rem', marginLeft: '5px' }}>({formatarDiaSemana(dataJogo.getDay() || 7)})</span>
+                                        </span>
+                                        <span style={{ color: jogo.status.includes('CONFIRMADO') ? '#00ff7f' : 'orange', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                            {jogo.status.replace('MENSALISTA_', '')}
+                                        </span>
+                                    </li>
+                                );
+                            })}
+                        {bookings.filter(b => b.id_quadra === hoveredMensalidade.idQuadra && b.status?.includes('MENSALISTA')).length === 0 && (
+                            <p style={{ fontSize: '0.75rem', color: '#888', margin: 0, fontStyle: 'italic' }}>Nenhum jogo confirmado ainda.</p>
+                        )}
+                    </ul>
+                </div>
             )}
         </div>
     );

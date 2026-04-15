@@ -14,6 +14,10 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 public class ContratoMensalistaService {
@@ -90,11 +94,11 @@ public class ContratoMensalistaService {
         return contratoRepository.save(contrato);
     }
 
-    public java.util.List<ContratoMensalista> listarMeusContratos(Users user) {
-        java.util.List<ContratoMensalista> todosContratos = new java.util.ArrayList<>();
+    public List<ContratoMensalista> listarMeusContratos(Users user) {
+        List<Arena> arenas = arenaRepository.findAll();
 
-        // Pega todas as arenas para iterar pelos schemas
-        java.util.List<Arena> arenas = arenaRepository.findAll();
+        // Usa LinkedHashSet para deduplicar contratos (equals/hashCode consideram id + idArena)
+        Set<ContratoMensalista> contratosUnicos = new LinkedHashSet<>();
 
         for (Arena arena : arenas) {
             if (!arena.isAtivo() || arena.getSchemaName() == null || "public".equals(arena.getSchemaName())) {
@@ -102,22 +106,23 @@ public class ContratoMensalistaService {
             }
 
             try {
-                // Muda para o schema da arena atual
-                com.example.Multitenancy.TenantContext.setCurrentTenant(arena.getSchemaName());
+                // Usa o método custom que faz SET search_path TO antes da query
+                List<ContratoMensalista> contratosArena = contratoRepository.findByIdUserComSchema(
+                        user.getIdUser(), arena.getSchemaName()
+                );
 
-                // Busca os contratos do usuário nesta arena
-                java.util.List<ContratoMensalista> contratosArena = contratoRepository.findByIdUser(user.getIdUser());
+                for (ContratoMensalista contrato : contratosArena) {
+                    // Preenche os campos transientes para o frontend saber de qual arena vem
+                    contrato.setIdArena(arena.getId());
+                    contrato.setArenaName(arena.getName());
+                    contratosUnicos.add(contrato);
+                }
 
-                todosContratos.addAll(contratosArena);
             } catch (Exception e) {
-                // Se der erro (ex: tabela ainda não existe nesta arena), apenas ignora e vai para a próxima
-                System.err.println("Aviso: Não foi possível buscar contratos na arena " + arena.getName() + " - " + e.getMessage());
-            } finally {
-                // Limpa o contexto para a próxima iteração
-                com.example.Multitenancy.TenantContext.clear();
+                System.err.println("Aviso: Falha ao buscar na arena " + arena.getName() + " - " + e.getMessage());
             }
         }
 
-        return todosContratos;
+        return new ArrayList<>(contratosUnicos);
     }
 }
