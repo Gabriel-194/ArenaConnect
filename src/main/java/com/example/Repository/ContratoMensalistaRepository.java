@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ContratoMensalistaRepository extends JpaRepository<ContratoMensalista, Integer>, ContratoMensalistaRepositoryCustom {
@@ -18,4 +19,6 @@ public interface ContratoMensalistaRepository extends JpaRepository<ContratoMens
 
     // Busca contratos pelo status (ex: PENDENTE)
     List<ContratoMensalista> findByStatus(String status);
+
+    Optional<ContratoMensalista> findByAsaasPaymentId(String asaasPaymentId);
 }

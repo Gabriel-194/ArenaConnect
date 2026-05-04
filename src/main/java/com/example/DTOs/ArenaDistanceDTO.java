@@ -20,5 +20,6 @@ public class ArenaDistanceDTO {
     private Double distanceKm;
     private String horaInicio;
     private String horaFim;
+    private Double descontoMensalista;
 
 }

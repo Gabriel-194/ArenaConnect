@@ -56,8 +56,8 @@ export default function Dashboard() {
                 if (Array.isArray(data)) {
                     const counts = data.reduce((acc, curr) => {
                         const s = curr.status ? curr.status.toUpperCase() : '';
-                        if (s === 'CONFIRMADO') acc.confirmados++;
-                        else if (s === 'PENDENTE') acc.pendentes++;
+                        if (s.includes('CONFIRMADO')) acc.confirmados++;
+                        else if (s.includes('PENDENTE')) acc.pendentes++;
                         else if (s === 'FINALIZADO') acc.finalizados++;
                         else if (s === 'CANCELADO') acc.cancelados++;
                         return acc;

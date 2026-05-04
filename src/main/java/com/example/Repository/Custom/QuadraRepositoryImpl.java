@@ -22,6 +22,10 @@ public class QuadraRepositoryImpl implements QuadraRepositoryCustom {
 
     private void definirSchema(String schema) {
         if (schema == null || schema.isEmpty()) schema = "public";
+        // 🔧 Segurança: Valida que o schema contém apenas caracteres alfanuméricos e underscore
+        if (!schema.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Nome de schema inválido: " + schema);
+        }
         entityManager.createNativeQuery("SET search_path TO " + schema).executeUpdate();
     }
 

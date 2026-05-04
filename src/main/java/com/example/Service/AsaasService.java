@@ -35,10 +35,14 @@ public class AsaasService {
     @Value("${asaas.api.key}")
     private String apiKey;
 
+    @Value("${asaas.master.wallet.id:}")
+    private String masterWalletId;
+
     @Autowired
     private UserRepository userRepository;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private static final double PERCENTUAL_SPLIT_ARENA = 90.0;
 
     public String createCustomer(Users user) {
         String url = asaasUrl + "/customers";
@@ -165,11 +169,7 @@ public class AsaasService {
         dto.setDueDate(LocalDate.now().toString());
         dto.setDescription("Reserva de quadra - ArenaConnect");
 
-        AsaasSplitDTO splitArena = new AsaasSplitDTO();
-        splitArena.setWalletId(walletIdArena);
-        splitArena.setPercentualValue(90.0);
-
-        dto.setSplit(List.of(splitArena));
+        dto.setSplit(List.of(criarSplitArena(walletIdArena)));
 
         HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(dto, getHeaders());
         ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url,request, AsaasResponseDTO.class);
@@ -186,10 +186,14 @@ public class AsaasService {
         String url = asaasUrl + "/payments";
 
         try {
+            validarWalletSplitArena(arena.getAsaasWalletId());
+
             // Verifica/Cria cliente no Asaas
             String asaasCustomerId = user.getAsaasCustomerId();
             if (asaasCustomerId == null || asaasCustomerId.isEmpty()) {
                 asaasCustomerId = createCustomer(user);
+                user.setAsaasCustomerId(asaasCustomerId);
+                userRepository.save(user);
             }
 
             AsaasPaymentDTO dto = new AsaasPaymentDTO();
@@ -203,11 +207,7 @@ public class AsaasService {
             dto.setExternalReference(externalReference);
 
             // Configuração do Split (90% para a Arena, 10% para a Plataforma)
-            AsaasSplitDTO splitArena = new AsaasSplitDTO();
-            splitArena.setWalletId(arena.getAsaasWalletId());
-            splitArena.setPercentualValue(90.0);
-
-            dto.setSplit(List.of(splitArena));
+            dto.setSplit(List.of(criarSplitArena(arena.getAsaasWalletId())));
 
             HttpEntity<AsaasPaymentDTO> request = new HttpEntity<>(dto, getHeaders());
             ResponseEntity<AsaasResponseDTO> response = restTemplate.postForEntity(url, request, AsaasResponseDTO.class);
@@ -221,6 +221,27 @@ public class AsaasService {
         } catch (Exception e) {
             throw new AsaasIntegrationException("Erro ao criar pagamento da mensalidade com split: " + e.getMessage());
         }
+    }
+
+    public void validarWalletSplitArena(String walletIdArena) {
+        if (walletIdArena == null || walletIdArena.isBlank()) {
+            throw new IllegalArgumentException("Arena nao configurada para receber split Asaas.");
+        }
+
+        String walletNormalizada = walletIdArena.trim();
+        if (masterWalletId != null && !masterWalletId.isBlank()
+                && walletNormalizada.equals(masterWalletId.trim())) {
+            throw new IllegalArgumentException("Split invalido: a wallet da arena nao pode ser a carteira principal.");
+        }
+    }
+
+    private AsaasSplitDTO criarSplitArena(String walletIdArena) {
+        validarWalletSplitArena(walletIdArena);
+
+        AsaasSplitDTO splitArena = new AsaasSplitDTO();
+        splitArena.setWalletId(walletIdArena.trim());
+        splitArena.setPercentualValue(PERCENTUAL_SPLIT_ARENA);
+        return splitArena;
     }
 
     public String getPaymentUrlById(String paymentId) {

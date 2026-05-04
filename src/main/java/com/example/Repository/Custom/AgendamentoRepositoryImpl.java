@@ -4,14 +4,11 @@ import com.example.DTOs.AgendamentoDashboardDTO;
 import com.example.DTOs.FaturamentoDTO;
 import com.example.DTOs.MovimentacaoDTO;
 import com.example.Models.Agendamentos;
-import com.example.Models.Quadra;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.repository.query.Param;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +27,18 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * 🔧 Otimização de Segurança: Validação de schema para prevenir SQL Injection.
+     * O schema é validado com regex antes de ser concatenado na query.
+     */
     private void definirSchema(String schema) {
         if (schema == null || schema.isEmpty()) schema = "public";
+
+        // 🔧 Segurança: Valida que o schema contém apenas caracteres alfanuméricos e underscore
+        if (!schema.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Nome de schema inválido: " + schema);
+        }
+
         entityManager.createNativeQuery("SET search_path TO " + schema).executeUpdate();
     }
 
@@ -110,14 +117,20 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(AgendamentoDashboardDTO.class));
     }
 
+    /**
+     * 🔧 Otimização de Segurança: Usa parâmetros preparados ao invés de concatenação de IDs.
+     * Antes: String concatenation vulnerável a SQL injection.
+     * Agora: Usa JPQL com parâmetro IN clause.
+     */
     @Override
     public void finalizarAgendamentosPorIds(List<Integer> ids, String schema) {
         if (ids == null || ids.isEmpty()) return;
 
         definirSchema(schema);
-        String idsStr = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
-        String sql = "UPDATE agendamentos SET status = 'FINALIZADO' WHERE id_agendamento IN (" + idsStr + ")";
-        entityManager.createNativeQuery(sql).executeUpdate();
+        String jpql = "UPDATE Agendamentos a SET a.status = 'FINALIZADO' WHERE a.id_agendamento IN :ids";
+        entityManager.createQuery(jpql)
+                .setParameter("ids", ids)
+                .executeUpdate();
     }
 
     @Override
@@ -125,13 +138,19 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         if (ids == null || ids.isEmpty()) return;
 
         definirSchema(schema);
-        String idsStr = ids.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
-        String sql = "UPDATE agendamentos SET status = 'CANCELADO' WHERE id_agendamento IN (" + idsStr + ")";
-        entityManager.createNativeQuery(sql).executeUpdate();
+        String jpql = "UPDATE Agendamentos a SET a.status = 'CANCELADO' WHERE a.id_agendamento IN :ids";
+        entityManager.createQuery(jpql)
+                .setParameter("ids", ids)
+                .executeUpdate();
     }
 
     @Override
     public List<FaturamentoDTO> findFaturamentoAnual(String schema, int ano) {
+        // 🔧 Segurança: Schema validado via definirSchema()
+        if (!schema.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Nome de schema inválido: " + schema);
+        }
+
         String sql = "SELECT EXTRACT(MONTH FROM a.data_inicio) as mes, SUM(a.valor_total) as total " +
                 "FROM " + schema + ".agendamentos a " +
                 "WHERE a.status IN ('FINALIZADO', 'CONFIRMADO') " +
@@ -205,7 +224,3 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
         });
     }
 }
-
-
-
-

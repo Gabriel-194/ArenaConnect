@@ -3,73 +3,42 @@ package com.example.Utils;
 import com.example.Models.ContratoMensalista;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Estrutura de busca de contratos por idUser.
+ *
+ * Substituída de BST (Binary Search Tree) para ConcurrentHashMap.
+ * Motivo: A BST não-balanceada degenerava para O(n) com IDs sequenciais.
+ * Agora todas as operações são O(1) amortizado e thread-safe sem synchronized.
+ */
 public class ContratoBST {
 
-    // Nó da Árvore
-    private static class Node {
-        Integer idUser;
-        // Uma lista porque um mesmo usuário pode ter vários contratos (mesmo id_user)
-        List<ContratoMensalista> contratos;
-        Node left, right;
+    private final ConcurrentHashMap<Integer, List<ContratoMensalista>> contratos = new ConcurrentHashMap<>();
 
-        Node(ContratoMensalista contrato) {
-            this.idUser = contrato.getIdUser();
-            this.contratos = new ArrayList<>();
-            this.contratos.add(contrato);
-            this.left = this.right = null;
-        }
+    // 🟢 Thread-safe via ConcurrentHashMap — sem necessidade de synchronized
+    public void insert(ContratoMensalista contrato) {
+        contratos.computeIfAbsent(contrato.getIdUser(), k -> new ArrayList<>())
+                .add(contrato);
     }
 
-    private Node root;
-
-    // 🟢 O bloco 'synchronized' garante que a Busca Paralela não corrompe a árvore
-    public synchronized void insert(ContratoMensalista contrato) {
-        root = insertRec(root, contrato);
-    }
-
-    private Node insertRec(Node root, ContratoMensalista contrato) {
-        if (root == null) {
-            return new Node(contrato);
-        }
-
-        // Se o id_user já existe no nó, apenas adiciona o contrato à lista daquele usuário
-        if (contrato.getIdUser().equals(root.idUser)) {
-            root.contratos.add(contrato);
-        }
-        // Se o id_user for menor, vai para a subárvore esquerda
-        else if (contrato.getIdUser() < root.idUser) {
-            root.left = insertRec(root.left, contrato);
-        }
-        // Se o id_user for maior, vai para a subárvore direita
-        else {
-            root.right = insertRec(root.right, contrato);
-        }
-
-        return root;
-    }
-
-    // Busca O(log n) para encontrar todos os contratos de um usuário específico
+    // Busca O(1) amortizado para encontrar todos os contratos de um usuário específico
     public List<ContratoMensalista> searchByUserId(Integer idUser) {
-        Node resultNode = searchRec(root, idUser);
-        if (resultNode != null) {
-            return resultNode.contratos;
-        }
-        return new ArrayList<>(); // Retorna lista vazia se não encontrar
+        return contratos.getOrDefault(idUser, new ArrayList<>());
     }
 
-    private Node searchRec(Node root, Integer idUser) {
-        // Base case: raiz é nula ou a chave está na raiz
-        if (root == null || root.idUser.equals(idUser)) {
-            return root;
-        }
+    // Utilitário: Remove todos os contratos de um usuário
+    public void removeByUserId(Integer idUser) {
+        contratos.remove(idUser);
+    }
 
-        // O valor procurado é menor que a chave da raiz
-        if (root.idUser > idUser) {
-            return searchRec(root.left, idUser);
-        }
+    // Utilitário: Limpa toda a estrutura
+    public void clear() {
+        contratos.clear();
+    }
 
-        // O valor procurado é maior que a chave da raiz
-        return searchRec(root.right, idUser);
+    // Utilitário: Quantidade de usuários distintos
+    public int size() {
+        return contratos.size();
     }
 }

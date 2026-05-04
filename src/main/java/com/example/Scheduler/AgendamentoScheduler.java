@@ -7,7 +7,6 @@ import com.example.Repository.ArenaRepository;
 import com.example.Repository.HistoricoRepository;
 import com.example.Service.AsaasService;
 import com.example.Service.NotificacaoService;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,30 +47,31 @@ public class AgendamentoScheduler {
 
         if (vencidosGlobal.isEmpty()) return;
 
-        Map<Integer, List<Integer>> gamesSchema = vencidosGlobal.stream()
+        // 🔧 Otimização: Agrupa por arena uma única vez — O(V)
+        // O Map já contém tanto IDs quanto os objetos, eliminando re-filtros O(V) por arena
+        Map<Integer, List<AgendamentoHistorico>> porArena = vencidosGlobal.stream()
                 .filter(a -> a.getId_arena() != null)
                 .filter(a -> a.getIdAgendamento() != null)
-                .collect(Collectors.groupingBy(
-                        AgendamentoHistorico::getId_arena,
-                        Collectors.mapping(AgendamentoHistorico::getIdAgendamento,Collectors.toList())
-                ));
+                .collect(Collectors.groupingBy(AgendamentoHistorico::getId_arena));
 
-        for (Map.Entry<Integer,List<Integer>> entry : gamesSchema.entrySet()){
+        for (Map.Entry<Integer, List<AgendamentoHistorico>> entry : porArena.entrySet()) {
             Integer id_Arena = entry.getKey();
-            List<Integer> idsParaFinalizar = entry.getValue();
+            List<AgendamentoHistorico> agendamentosDestaArena = entry.getValue();
 
-            if(id_Arena == null || id_Arena.equals(0)) continue;
+            // 🔧 Extrai IDs direto do agrupamento — O(1) lookup ao invés de O(V) filtro
+            List<Integer> idsParaFinalizar = agendamentosDestaArena.stream()
+                    .map(AgendamentoHistorico::getIdAgendamento)
+                    .collect(Collectors.toList());
 
-            try{
+            if (id_Arena == null || id_Arena.equals(0)) continue;
+
+            try {
                 String schema = arenaRepository.findSchemaNameById(id_Arena.longValue());
                 TenantContext.setCurrentTenant(schema);
 
-                agendamentoRepository.finalizarAgendamentosPorIds(idsParaFinalizar,schema);
+                agendamentoRepository.finalizarAgendamentosPorIds(idsParaFinalizar, schema);
 
-                List<AgendamentoHistorico> agendamentosDestaArena = vencidosGlobal.stream()
-                        .filter(a -> id_Arena.equals(a.getId_arena()))
-                        .collect(Collectors.toList());
-
+                // 🔧 Usa a lista já agrupada — antes re-filtrava vencidosGlobal inteiro
                 for (AgendamentoHistorico hist : agendamentosDestaArena) {
                     if (hist.getIdUser() != null) {
                         notificacaoService.enviar(
@@ -85,15 +85,15 @@ public class AgendamentoScheduler {
 
                 logger.info("✅ Arena {}: Finalizados {} jogos (IDs: {})", id_Arena, idsParaFinalizar.size(), idsParaFinalizar);
             } catch (Exception e) {
-            logger.error("❌ Erro ao finalizar jogos na arena {}: {}", id_Arena, e.getMessage());
+                logger.error("❌ Erro ao finalizar jogos na arena {}: {}", id_Arena, e.getMessage());
             } finally {
-            TenantContext.clear();
+                TenantContext.clear();
             }
 
-            try{
+            try {
                 TenantContext.setCurrentTenant("public");
-                historicoRepository.atualizarStatusEmLoteManual(idsParaFinalizar, id_Arena,"FINALIZADO");
-            } catch (Exception e){
+                historicoRepository.atualizarStatusEmLoteManual(idsParaFinalizar, id_Arena, "FINALIZADO");
+            } catch (Exception e) {
                 logger.error("Erro ao atualizar jogos finalizados na tabela do public");
             }
         }
@@ -101,13 +101,14 @@ public class AgendamentoScheduler {
 
     @Scheduled(fixedRate = 600000)
     @Transactional
-    public void cancelarReservasNaoPagas(){
+    public void cancelarReservasNaoPagas() {
         LocalDateTime limite = LocalDateTime.now().plusMinutes(30);
 
         List<AgendamentoHistorico> pendentes = historicoRepository.findPendentesParaCancelar(limite);
 
         if (pendentes.isEmpty()) return;
 
+        // 🔧 Otimização: Agrupa uma única vez e usa o agrupamento para tudo
         Map<Integer, List<AgendamentoHistorico>> porSchema = pendentes.stream()
                 .filter(a -> a.getId_arena() != null)
                 .filter(a -> a.getIdAgendamento() != null)
@@ -128,13 +129,10 @@ public class AgendamentoScheduler {
             try {
                 TenantContext.setCurrentTenant(schema);
 
-                agendamentoRepository.cancelarAgendamentosPorIds(idsParaCancelar,schema);
+                agendamentoRepository.cancelarAgendamentosPorIds(idsParaCancelar, schema);
 
-                List<AgendamentoHistorico> agendamentosDestaArena = pendentes.stream()
-                        .filter(a -> id_arena.equals(a.getId_arena()))
-                        .collect(Collectors.toList());
-
-                for (AgendamentoHistorico hist : agendamentosDestaArena) {
+                // 🔧 Usa listaHistorico já agrupada — antes re-filtrava pendentes inteiro
+                for (AgendamentoHistorico hist : listaHistorico) {
                     if (hist.getIdUser() != null) {
                         notificacaoService.enviar(
                                 hist.getIdUser().longValue(),
@@ -152,9 +150,14 @@ public class AgendamentoScheduler {
                 TenantContext.clear();
             }
 
+            // 🔧 Cancelamento Asaas — filtra apenas os que têm paymentId
             for (AgendamentoHistorico h : listaHistorico) {
                 if (h.getAsaasPaymentId() != null) {
-                    asaasService.cancelarCobranca(h.getAsaasPaymentId());
+                    try {
+                        asaasService.cancelarCobranca(h.getAsaasPaymentId());
+                    } catch (Exception e) {
+                        logger.warn("Erro ao cancelar cobrança Asaas {}: {}", h.getAsaasPaymentId(), e.getMessage());
+                    }
                 }
             }
 

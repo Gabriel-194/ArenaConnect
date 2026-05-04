@@ -58,20 +58,29 @@ public class TernarySearchTree<T> {
     }
 
     public List<T> searchByPrefix(String prefix) {
+        if (prefix == null || prefix.isEmpty()) return new ArrayList<>();
+
         List<T> results = new ArrayList<>();
         Node<T> node = search(root, prefix, 0);
         if (node == null) return results;
 
+        // Limitar a coleta para evitar retornos massivos com prefixos curtos
         results.addAll(node.values);
-        collect(node.mid, results);
+        collect(node.mid, results, 500); // Limite máximo de resultados
         return results;
     }
 
-    private void collect(Node<T> node, List<T> results) {
-        if (node == null) return;
-        collect(node.left, results);
+    /**
+     * Coleta com limite máximo de resultados para evitar O(n) com prefixos curtos.
+     * Antes: collect sem limite poderia retornar toda a árvore.
+     */
+    private void collect(Node<T> node, List<T> results, int maxResults) {
+        if (node == null || results.size() >= maxResults) return;
+        collect(node.left, results, maxResults);
+        if (results.size() >= maxResults) return;
         results.addAll(node.values);
-        collect(node.mid, results);
-        collect(node.right, results);
+        collect(node.mid, results, maxResults);
+        if (results.size() >= maxResults) return;
+        collect(node.right, results, maxResults);
     }
 }

@@ -8,6 +8,7 @@ import com.example.Repository.AgendamentoRepository;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.ContratoMensalistaRepository;
 import com.example.Repository.UserRepository;
+import com.example.Service.AgendamentoService;
 import com.example.Service.AsaasService;
 import com.example.Service.ContratoMensalistaService;
 import com.example.Multitenancy.TenantContext;
@@ -17,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +38,9 @@ public class ContratoMensalistaController {
 
     @Autowired
     private AgendamentoRepository agendamentoRepository;
+
+    @Autowired
+    private AgendamentoService agendamentoService;
 
     @Autowired
     private UserRepository userRepository;
@@ -61,6 +66,7 @@ public class ContratoMensalistaController {
             Integer idArena = Integer.parseInt(payload.get("idArena").toString());
             Integer idQuadra = Integer.parseInt(payload.get("idQuadra").toString());
             int diaSemana = Integer.parseInt(payload.get("diaSemana").toString());
+            LocalDate dataInicio = LocalDate.parse(payload.get("dataInicio").toString());
             String horaInicio = payload.get("horaInicio").toString();
             String horaFim = payload.get("horaFim").toString();
 
@@ -72,7 +78,7 @@ public class ContratoMensalistaController {
             TenantContext.setCurrentTenant(arena.getSchemaName());
 
             ContratoMensalista contrato = contratoService.criarAssinaturaMensalista(
-                    user, arena, idQuadra, diaSemana, LocalTime.parse(horaInicio), LocalTime.parse(horaFim)
+                    user, arena, idQuadra, diaSemana, dataInicio, LocalTime.parse(horaInicio), LocalTime.parse(horaFim)
             );
 
             return ResponseEntity.ok(contrato);
@@ -172,6 +178,10 @@ public class ContratoMensalistaController {
             contratoEncontrado.setAtivo(false);
             contratoEncontrado.setStatus("CANCELADO");
             contratoRepository.save(contratoEncontrado);
+
+            if (contratoEncontrado.getAsaasPaymentId() != null) {
+                agendamentoService.cancelPaymentWebhook(contratoEncontrado.getAsaasPaymentId(), "CANCELAMENTO_MANUAL");
+            }
 
             // 5. Cascata: Cancelar todos os agendamentos (jogos) futuros ligados a este contrato
             List<Agendamentos> todosAgendamentos = agendamentoRepository.findAll();

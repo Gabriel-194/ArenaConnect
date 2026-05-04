@@ -19,9 +19,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +42,9 @@ public class AgendamentoService {
 
     @Autowired
     private HistoricoRepository historicoRepository;
+
+    @Autowired
+    private ContratoMensalistaRepository contratoMensalistaRepository;
 
     @Autowired
     private AsaasService asaasService;
@@ -85,9 +87,10 @@ public class AgendamentoService {
 
         List<Agendamentos> agendamentos = agendamentoRepository.findAgendamentosDoDiaComSchema(idQuadra, inicioDia, fimDia, schema);
 
-        List<LocalTime> horariosOcupados = agendamentos.stream()
+        // 🔧 Otimização: HashSet para lookup O(1) ao invés de List.contains() O(n)
+        Set<LocalTime> horariosOcupados = agendamentos.stream()
                 .map(a -> a.getData_inicio().toLocalTime())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
 
         List<LocalTime> horariosDisponiveis = new ArrayList<>();
         LocalTime atual = abertura;
@@ -211,23 +214,27 @@ public class AgendamentoService {
         }
         List<Agendamentos> agendamento = agendamentoRepository.findAllAgendamentos(idQuadra, data, schema);
 
+        if (agendamento.isEmpty()) return new ArrayList<>();
+
+        // 🔧 Otimização N+1: Batch fetch de users e quadras em 2 queries ao invés de 3n
+        Set<Integer> userIds = agendamento.stream().map(Agendamentos::getId_user).collect(Collectors.toSet());
+        Set<Integer> quadraIds = agendamento.stream().map(Agendamentos::getId_quadra).collect(Collectors.toSet());
+
+        Map<Integer, Users> usersMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(Users::getIdUser, Function.identity()));
+
+        Map<Integer, Quadra> quadrasMap = quadraRepository.findAllById(quadraIds).stream()
+                .collect(Collectors.toMap(Quadra::getId, Function.identity()));
+
         for (Agendamentos a : agendamento) {
-            String nomeCliente = userRepository.findById(a.getId_user())
-                    .map(user -> user.getNome())
-                    .orElse("Usuario não encontrado");
+            Users user = usersMap.get(a.getId_user());
+            a.setNomeCliente(user != null ? user.getNome() : "Usuario não encontrado");
 
-            a.setNomeCliente(nomeCliente);
+            Quadra quadra = quadrasMap.get(a.getId_quadra());
+            a.setQuadraNome(quadra != null ? quadra.getNome() : "Quadra não encontrada");
 
-            String nomeQuadra = quadraRepository.findById(a.getId_quadra())
-                    .map(quadra -> quadra.getNome())
-                    .orElse("Quadra não encontrada");
-
-            a.setQuadraNome(nomeQuadra);
-
-            String numeroCliente = userRepository.findById(a.getId_user())
-
-                    .map(user -> user.getTelefone())
-                    .orElse("usuario nao encontrado");
+            String numeroCliente = (user != null && user.getTelefone() != null)
+                    ? user.getTelefone() : "";
 
             numeroCliente = numeroCliente.replaceAll("\\D", "");
             if (numeroCliente.length() == 11) {
@@ -250,15 +257,25 @@ public class AgendamentoService {
 
         List<AgendamentoHistorico> historico = historicoRepository.buscarHistoricoPorUsuario(user.getIdUser());
 
+        // 🔧 Otimização: Limita chamadas HTTP ao Asaas (máx 10 por request)
+        // Evita O(n × HTTP) quando há muitos pendentes sem URL
+        int maxApiCalls = 10;
+        int apiCallCount = 0;
 
         for (AgendamentoHistorico h : historico) {
+            if (apiCallCount >= maxApiCalls) break;
+
             if (h.getAsaasPaymentId() != null && h.getAsaasInvoiceUrl() == null) {
+                try {
+                    String urlRecuperada = asaasService.getPaymentUrlById(h.getAsaasPaymentId());
+                    apiCallCount++;
 
-                String urlRecuperada = asaasService.getPaymentUrlById(h.getAsaasPaymentId());
-
-                if (urlRecuperada != null) {
-                    h.setAsaasInvoiceUrl(urlRecuperada);
-                    historicoRepository.save(h);
+                    if (urlRecuperada != null) {
+                        h.setAsaasInvoiceUrl(urlRecuperada);
+                        historicoRepository.save(h);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Erro ao recuperar URL Asaas para payment {}: {}", h.getAsaasPaymentId(), e.getMessage());
                 }
             }
         }
@@ -349,12 +366,19 @@ public class AgendamentoService {
 
     public boolean confirmPaymentWebhook(String paymentId){
         var historicoOpt = historicoRepository.findByAsaasPaymentId(paymentId);
+        List<AgendamentoHistorico> historicosMesmoPagamento = historicoRepository.findAllByAsaasPaymentId(paymentId);
+
+        if (historicosMesmoPagamento != null && historicosMesmoPagamento.stream()
+                .anyMatch(h -> h.getStatus() != null && h.getStatus().startsWith("MENSALISTA_"))) {
+            return confirmarMensalidadeWebhook(paymentId, historicosMesmoPagamento);
+        }
 
         if(historicoOpt.isPresent()){
             AgendamentoHistorico historico = historicoOpt.get();
 
             if ("CONFIRMADO".equalsIgnoreCase(historico.getStatus()) ||
-                    "FINALIZADO".equalsIgnoreCase(historico.getStatus())) {
+                    "FINALIZADO".equalsIgnoreCase(historico.getStatus()) ||
+                    "CANCELADO".equalsIgnoreCase(historico.getStatus())) {
                 System.out.println("Webhook ignorado: Pagamento " + paymentId + " já processado anteriormente.");
                 return true;
             }
@@ -395,6 +419,136 @@ public class AgendamentoService {
         }
         System.out.println("Webhook ignorado: Pagamento " + paymentId + " não encontrado no sistema.");
         return false;
+    }
+
+    private boolean confirmarMensalidadeWebhook(String paymentId, List<AgendamentoHistorico> historicos) {
+        if (historicos == null || historicos.isEmpty()) {
+            return false;
+        }
+
+        boolean algumProcessado = false;
+        Set<String> schemasAtualizados = new HashSet<>();
+
+        for (AgendamentoHistorico historico : historicos) {
+            if (historico.getStatus() != null &&
+                    (historico.getStatus().equalsIgnoreCase("MENSALISTA_CONFIRMADO") ||
+                            historico.getStatus().equalsIgnoreCase("FINALIZADO") ||
+                            historico.getStatus().equalsIgnoreCase("CANCELADO"))) {
+                algumProcessado = true;
+                continue;
+            }
+
+            Integer idArena = historico.getId_arena();
+            if (idArena == null) continue;
+
+            String schema = arenaRepository.findSchemaNameById(idArena.longValue());
+            TenantContext.setCurrentTenant(schema);
+
+            try {
+                Optional<Agendamentos> agendamentoOpt = agendamentoRepository.findById(historico.getIdAgendamento());
+                if (agendamentoOpt.isPresent()) {
+                    Agendamentos agendamento = agendamentoOpt.get();
+
+                    if ("CANCELADO".equalsIgnoreCase(agendamento.getStatus())
+                            || "FINALIZADO".equalsIgnoreCase(agendamento.getStatus())) {
+                        historico.setStatus(agendamento.getStatus());
+                        historicoRepository.save(historico);
+                        algumProcessado = true;
+                        continue;
+                    }
+
+                    agendamento.setStatus("MENSALISTA_CONFIRMADO");
+                    agendamentoRepository.save(agendamento);
+
+                    if (agendamento.getId_user() != null) {
+                        Long userId = agendamento.getId_user().longValue();
+                        Arena arena = getArenaAtual(schema);
+
+                        notificacaoService.enviar(
+                                userId,
+                                "Pagamento Aprovado! ",
+                                "O pagamento da sua mensalidade na " + arena.getName() + " foi confirmado com sucesso.",
+                                "MENSALISTA_CONFIRMADO"
+                        );
+                    }
+                }
+
+                historico.setStatus("MENSALISTA_CONFIRMADO");
+                historicoRepository.save(historico);
+
+                if (schemasAtualizados.add(schema)) {
+                    atualizarContratoMensalistaPorPagamento(paymentId, "PAGO", true);
+                }
+
+                algumProcessado = true;
+            } catch (Exception e) {
+                System.err.println("Erro ao processar webhook mensalista " + paymentId + ": " + e.getMessage());
+                return false;
+            } finally {
+                TenantContext.clear();
+            }
+        }
+
+        return algumProcessado;
+    }
+
+    @Transactional
+    public boolean cancelPaymentWebhook(String paymentId, String motivo) {
+        if (paymentId == null || paymentId.isBlank()) {
+            return false;
+        }
+
+        List<AgendamentoHistorico> historicos = historicoRepository.findAllByAsaasPaymentId(paymentId);
+        if (historicos == null || historicos.isEmpty()) {
+            return false;
+        }
+
+        boolean encontrouPagamento = false;
+        Set<String> schemasAtualizados = new HashSet<>();
+
+        for (AgendamentoHistorico historico : historicos) {
+            Integer idArena = historico.getId_arena();
+            if (idArena == null) continue;
+
+            String schema = arenaRepository.findSchemaNameById(idArena.longValue());
+            TenantContext.setCurrentTenant(schema);
+
+            try {
+                agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
+                    if (!"FINALIZADO".equalsIgnoreCase(agendamento.getStatus())) {
+                        agendamento.setStatus("CANCELADO");
+                        agendamentoRepository.save(agendamento);
+                    }
+                });
+
+                if (!"FINALIZADO".equalsIgnoreCase(historico.getStatus())) {
+                    historico.setStatus("CANCELADO");
+                    historicoRepository.save(historico);
+                }
+
+                if (schemasAtualizados.add(schema)) {
+                    atualizarContratoMensalistaPorPagamento(paymentId, "CANCELADO", false);
+                }
+
+                encontrouPagamento = true;
+                logger.info("Pagamento {} cancelado/refundado pelo webhook Asaas. Motivo: {}", paymentId, motivo);
+            } catch (Exception e) {
+                logger.error("Erro ao cancelar agendamentos vinculados ao pagamento {}: {}", paymentId, e.getMessage());
+                return false;
+            } finally {
+                TenantContext.clear();
+            }
+        }
+
+        return encontrouPagamento;
+    }
+
+    private void atualizarContratoMensalistaPorPagamento(String paymentId, String status, boolean ativo) {
+        contratoMensalistaRepository.findByAsaasPaymentId(paymentId).ifPresent(contrato -> {
+            contrato.setStatus(status);
+            contrato.setAtivo(ativo);
+            contratoMensalistaRepository.save(contrato);
+        });
     }
 
     private void atualizarHistoricoData(Integer id, String schema, LocalDateTime inicio, LocalDateTime fim) {

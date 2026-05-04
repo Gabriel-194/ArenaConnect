@@ -1,9 +1,10 @@
-import {useState, useEffect, useRef} from "react";
+import {useState, useEffect, useRef, useMemo} from "react";
 import '../Styles/HomeClient.css'
 import axios from "axios";
 import ModalBooking from "../Components/ModalBooking.jsx";
 import ClientHeader from "../Components/clientHeader.jsx";
 import ClientNav from "../Components/clientNav.jsx"
+import {ArenaBST} from "../utils/ArenaBST.js";
 
 export default function HomeClient() {
     const [loading, setLoading] = useState(true);
@@ -14,6 +15,15 @@ export default function HomeClient() {
 
     const lastUpdateRef = useRef(0);
     const UPDATE_INTERVAL = 5000000;
+
+    // 🌳 BST para busca local instantânea
+    const arenaBSTRef = useRef(ArenaBST.buildBalanced([]));
+
+    // 🌳 Filtragem local instantânea via BST (sem esperar debounce da API)
+    const instantResults = useMemo(() => {
+        if (!searchItem || searchItem.trim().length < 2) return null; // null = usar arenas da API
+        return arenaBSTRef.current.searchByName(searchItem, 12);
+    }, [searchItem]);
 
     useEffect(() => {
         let watchId = null;
@@ -74,6 +84,9 @@ export default function HomeClient() {
             });
 
             setArenas(response.data);
+
+            // 🌳 Reconstrói a BST com os novos dados da API
+            arenaBSTRef.current = ArenaBST.buildBalanced(response.data);
         } catch (error) {
             if (error.response?.status !== 403) {
                 console.error("Erro ao buscar arenas:", error);
@@ -83,7 +96,10 @@ export default function HomeClient() {
         }
     }
 
-    const processedArenas = arenas.map(arena => {
+    // 🌳 Decide qual lista renderizar: BST instantânea ou resultados da API
+    const displayArenas = (instantResults && instantResults.length > 0) ? instantResults : arenas;
+
+    const processedArenas = displayArenas.map(arena => {
         let formattedDist = "Nova";
 
         if (arena.distanceKm !== null && arena.distanceKm !== undefined) {

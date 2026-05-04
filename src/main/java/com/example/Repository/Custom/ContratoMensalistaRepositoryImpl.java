@@ -3,12 +3,13 @@ package com.example.Repository.Custom;
 import com.example.Models.ContratoMensalista;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@Repository
 public class ContratoMensalistaRepositoryImpl implements ContratoMensalistaRepositoryCustom {
 
     @Autowired
@@ -17,6 +18,11 @@ public class ContratoMensalistaRepositoryImpl implements ContratoMensalistaRepos
     @Override
     public List<ContratoMensalista> findByIdUserComSchema(Integer idUser, String schema) {
         if (schema == null || schema.isEmpty()) schema = "public";
+
+        // 🔧 Segurança: Valida que o schema contém apenas caracteres alfanuméricos e underscore
+        if (!schema.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Nome de schema inválido: " + schema);
+        }
 
         // Define o schema antes da query (mesmo padrão do AgendamentoRepositoryImpl)
         jdbcTemplate.execute("SET search_path TO " + schema);

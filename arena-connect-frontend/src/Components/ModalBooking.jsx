@@ -149,6 +149,32 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
         return dias[jsDay] || "";
     };
 
+    const contarDiasRestantesNoMes = () => {
+        if (!selectedDate) return 0;
+
+        const dataBase = new Date(selectedDate + "T00:00:00");
+        const diaSemana = dataBase.getDay();
+        const cursor = new Date(dataBase);
+        const mes = dataBase.getMonth();
+        let total = 0;
+
+        while (cursor.getMonth() === mes) {
+            if (cursor.getDay() === diaSemana) {
+                total += 1;
+            }
+            cursor.setDate(cursor.getDate() + 1);
+        }
+
+        return total;
+    };
+
+    const descontoMensalista = arena?.descontoMensalista ?? 0;
+    const quantidadeJogosMensal = contarDiasRestantesNoMes();
+    const valorMensalPorJogo = selectedQuadra
+        ? selectedQuadra.valor_hora * (1 - descontoMensalista / 100)
+        : 0;
+    const valorTotalMensal = valorMensalPorJogo * quantidadeJogosMensal;
+
     const handleConfirm = async () => {
         if(!selectedHour) {
             alert("Por favor, selecione um horário.");
@@ -202,13 +228,18 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
                     const jsDay = new Date(selectedDate + "T00:00:00").getDay();
                     const diaSemanaBackend = jsDay === 0 ? 7 : jsDay;
 
-                    const idDaArena = arena?.id || arena?.idArena || arena?.id_arena || bookingToEdit?.id_arena || 1;
+                    const idDaArena = arena?.id || arena?.idArena || arena?.id_arena || bookingToEdit?.id_arena;
+                    if (!idDaArena) {
+                        alert("Arena nao identificada para criar mensalidade.");
+                        return;
+                    }
 
                     // 🟢 EM VEZ DE URL PARAMS, ENVIAMOS UM JSON PAYLOAD
                     const payloadMensal = {
                         idArena: idDaArena,
                         idQuadra: selectedQuadra.id,
                         diaSemana: diaSemanaBackend,
+                        dataInicio: selectedDate,
                         horaInicio: timeFormatted,
                         horaFim: horaFimStr
                     };
@@ -368,13 +399,18 @@ export default function ModalBooking({ arena, bookingToEdit, onClose, onSuccess 
 
                                                                     <h3 style={{ margin: '0 0 10px 0', color: '#00ff7f', fontSize: '1.1rem' }}>Mensalista</h3>
                                                                     <p style={{ fontSize: '0.85rem', color: '#aaa', minHeight: '40px', margin: 0 }}>
-                                                                        Garanta toda <b>{formatarDiaDaSemana(new Date(selectedDate + "T00:00:00").getDay())}</b> neste horário!
+                                                                        Garanta toda <b>{formatarDiaDaSemana(new Date(selectedDate + "T00:00:00").getDay())}</b> neste horário.
+                                                                        <br />
+                                                                        {quantidadeJogosMensal} jogo{quantidadeJogosMensal === 1 ? '' : 's'} restante{quantidadeJogosMensal === 1 ? '' : 's'} neste mês.
                                                                     </p>
                                                                     <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                                                                         <span style={{ fontSize: '0.85rem', color: '#ccc' }}>Valor por jogo:</span><br/>
                                                                         <strong style={{ fontSize: '1.4rem', color: '#00ff7f' }}>
-                                                                            R$ {(selectedQuadra.valor_hora * (1 - (arena?.descontoMensalista || 10) / 100)).toFixed(2)}
+                                                                            R$ {valorMensalPorJogo.toFixed(2)}
                                                                         </strong>
+                                                                        <div style={{ marginTop: '8px', color: '#fff', fontSize: '0.9rem' }}>
+                                                                            Total: <b>R$ {valorTotalMensal.toFixed(2)}</b>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>

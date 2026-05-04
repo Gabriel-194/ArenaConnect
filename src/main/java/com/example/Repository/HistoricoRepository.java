@@ -23,10 +23,12 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
 
     Optional<AgendamentoHistorico> findByAsaasPaymentId(String asaasPaymentId);
 
+    List<AgendamentoHistorico> findAllByAsaasPaymentId(String asaasPaymentId);
+
     List<AgendamentoHistorico> findByStatus(String status);
 
 
-    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status = 'CONFIRMADO' AND h.data_fim < :agora")
+    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status IN ('CONFIRMADO', 'MENSALISTA_CONFIRMADO') AND h.data_fim < :agora")
     List<AgendamentoHistorico> findJogosVencidosGlobalmente(@Param("agora") LocalDateTime agora);
 
     @Modifying
@@ -38,6 +40,6 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
             @Param("novoStatus") String novoStatus
     );
 
-    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status = 'PENDENTE' AND h.dataInicio < :limiteTempo")
+    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status IN ('PENDENTE', 'MENSALISTA_PENDENTE') AND h.dataInicio < :limiteTempo")
     List<AgendamentoHistorico> findPendentesParaCancelar(@Param("limiteTempo") LocalDateTime limiteTempo);
 }

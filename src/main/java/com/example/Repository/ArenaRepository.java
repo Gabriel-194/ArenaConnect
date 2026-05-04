@@ -34,7 +34,8 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
             sin(radians(:lat)) * sin(radians(a.latitude)))
         ) AS distance,  
         a.hora_inicio,  
-        a.hora_fim      
+        a.hora_fim,
+        a.desconto_mensalista
     FROM public.arenas a 
     WHERE a.latitude IS NOT NULL 
     AND a.longitude IS NOT NULL 
@@ -54,7 +55,8 @@ public interface ArenaRepository extends JpaRepository<Arena, Long> {
     SELECT a.id, a.name, a.endereco, a.cidade, a.estado, a.latitude, a.longitude,    
         NULL as distance, 
         a.hora_inicio,
-        a.hora_fim      
+        a.hora_fim,
+        a.desconto_mensalista
     FROM public.arenas a 
     WHERE (:search IS NULL 
            OR LOWER(a.name) LIKE LOWER(CONCAT('%', :search, '%')) 

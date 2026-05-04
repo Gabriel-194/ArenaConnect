@@ -8,6 +8,8 @@ import com.example.Models.Arena;
 import com.example.Models.Users;
 import com.example.Repository.ArenaRepository;
 import com.example.Repository.UserRepository;
+import com.example.Utils.ArenaBST;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -40,6 +43,29 @@ public class ArenaService {
 
     @Autowired
     private UserRepository userRepository;
+
+    /**
+     * 🔧 BST Cache: Árvore Binária de Busca balanceada para pesquisa de arenas.
+     * Construída na inicialização e atualizada a cada 10 minutos.
+     * Permite busca por nome em O(log n) sem ir ao banco.
+     */
+    private volatile ArenaBST arenaBST = new ArenaBST();
+
+    @PostConstruct
+    public void initArenaBSTCache() {
+        rebuildArenaBST();
+    }
+
+    @Scheduled(fixedRate = 600000) // Reconstrói a cada 10 minutos
+    public void rebuildArenaBST() {
+        try {
+            List<ArenaDistanceDTO> allArenas = buscarArenasFromDB(null, null, null);
+            arenaBST = ArenaBST.buildBalanced(allArenas);
+            logger.info("🌳 ArenaBST reconstruída com {} arenas.", arenaBST.size());
+        } catch (Exception e) {
+            logger.warn("Erro ao reconstruir ArenaBST: {}", e.getMessage());
+        }
+    }
 
     @Transactional
     public Arena cadastrarArena(Arena arena){
@@ -72,6 +98,9 @@ public class ArenaService {
             logger.error("❌ Erro ao criar tabelas: {}", e.getMessage(), e);
             throw new RuntimeException("Falha ao criar tabelas no schema", e);
         }
+
+        // 🌳 Invalida cache BST para incluir a nova arena
+        rebuildArenaBST();
 
         return savedArena;
     }
@@ -174,7 +203,36 @@ public class ArenaService {
         arenaRepository.save(arena);
     }
 
+    /**
+     * 🔧 Busca inteligente com BST Cache.
+     *
+     * Fluxo:
+     * 1. Se tem search e NÃO tem geolocalização → usa BST em memória O(log n)
+     * 2. Se tem geolocalização → vai ao banco para calcular distâncias
+     * 3. Sem search e sem geo → retorna recentes do banco
+     */
     public List<ArenaDistanceDTO> buscarArenasInteligente(Double lat, Double lon, String search) {
+
+        // 🌳 Caminho rápido: busca por texto sem geolocalização → BST in-memory
+        if (search != null && !search.isBlank() && (lat == null || lon == null) && !arenaBST.isEmpty()) {
+            List<ArenaDistanceDTO> bstResults = arenaBST.searchByName(search, 12);
+
+            if (!bstResults.isEmpty()) {
+                logger.debug("🌳 BST search '{}' retornou {} resultados (in-memory)", search, bstResults.size());
+                return bstResults;
+            }
+            // Fallback ao banco se BST não encontrou
+        }
+
+        // Caminho padrão: vai ao banco de dados
+        return buscarArenasFromDB(lat, lon, search);
+    }
+
+    /**
+     * Busca arenas diretamente do banco de dados.
+     * Usado como fonte para construir a BST e como fallback.
+     */
+    private List<ArenaDistanceDTO> buscarArenasFromDB(Double lat, Double lon, String search) {
         List<Object[]> rows;
 
         if (lat == null || lon == null) {
@@ -206,6 +264,9 @@ public class ArenaService {
             }
             if (row[9] != null) {
                 dto.setHoraFim(row[9].toString().substring(0, 5));
+            }
+            if (row.length > 10 && row[10] != null) {
+                dto.setDescontoMensalista(((Number) row[10]).doubleValue());
             }
             return dto;
         }).toList();
