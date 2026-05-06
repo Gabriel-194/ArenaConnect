@@ -108,6 +108,16 @@ public class AgendamentoRepositoryImpl implements AgendamentoRepositoryCustom {
     }
 
     @Override
+    public List<Agendamentos> findByAsaasPaymentIdComSchema(String asaasPaymentId, String schema) {
+        definirSchema(schema);
+
+        String jpql = "SELECT a FROM Agendamentos a WHERE a.asaasPaymentId = :asaasPaymentId";
+        return entityManager.createQuery(jpql, Agendamentos.class)
+                .setParameter("asaasPaymentId", asaasPaymentId)
+                .getResultList();
+    }
+
+    @Override
     @Transactional
     public List<AgendamentoDashboardDTO> findAllDashboard(String schema) {
 

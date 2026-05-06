@@ -27,6 +27,10 @@ import java.util.stream.Collectors;
 public class AgendamentoService {
 
     private static final Logger logger = LoggerFactory.getLogger(AgendamentoService.class);
+    private static final int MAX_RECONCILIACAO_LEITURA = 10;
+    private static final Set<String> STATUS_PENDENTES_PAGAMENTO = Set.of("PENDENTE", "MENSALISTA_PENDENTE");
+    private static final Set<String> STATUS_ASAAS_CONFIRMADOS = Set.of("CONFIRMED", "RECEIVED", "RECEIVED_IN_CASH");
+    private static final Set<String> STATUS_ASAAS_CANCELADOS = Set.of("REFUNDED", "REFUND_REQUESTED", "DELETED");
 
     @Autowired
     private UserRepository userRepository;
@@ -212,6 +216,7 @@ public class AgendamentoService {
         if (schema == null || schema.isEmpty()) {
             throw new IllegalArgumentException("O identificador da arena (schema) é obrigatório.");
         }
+        reconciliarPagamentosPendentesDaArenaAtual();
         List<Agendamentos> agendamento = agendamentoRepository.findAllAgendamentos(idQuadra, data, schema);
 
         if (agendamento.isEmpty()) return new ArrayList<>();
@@ -255,6 +260,7 @@ public class AgendamentoService {
         Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
 
+        reconciliarPagamentosPendentesDoUsuario(user.getIdUser());
         List<AgendamentoHistorico> historico = historicoRepository.buscarHistoricoPorUsuario(user.getIdUser());
 
         // 🔧 Otimização: Limita chamadas HTTP ao Asaas (máx 10 por request)
@@ -281,6 +287,80 @@ public class AgendamentoService {
         }
 
         return historico;
+    }
+
+    public int reconciliarPagamentosPendentesDoUsuario(Integer idUser) {
+        if (idUser == null) {
+            return 0;
+        }
+
+        List<AgendamentoHistorico> pendentes = historicoRepository.findPendentesPorUsuario(idUser);
+        return reconciliarPagamentosPendentes(pendentes, MAX_RECONCILIACAO_LEITURA);
+    }
+
+    public int reconciliarPagamentosPendentesDaArenaAtual() {
+        String schema = configurarSchema();
+        if (schema == null || schema.isBlank() || "public".equalsIgnoreCase(schema)) {
+            return 0;
+        }
+
+        Long idArena = arenaRepository.findIdBySchemaName(schema);
+        if (idArena == null) {
+            return 0;
+        }
+
+        List<AgendamentoHistorico> pendentes = historicoRepository.findPendentesPorArena(idArena.intValue());
+        return reconciliarPagamentosPendentes(pendentes, MAX_RECONCILIACAO_LEITURA);
+    }
+
+    public int reconciliarPagamentosPendentes(List<AgendamentoHistorico> historicos, int limiteChamadas) {
+        if (historicos == null || historicos.isEmpty() || limiteChamadas <= 0) {
+            return 0;
+        }
+
+        Set<String> pagamentosPendentes = new LinkedHashSet<>();
+        for (AgendamentoHistorico historico : historicos) {
+            if (!isHistoricoPendentePagamento(historico)) {
+                continue;
+            }
+
+            String paymentId = historico.getAsaasPaymentId();
+            if (paymentId != null && !paymentId.isBlank()) {
+                pagamentosPendentes.add(paymentId);
+            }
+        }
+
+        int processados = 0;
+        for (String paymentId : pagamentosPendentes) {
+            if (processados >= limiteChamadas) {
+                break;
+            }
+
+            try {
+                String statusAsaas = asaasService.checkPaymentStatus(paymentId);
+                processados++;
+
+                if (statusAsaas == null || statusAsaas.isBlank()) {
+                    continue;
+                }
+
+                if (STATUS_ASAAS_CONFIRMADOS.contains(statusAsaas)) {
+                    confirmPaymentWebhook(paymentId);
+                } else if (STATUS_ASAAS_CANCELADOS.contains(statusAsaas)) {
+                    cancelPaymentWebhook(paymentId, "RECONCILIACAO_LEITURA_" + statusAsaas);
+                }
+            } catch (Exception e) {
+                logger.warn("Erro ao reconciliar pagamento {} durante leitura: {}", paymentId, e.getMessage());
+            }
+        }
+
+        return processados;
+    }
+
+    private boolean isHistoricoPendentePagamento(AgendamentoHistorico historico) {
+        return historico != null
+                && historico.getStatus() != null
+                && STATUS_PENDENTES_PAGAMENTO.contains(historico.getStatus().toUpperCase());
     }
 
     @Transactional
@@ -365,7 +445,10 @@ public class AgendamentoService {
     }
 
     public boolean confirmPaymentWebhook(String paymentId){
-        var historicoOpt = historicoRepository.findByAsaasPaymentId(paymentId);
+        return confirmPaymentWebhook(paymentId, null);
+    }
+
+    public boolean confirmPaymentWebhook(String paymentId, String externalReference){
         List<AgendamentoHistorico> historicosMesmoPagamento = historicoRepository.findAllByAsaasPaymentId(paymentId);
 
         if (historicosMesmoPagamento != null && historicosMesmoPagamento.stream()
@@ -373,8 +456,13 @@ public class AgendamentoService {
             return confirmarMensalidadeWebhook(paymentId, historicosMesmoPagamento);
         }
 
-        if(historicoOpt.isPresent()){
-            AgendamentoHistorico historico = historicoOpt.get();
+        if ((historicosMesmoPagamento == null || historicosMesmoPagamento.isEmpty())
+                && isExternalReferenceMensalista(externalReference)) {
+            return confirmarMensalidadePorContrato(paymentId, externalReference);
+        }
+
+        if(historicosMesmoPagamento != null && !historicosMesmoPagamento.isEmpty()){
+            AgendamentoHistorico historico = historicosMesmoPagamento.get(0);
 
             if ("CONFIRMADO".equalsIgnoreCase(historico.getStatus()) ||
                     "FINALIZADO".equalsIgnoreCase(historico.getStatus()) ||
@@ -387,9 +475,9 @@ public class AgendamentoService {
             String schema = arenaRepository.findSchemaNameById(id_arena.longValue());
             TenantContext.setCurrentTenant(schema);
             try{
-                agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
+                agendamentoRepository.buscarPorIdComSchema(historico.getIdAgendamento(), schema).ifPresent(agendamento -> {
                     agendamento.setStatus("CONFIRMADO");
-                    agendamentoRepository.save(agendamento);
+                    agendamentoRepository.salvarComSchema(agendamento, schema);
 
                     if (agendamento.getId_user() != null) {
                         Long userId = agendamento.getId_user().longValue();
@@ -421,6 +509,109 @@ public class AgendamentoService {
         return false;
     }
 
+    private boolean isExternalReferenceMensalista(String externalReference) {
+        return externalReference != null && externalReference.startsWith("MENSAL_");
+    }
+
+    private boolean confirmarMensalidadePorContrato(String paymentId, String externalReference) {
+        Integer contratoId = extrairContratoMensalistaId(externalReference);
+        if (contratoId == null) {
+            return false;
+        }
+
+        for (Arena arena : arenaRepository.findByAtivoTrue()) {
+            String schema = arena.getSchemaName();
+            if (schema == null || schema.isBlank() || "public".equalsIgnoreCase(schema)) {
+                continue;
+            }
+
+            TenantContext.setCurrentTenant(schema);
+            try {
+                Optional<ContratoMensalista> contratoOpt = contratoMensalistaRepository.findById(contratoId);
+                if (contratoOpt.isEmpty()) {
+                    continue;
+                }
+
+                ContratoMensalista contrato = contratoOpt.get();
+                if (contrato.getAsaasPaymentId() == null || !contrato.getAsaasPaymentId().equals(paymentId)) {
+                    continue;
+                }
+
+                List<Agendamentos> agendamentos = agendamentoRepository.findByAsaasPaymentIdComSchema(paymentId, schema);
+                if (agendamentos.isEmpty()) {
+                    logger.warn("Mensalidade {} encontrada, mas sem agendamentos vinculados ao pagamento {} no schema {}.",
+                            contratoId, paymentId, schema);
+                    return false;
+                }
+
+                for (Agendamentos agendamento : agendamentos) {
+                    if (!"CANCELADO".equalsIgnoreCase(agendamento.getStatus())
+                            && !"FINALIZADO".equalsIgnoreCase(agendamento.getStatus())) {
+                        agendamento.setStatus("MENSALISTA_CONFIRMADO");
+                        agendamentoRepository.salvarComSchema(agendamento, schema);
+                    }
+
+                    atualizarOuCriarHistoricoMensalista(agendamento, arena);
+                }
+
+                contrato.setStatus("PAGO");
+                contrato.setAtivo(true);
+                contratoMensalistaRepository.save(contrato);
+                return true;
+            } catch (Exception e) {
+                logger.error("Erro ao confirmar mensalidade {} pelo externalReference {}: {}",
+                        paymentId, externalReference, e.getMessage());
+                return false;
+            } finally {
+                TenantContext.clear();
+            }
+        }
+
+        return false;
+    }
+
+    private Integer extrairContratoMensalistaId(String externalReference) {
+        try {
+            return Integer.parseInt(externalReference.replace("MENSAL_", ""));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void atualizarOuCriarHistoricoMensalista(Agendamentos agendamento, Arena arena) {
+        historicoRepository.buscarPorOrigem(agendamento.getId_agendamento(), arena.getId())
+                .ifPresentOrElse(historico -> {
+                    if (!"CANCELADO".equalsIgnoreCase(historico.getStatus())
+                            && !"FINALIZADO".equalsIgnoreCase(historico.getStatus())) {
+                        historico.setStatus("MENSALISTA_CONFIRMADO");
+                        historico.setAsaasPaymentId(agendamento.getAsaasPaymentId());
+                        historico.setAsaasInvoiceUrl(agendamento.getAsaasInvoiceUrl());
+                        historicoRepository.save(historico);
+                    }
+                }, () -> salvarHistoricoRecuperadoMensalista(agendamento, arena));
+    }
+
+    private void salvarHistoricoRecuperadoMensalista(Agendamentos agendamento, Arena arena) {
+        AgendamentoHistorico historico = new AgendamentoHistorico();
+        historico.setId_arena(arena.getId());
+        historico.setIdUser(agendamento.getId_user());
+        historico.setIdAgendamento(agendamento.getId_agendamento());
+        historico.setId_quadra(agendamento.getId_quadra());
+        historico.setDataInicio(agendamento.getData_inicio());
+        historico.setData_fim(agendamento.getData_fim());
+        historico.setStatus("MENSALISTA_CONFIRMADO");
+        historico.setValor(agendamento.getValor());
+        historico.setAsaasPaymentId(agendamento.getAsaasPaymentId());
+        historico.setAsaasInvoiceUrl(agendamento.getAsaasInvoiceUrl());
+        historico.setArenaName(arena.getName());
+        historico.setEnderecoArena(arena.getEndereco() + " - " + arena.getCidade());
+
+        quadraRepository.buscarPorIdComSchema(agendamento.getId_quadra(), arena.getSchemaName())
+                .ifPresent(quadra -> historico.setQuadraNome(quadra.getNome()));
+
+        historicoRepository.save(historico);
+    }
+
     private boolean confirmarMensalidadeWebhook(String paymentId, List<AgendamentoHistorico> historicos) {
         if (historicos == null || historicos.isEmpty()) {
             return false;
@@ -445,7 +636,7 @@ public class AgendamentoService {
             TenantContext.setCurrentTenant(schema);
 
             try {
-                Optional<Agendamentos> agendamentoOpt = agendamentoRepository.findById(historico.getIdAgendamento());
+                Optional<Agendamentos> agendamentoOpt = agendamentoRepository.buscarPorIdComSchema(historico.getIdAgendamento(), schema);
                 if (agendamentoOpt.isPresent()) {
                     Agendamentos agendamento = agendamentoOpt.get();
 
@@ -458,7 +649,7 @@ public class AgendamentoService {
                     }
 
                     agendamento.setStatus("MENSALISTA_CONFIRMADO");
-                    agendamentoRepository.save(agendamento);
+                    agendamentoRepository.salvarComSchema(agendamento, schema);
 
                     if (agendamento.getId_user() != null) {
                         Long userId = agendamento.getId_user().longValue();
@@ -514,10 +705,10 @@ public class AgendamentoService {
             TenantContext.setCurrentTenant(schema);
 
             try {
-                agendamentoRepository.findById(historico.getIdAgendamento()).ifPresent(agendamento -> {
+                agendamentoRepository.buscarPorIdComSchema(historico.getIdAgendamento(), schema).ifPresent(agendamento -> {
                     if (!"FINALIZADO".equalsIgnoreCase(agendamento.getStatus())) {
                         agendamento.setStatus("CANCELADO");
-                        agendamentoRepository.save(agendamento);
+                        agendamentoRepository.salvarComSchema(agendamento, schema);
                     }
                 });
 
@@ -623,6 +814,7 @@ public class AgendamentoService {
             throw new IllegalArgumentException("Arena não identificada.");
         }
 
+        reconciliarPagamentosPendentesDaArenaAtual();
         return agendamentoRepository.findAllDashboard(schema);
     }
 
@@ -634,6 +826,7 @@ public class AgendamentoService {
 
     public List<MovimentacaoDTO> getUltimasMovimentacoes() {
         String schema = configurarSchema();
+        reconciliarPagamentosPendentesDaArenaAtual();
         return agendamentoRepository.findUltimasMovimentacoes(schema);
     }
 

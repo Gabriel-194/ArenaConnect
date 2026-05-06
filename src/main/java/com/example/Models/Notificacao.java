@@ -25,7 +25,7 @@ public class Notificacao {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String mensagem;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 50)
     private String tipo;
 
     @Column(nullable = false)

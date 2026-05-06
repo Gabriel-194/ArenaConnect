@@ -32,7 +32,7 @@ public class WebhookController {
     @Autowired
     private ArenaRepository arenaRepository;
 
-    @Value("${ASAAS_WEBHOOK_AUTH_TOKEN}")
+    @Value("${asaas.webhook.auth-token:${ASAAS_WEBHOOK_AUTH_TOKEN:}}")
     private String asaasWebhookAuthToken;
 
     @Autowired
@@ -89,7 +89,8 @@ public class WebhookController {
             subscriptionId = paymentNode.path("subscription").asText();
         }
 
-        boolean isAgendamento = confirmPaymentifExist(paymentId);
+        String externalReference = paymentNode.path("externalReference").asText(null);
+        boolean isAgendamento = confirmPaymentifExist(paymentId, externalReference);
 
         if (!isAgendamento && subscriptionId != null && !subscriptionId.isEmpty()) {
             LocalDate novaDataExpiracao = LocalDate.now().plusMonths(1);
@@ -128,9 +129,13 @@ public class WebhookController {
     }
 
     public Boolean confirmPaymentifExist(String paymentId) {
+        return confirmPaymentifExist(paymentId, null);
+    }
+
+    public Boolean confirmPaymentifExist(String paymentId, String externalReference) {
         if (paymentId == null || paymentId.isEmpty()) return false;
 
-        boolean confirmado = agendamentoService.confirmPaymentWebhook(paymentId);
+        boolean confirmado = agendamentoService.confirmPaymentWebhook(paymentId, externalReference);
 
         if (confirmado) {
             logger.info("Pagamento de reserva confirmado com sucesso. ID Asaas: {}", paymentId);

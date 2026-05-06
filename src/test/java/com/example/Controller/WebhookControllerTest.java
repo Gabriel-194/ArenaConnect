@@ -35,13 +35,13 @@ class WebhookControllerTest {
         ResponseEntity<String> response = controller.handleAsaasWebhook(payloadRecebido(), "token-incorreto");
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        verify(agendamentoService, never()).confirmPaymentWebhook("pay_123");
+        verify(agendamentoService, never()).confirmPaymentWebhook("pay_123", null);
     }
 
     @Test
     void processaPagamentoRecebidoQuandoTokenAsaasConfere() {
         ReflectionTestUtils.setField(controller, "asaasWebhookAuthToken", "token-seguro-asaas-123456789012345");
-        when(agendamentoService.confirmPaymentWebhook("pay_123")).thenReturn(true);
+        when(agendamentoService.confirmPaymentWebhook("pay_123", null)).thenReturn(true);
 
         ResponseEntity<String> response = controller.handleAsaasWebhook(
                 payloadRecebido(),
@@ -49,7 +49,21 @@ class WebhookControllerTest {
         );
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(agendamentoService).confirmPaymentWebhook("pay_123");
+        verify(agendamentoService).confirmPaymentWebhook("pay_123", null);
+    }
+
+    @Test
+    void enviaExternalReferenceMensalistaParaServicoDeConfirmacao() {
+        ReflectionTestUtils.setField(controller, "asaasWebhookAuthToken", "token-seguro-asaas-123456789012345");
+        when(agendamentoService.confirmPaymentWebhook("pay_mensal", "MENSAL_16")).thenReturn(true);
+
+        ResponseEntity<String> response = controller.handleAsaasWebhook(
+                payloadMensalRecebido(),
+                "token-seguro-asaas-123456789012345"
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(agendamentoService).confirmPaymentWebhook("pay_mensal", "MENSAL_16");
     }
 
     private String payloadRecebido() {
@@ -59,6 +73,19 @@ class WebhookControllerTest {
                   "payment": {
                     "id": "pay_123",
                     "status": "RECEIVED"
+                  }
+                }
+                """;
+    }
+
+    private String payloadMensalRecebido() {
+        return """
+                {
+                  "event": "PAYMENT_RECEIVED",
+                  "payment": {
+                    "id": "pay_mensal",
+                    "status": "RECEIVED",
+                    "externalReference": "MENSAL_16"
                   }
                 }
                 """;

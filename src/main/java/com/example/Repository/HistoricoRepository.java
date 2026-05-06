@@ -27,6 +27,12 @@ public interface HistoricoRepository extends JpaRepository<AgendamentoHistorico,
 
     List<AgendamentoHistorico> findByStatus(String status);
 
+    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.idUser = :idUser AND h.status IN ('PENDENTE', 'MENSALISTA_PENDENTE')")
+    List<AgendamentoHistorico> findPendentesPorUsuario(@Param("idUser") Integer idUser);
+
+    @Query("SELECT h FROM AgendamentoHistorico h WHERE h.id_arena = :idArena AND h.status IN ('PENDENTE', 'MENSALISTA_PENDENTE')")
+    List<AgendamentoHistorico> findPendentesPorArena(@Param("idArena") Integer idArena);
+
 
     @Query("SELECT h FROM AgendamentoHistorico h WHERE h.status IN ('CONFIRMADO', 'MENSALISTA_CONFIRMADO') AND h.data_fim < :agora")
     List<AgendamentoHistorico> findJogosVencidosGlobalmente(@Param("agora") LocalDateTime agora);

@@ -20,6 +20,8 @@ public interface AgendamentoRepositoryCustom {
 
     Optional<Agendamentos> buscarPorIdComSchema(Integer id, String schema);
 
+    List<Agendamentos> findByAsaasPaymentIdComSchema(String asaasPaymentId, String schema);
+
     List<AgendamentoDashboardDTO> findAllDashboard(String schema);
 
     void finalizarAgendamentosPorIds(List<Integer> ids, String schema);

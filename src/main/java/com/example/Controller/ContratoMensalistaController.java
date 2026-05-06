@@ -94,6 +94,7 @@ public class ContratoMensalistaController {
     public ResponseEntity<?> getMeusContratos() {
         try {
             Users user = getUsuarioLogado();
+            agendamentoService.reconciliarPagamentosPendentesDoUsuario(user.getIdUser());
             var contratos = contratoService.listarMeusContratos(user);
             return ResponseEntity.ok(contratos);
         } catch (Exception e) {
@@ -109,6 +110,7 @@ public class ContratoMensalistaController {
     @GetMapping("/arena")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ContratoMensalista>> getContratosDaArena() {
+        agendamentoService.reconciliarPagamentosPendentesDaArenaAtual();
         List<ContratoMensalista> contratos = contratoRepository.findByAtivoTrue();
         return ResponseEntity.ok(contratos);
     }
